@@ -11,4 +11,4 @@ JOB_CLASS_DICT['FenicsLinearElastic'] = 'pyiron_continuum.fenics.job.elastic'
 from ._version import get_versions
 
 __version__ = get_versions()["version"]
-del 
+del get_versions
