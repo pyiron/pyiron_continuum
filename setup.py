@@ -35,11 +35,12 @@ setup(
     install_requires=[
         'matplotlib==3.3.4',
         'numpy==1.20.1',
-        'pyiron_base==0.1.47',
-        'scikit-image==0.18.1',
+        'pyiron_base==0.1.47'
+    ],
+    extras_require={'fenics': [
         'fenics==2019.1.0',
         'mshr==2019.1.0',
-    ],
+    ]},
     cmdclass=versioneer.get_cmdclass(),
     
 )
