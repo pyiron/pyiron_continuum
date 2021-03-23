@@ -9,7 +9,7 @@ A job class for performing finite element simulations using the [FEniCS](https:/
 import fenics as FEN
 import mshr
 import sympy
-from pyiron_base import GenericJob, InputList
+from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
@@ -65,8 +65,8 @@ class Fenics(GenericJob):
               Currently the linear variational problem is hardcoded.
 
     Attributes:
-        input (InputList): The input parameters controlling the run.
-        output (InputList): The output from the run, i.e. data that comes from `solve`ing the PDE.
+        input (DataContainer): The input parameters controlling the run.
+        output (DataContainer): The output from the run, i.e. data that comes from `solve`ing the PDE.
         domain (?): The spatial domain on which to build the mesh or, in the case of special meshes, the mesh itself.
             To be provided prior to running the job.
         BC (?): The boundary conditions for the mesh. To be provided prior to running the job.
@@ -123,7 +123,7 @@ class Fenics(GenericJob):
         self.create = Creator(self)
         self._plot = Plot(self)
 
-        self.input = InputList(table_name='input')
+        self.input = DataContainer(table_name='input')
         self.input.mesh_resolution = 2
         self.input.element_type = 'P'
         self.input.element_order = 1
@@ -133,7 +133,7 @@ class Fenics(GenericJob):
         self.input.solver_parameters = {}
         # TODO?: Make input sub-classes to catch invalid input?
 
-        self.output = InputList(table_name='output')
+        self.output = DataContainer(table_name='output')
         self.output.solution = []
 
         # TODO: Figure out how to get these attributes into input/otherwise serializable
