@@ -20,7 +20,8 @@ class DAMASKjob(GenericJob):
         self.input['grid'] = np.array([16,16,16])
         self.input['size'] = np.array([1.0,1.0,1.0])
         self.input['grains'] = 20
-        self.executable = "DAMASK_grid -l tensionX.load -g damask.vtr"
+        self.input['nodes'] = 4
+        self.executable = "mpiexec -np "+str(self.input['cores'])+" DAMASK_grid -l tensionX.load -g damask.vtr"
         self._material = None 
         self._tension = None 
         
