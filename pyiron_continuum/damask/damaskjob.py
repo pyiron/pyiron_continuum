@@ -18,7 +18,6 @@ class DAMASKjob(GenericJob):
     def __init__(self, project, job_name):
         super(DAMASKjob, self).__init__(project, job_name)
         self.input = InputList()
-        self.executable = self.executable_activate
         self._material = None 
         self._load = None
         self._geometry = None
@@ -27,7 +26,7 @@ class DAMASKjob(GenericJob):
         self.input.create_group('material')
         self.input.create_group('load')
         self.input['cores'] = 2 # solver decompose the geometry into multiple domains that get solved in parallel, defualt is 2
-        self.executable_activate()
+        self.executable = self.executable_activate
     
     @property
     def executable_activate(self):
