@@ -26,12 +26,8 @@ class DAMASKjob(GenericJob):
         self.input.create_group('material')
         self.input.create_group('load')
         self.input['cores'] = 2 # solver decompose the geometry into multiple domains that get solved in parallel, defualt is 2
-        self.executable = self.executable_activate
+        self._executable_activate()
     
-    @property
-    def executable_activate(self):
-        return "mpiexec -np "+str(self.input['cores'])+" DAMASK_grid -l tensionX.load -g damask.geom"
-        
     @property
     def material(self):
         return self._material
