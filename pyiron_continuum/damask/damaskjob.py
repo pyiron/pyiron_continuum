@@ -25,7 +25,6 @@ class DAMASKjob(GenericJob):
         self.input.create_group('geometry')
         self.input.create_group('material')
         self.input.create_group('load')
-        self.input['cores'] = 2 # solver decompose the geometry into multiple domains that get solved in parallel, defualt is 2
         self._executable_activate()
     
     @property
