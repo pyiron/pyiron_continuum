@@ -1,9 +1,8 @@
 # To do in next pull request! 
-# Refactor the code according to Liams suggestion. 
+#Refactor the code according to Liams suggestion. 
 # Use DataContainer instead of InputList
 # Replace to_hdf, from_hdf
-
-from pyiron_base import Project, GenericJob, GenericParameters, InputList
+from pyiron_base import Project, GenericJob, GenericParameters, InputList, DataContainer
 import numpy as np
 import matplotlib.pyplot as plt
 from damask import Config
@@ -18,7 +17,7 @@ import os
 class DAMASKjob(GenericJob):
     def __init__(self, project, job_name):
         super(DAMASKjob, self).__init__(project, job_name)
-        self.input = InputList()
+        self.input = DataContainer()
         self._material = None 
         self._load = None
         self._geometry = None
@@ -34,9 +33,9 @@ class DAMASKjob(GenericJob):
     
     @material.setter
     def material(self, path=None):
-        with open(path) as f:
-            self._material = yaml.load(f, Loader=yaml.FullLoader)
-        self.material_inputlist()
+        #with open(path) as f:
+        self._material = self.input.material.read(path)
+        #self.material_inputlist()
         
     @property
     def load(self):
@@ -44,9 +43,9 @@ class DAMASKjob(GenericJob):
     
     @load.setter
     def load(self, path=None):
-        with open(path) as f:
-            self._load = yaml.load(f, Loader=yaml.FullLoader)
-        self.load_inputlist()
+        #with open(path) as f:
+        self._load = self.input.material.read(path)
+        #self.load_inputlist()
     
     @property
     def path(self):
@@ -74,27 +73,12 @@ class DAMASKjob(GenericJob):
         else:
             pass
                 
-    def load_inputlist(self):
-        if isinstance(self._load, type(None)):
-            raise ValueError('job.load file not specified')
-        else:
-            self.input.load = InputList(self._load)
-            
-    def material_inputlist(self):
-        if isinstance(self._material, type(None)):
-            raise ValueError('job.material file not specified')
-        else:
-            self.input.material = InputList(self._material)
     
     def load_write(self):
-        load = self.input.load.to_builtin()
-        with open(os.path.join(self.working_directory, 'tensionX.yaml'), "w") as f:
-                    yaml.dump(load , f)
+        load = self.input.load.write('tensionX.yaml')
         
     def material_write(self):
-        material = self.input.material.to_builtin()
-        with open(os.path.join(self.working_directory, 'material.yaml'), "w") as f:
-                    yaml.dump(material , f)
+        material = self.input.material.write('material.yaml')
     
     def geometry_write(self):
         seed = seeds.from_random(self.input.geometry['size'], self.input.geometry['grains'])
@@ -103,7 +87,7 @@ class DAMASKjob(GenericJob):
         new_geom.save(os.path.join(self.working_directory, "damask"))
     
     def write_input(self):
-        
+        os.chdir(self.working_directory)
         self.load_write()
         self.geometry_write()
         self.material_write()
