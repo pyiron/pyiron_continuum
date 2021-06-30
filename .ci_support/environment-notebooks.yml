@@ -5,6 +5,7 @@ dependencies:
   - coveralls
   - coverage
   - codacy-coverage
+  - damask
   - matplotlib
   - fenics
   - mshr
