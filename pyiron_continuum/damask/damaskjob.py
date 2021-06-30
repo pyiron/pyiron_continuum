@@ -1,7 +1,6 @@
 # To do in next pull request! 
 #Refactor the code according to Liams suggestion. 
-# Use DataContainer instead of InputList
-# Replace to_hdf, from_hdf
+
 from pyiron_base import Project, GenericJob, GenericParameters, InputList, DataContainer
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,10 +8,11 @@ from damask import Config
 from damask import Grid
 from damask import Result
 from damask import seeds
+import pyvista as pv
 import h5py
 import yaml
 import os
-
+from os.path import join
 
 class DAMASKjob(GenericJob):
     def __init__(self, project, job_name):
@@ -25,7 +25,7 @@ class DAMASKjob(GenericJob):
         self.input.create_group('geometry')
         self.input.create_group('material')
         self.input.create_group('load')
-        self.executable = "DAMASK_grid -l tensionX.yaml -g damask.vtr"
+        self.executable = "DAMASK_grid -l tensionX.yaml -g damask.vtr" # this will be updated with new damask version
         
     @property
     def material(self):
@@ -47,33 +47,6 @@ class DAMASKjob(GenericJob):
         self._load = self.input.material.read(path)
         #self.load_inputlist()
     
-    @property
-    def path(self):
-        return self._path
-    
-    @path.setter
-    def path(self, path):
-        self._path = path
-        self.check_path()
-       
-    def check_path(self):
-        if self._path is not None:
-            try:
-                with open(os.path.join(self._path, 'damask.vtr')) as f:
-                    geometry = f.readlines()
-                self.geometry = geometry
-                with open(os.path.join(self._path, 'material.yaml')) as f:
-                    material = yaml.load(f, Loader=yaml.FullLoader)
-                self.material = material
-                with open(os.path.join(self._path, 'tensionX.yaml')) as f:
-                    load = f.readlines()
-                self.load = load
-            except:
-                pass
-        else:
-            pass
-                
-    
     def load_write(self):
         load = self.input.load.write('tensionX.yaml')
         
@@ -93,28 +66,10 @@ class DAMASKjob(GenericJob):
         self.material_write()
              
     def collect_output(self): 
-        pass
-    
-    def to_hdf(self, hdf=None, group_name=None): 
-        super().to_hdf(
-            hdf=hdf,
-            group_name=group_name
-        )
-        with self.project_hdf5.open("input") as h5in:
-            self.input.to_hdf(h5in)
-            h5in["material"] = self._material
-            h5in["load"] = self._load
-        self.status.finished = True
-
-    def from_hdf(self, hdf=None, group_name=None): 
-        super().from_hdf(
-            hdf=hdf,
-            group_name=group_name
-        )
-        with self.project_hdf5.open("input") as h5in:
-            self.input.from_hdf(h5in)
-            self._material = h5in["material"]
-            self._load = h5in["load"]
+        file = join(self.working_directory, "output") 
+        with self.project_hdf5.open("output/generic") as h5out: 
+            h5out["stress"] = self.stress()
+            h5out["strain"] = self.strain()
     
     def load_results(self, file_name):
         if self._damask_results is None:
@@ -132,7 +87,6 @@ class DAMASKjob(GenericJob):
     @property
     def output(self):
         self._file_name = os.path.join(self.working_directory, "damask_tensionX.hdf5")
-        #if file_name is not None:
         return Result(self._file_name)
     
     def stress(self):
