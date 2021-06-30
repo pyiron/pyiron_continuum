@@ -1,16 +1,14 @@
 # To do in next pull request! 
 #Refactor the code according to Liams suggestion. 
 
-from pyiron_base import Project, GenericJob, GenericParameters, InputList, DataContainer
+from pyiron_base import GenericJob, GenericParameters, InputList, DataContainer
 import numpy as np
 import matplotlib.pyplot as plt
-from damask import Config
 from damask import Grid
 from damask import Result
 from damask import seeds
 import pyvista as pv
 import h5py
-import yaml
 import os
 from os.path import join
 
@@ -48,10 +46,10 @@ class DAMASKjob(GenericJob):
         #self.load_inputlist()
     
     def load_write(self):
-        load = self.input.load.write('tensionX.yaml')
+        self.input.load.write('tensionX.yaml')
         
     def material_write(self):
-        material = self.input.material.write('material.yaml')
+        self.input.material.write('material.yaml')
     
     def geometry_write(self):
         seed = seeds.from_random(self.input.geometry['size'], self.input.geometry['grains'])
@@ -66,7 +64,6 @@ class DAMASKjob(GenericJob):
         self.material_write()
              
     def collect_output(self): 
-        file = join(self.working_directory, "output") 
         with self.project_hdf5.open("output/generic") as h5out: 
             h5out["stress"] = self.stress()
             h5out["strain"] = self.strain()
