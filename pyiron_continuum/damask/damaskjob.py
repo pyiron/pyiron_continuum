@@ -1,7 +1,4 @@
-# To do in next pull request! 
-#Refactor the code according to Liams suggestion. 
-
-from pyiron_base import GenericJob, GenericParameters, InputList, DataContainer
+from pyiron_base import GenericJob, DataContainer
 import numpy as np
 import matplotlib.pyplot as plt
 from damask import Grid
@@ -10,7 +7,6 @@ from damask import seeds
 import pyvista as pv
 import h5py
 import os
-from os.path import join
 
 class DAMASKjob(GenericJob):
     def __init__(self, project, job_name):
@@ -63,7 +59,7 @@ class DAMASKjob(GenericJob):
         self.geometry_write()
         self.material_write()
              
-    def collect_output(self): 
+    def collect_output(self):
         with self.project_hdf5.open("output/generic") as h5out: 
             h5out["stress"] = self.stress()
             h5out["strain"] = self.strain()
