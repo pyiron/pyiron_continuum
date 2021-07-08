@@ -32,9 +32,11 @@ class DAMASKjob(GenericJob):
     def material(self, path=None, material=None):
         if path:
             self._material = self.input.material.read(path)
-        elif isinstance(new_mat, DataContainer):
+        elif isinstance(material, DataContainer):
             self._material = material
             self.input.material = material
+        else:
+            raise TypeError("the material should be of type DataContainer")
         
     @property
     def load(self):
