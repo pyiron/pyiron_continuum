@@ -29,8 +29,12 @@ class DAMASKjob(GenericJob):
         return self._material
     
     @material.setter
-    def material(self, path=None):
-        self._material = self.input.material.read(path)
+    def material(self, path=None, material=None):
+        if path:
+            self._material = self.input.material.read(path)
+        elif isinstance(new_mat, DataContainer):
+            self._material = material
+            self.input.material = material
         
     @property
     def load(self):
@@ -108,7 +112,12 @@ class DAMASKjob(GenericJob):
             for count,path in enumerate(stress_path):
                 strain[count] = np.array(hdf[path.split('avg_sigma')[0]+ 'avg_epsilon'])
             self.output.strain = strain
-    
+
+    def to_hdf(self, hdf=None, group_name=None):
+        # TODO: check the function in the original function
+        self.input.to_hdf(hdf=self._hdf5, group_name='input')
+        self.output.to_hdf(hdf=self._hdf5, group_name='output')
+
     @property
     def plot_stress_strain(self):
         """
