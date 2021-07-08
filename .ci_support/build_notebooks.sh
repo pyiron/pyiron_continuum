@@ -5,7 +5,7 @@ done;
 # execute notebooks
 i=0;
 cd notebooks
-for notebook in $(ls *.ipynb); do
+for notebook in $(ls ./*.ipynb); do
     papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k "python3" || i=$((i+1));
 done;
 
