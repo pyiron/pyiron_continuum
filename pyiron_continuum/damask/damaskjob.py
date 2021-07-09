@@ -125,8 +125,8 @@ class DAMASK(GenericJob):
         ax.grid(True)
         ax.set_xlabel(r'$\varepsilon_{VM} $', fontsize=18)
         ax.set_ylabel(r'$\sigma_{VM}$ (MPa)', fontsize=18)
-        return fig, ax 
-     
+        return fig, ax
+    
     def load_mesh(self, inc=20):
         """
         Return the mesh for particular increment
