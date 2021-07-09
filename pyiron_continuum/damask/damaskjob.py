@@ -125,7 +125,7 @@ class DAMASKjob(GenericJob):
         ax.grid(True)
         ax.set_xlabel(r'$\varepsilon_{VM} $', fontsize=18)
         ax.set_ylabel(r'$\sigma_{VM}$ (MPa)', fontsize=18)
-        #return fig, ax #not needed right now
+        return fig, ax 
      
     def load_mesh(self, inc=20):
         """
