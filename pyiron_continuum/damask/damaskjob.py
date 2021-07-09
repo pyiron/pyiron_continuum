@@ -10,7 +10,7 @@ import os
 
 class DAMASK(GenericJob):
     def __init__(self, project, job_name):
-        super(DAMASKjob, self).__init__(project, job_name)
+        super(DAMASK, self).__init__(project, job_name)
         self.input = DataContainer()
         self.output = DataContainer()
         self._material = None 
