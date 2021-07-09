@@ -8,7 +8,7 @@ import pyvista as pv
 import h5py
 import os
 
-class DAMASKjob(GenericJob):
+class DAMASK(GenericJob):
     def __init__(self, project, job_name):
         super(DAMASKjob, self).__init__(project, job_name)
         self.input = DataContainer()
