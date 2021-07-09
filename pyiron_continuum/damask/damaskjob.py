@@ -14,40 +14,34 @@ class DAMASKjob(GenericJob):
         self.input = DataContainer()
         self.output = DataContainer()
         self._material = None 
-        self._load = None
+        self._loading = None
         self._geometry = None
         self._damask_results = None
         self.input.create_group('geometry')
         self.input.create_group('material')
-        self.input.create_group('load')
+        self.input.create_group('loading')
         self.output.create_group('stress')
         self.output.create_group('strain')
-        self.executable = "DAMASK_grid -l tensionX.yaml -g damask.vtr" # this will be updated with new damask version
+        self._executable_activate()
         
     @property
     def material(self):
         return self._material
     
     @material.setter
-    def material(self, path=None, material=None):
-        if path:
-            self._material = self.input.material.read(path)
-        elif isinstance(material, DataContainer):
-            self._material = material
-            self.input.material = material
-        else:
-            raise TypeError("the material should be of type DataContainer")
+    def material(self, path=None):
+        self._material = self.input.material.read(path)
         
     @property
-    def load(self):
-        return self._load
+    def loading(self):
+        return self._loading
     
-    @load.setter
-    def load(self, path=None):
-        self._load = self.input.load.read(path)
+    @loading.setter
+    def loading(self, path=None):
+        self._loading = self.input.loading.read(path)
     
-    def load_write(self):
-        self.input.load.write('tensionX.yaml')
+    def loading_write(self):
+        self.input.loading.write('tensionX.yaml')
         
     def material_write(self):
         self.input.material.write('material.yaml')
@@ -59,7 +53,7 @@ class DAMASKjob(GenericJob):
     
     def write_input(self):
         os.chdir(self.working_directory)
-        self.load_write()
+        self.loading_write()
         self.geometry_write()
         self.material_write()
              
@@ -69,6 +63,9 @@ class DAMASKjob(GenericJob):
         self.strain()
     
     def load_results(self, file_name="damask_tensionX.hdf5"):
+        """
+        Open ‘damask_tensionX.hdf5’,add the Mises equivalent of the Cauchy stress, and export it to VTK (file).
+        """
         if self._damask_results is None:
             self._file_name = os.path.join(self.working_directory, file_name)
             self._damask_results = Result(self._file_name)
@@ -114,30 +111,26 @@ class DAMASKjob(GenericJob):
             for count,path in enumerate(stress_path):
                 strain[count] = np.array(hdf[path.split('avg_sigma')[0]+ 'avg_epsilon'])
             self.output.strain = strain
-
-    def to_hdf(self, hdf=None, group_name=None):
-        # TODO: check the function in the original function
-        self.input.to_hdf(hdf=self._hdf5, group_name='input')
-        self.output.to_hdf(hdf=self._hdf5, group_name='output')
-
-    @property
-    def plot_stress_strain(self):
+    
+    def plot_stress_strain(self, ax=None):
         """
         Plot the stress strain curve from the job file
         Parameters
         ----------
-        self.stress
-        self.strain
+        ax (matplotlib axis /None): axis to plot on (created if None)
         """
-        #stress = self.stress()
-        #strain = self.strain()
-        plt.plot(self.output.strain, self.output.stress, linestyle='-', linewidth='2.5')
-        plt.xlabel(r'$\varepsilon_{VM} $', fontsize=18)
-        plt.ylabel(r'$\sigma_{VM}$ (MPa)', fontsize=18)
+        if ax is None:
+            fig, ax = plt.subplots()
+        ax.plot(self.output.strain, self.output.stress, linestyle='-', linewidth='2.5')
+        ax.grid(True)
+        ax.set_xlabel(r'$\varepsilon_{VM} $', fontsize=18)
+        ax.set_ylabel(r'$\sigma_{VM}$ (MPa)', fontsize=18)
+        #return fig, ax #not needed right now
      
-    def mesh(self, inc=20):
+    def load_mesh(self, inc=20):
         """
-        mesh
+        Return the mesh for particular increment
         """
         mesh = pv.read(os.path.join(self.working_directory, self._file_name.split('.')[0] + f'_inc0{inc}.vtr'))
         return mesh
+    
