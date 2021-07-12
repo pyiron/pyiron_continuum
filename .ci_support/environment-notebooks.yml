@@ -11,7 +11,7 @@ dependencies:
   - mshr
   - numpy
   - pyiron
-  - pyiron-data
+  - pyiron-data >=0.0.16
   - pyvista
   - scipy
   - seaborn
