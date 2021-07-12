@@ -11,9 +11,11 @@ dependencies:
   - mshr
   - numpy
   - pyiron
-  - pyiron-data >=0.0.16
+  - pyiron-data
   - pyvista
   - scipy
   - seaborn
   - scikit-image
   - papermill
+  - pip:
+    - git+https://github.com/pyiron/pyiron_continuum.git@Damask_first_steps

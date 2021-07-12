@@ -4,7 +4,8 @@ for f in $(cat .ci_support/exclude); do
 done;
 # execute notebooks
 i=0;
-for notebook in $(ls notebooks/*.ipynb); do 
+cd notebooks
+for notebook in $(ls ./*.ipynb); do
     papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k "python3" || i=$((i+1));
 done;
 
