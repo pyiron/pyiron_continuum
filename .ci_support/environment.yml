@@ -1,9 +1,9 @@
 channels:
-  - conda-forge
+- conda-forge
 dependencies:
-  - coveralls
-  - coverage
-  - codacy-coverage
-  - matplotlib =3.4.2
-  - numpy =1.21.1
-  - pyiron_base =0.2.19
+- coveralls
+- coverage
+- codacy-coverage
+- matplotlib =3.4.2
+- numpy =1.21.1
+- pyiron_base =0.2.20
