@@ -1,21 +1,14 @@
 channels:
   - conda-forge
 dependencies:
-  - ase
-  - coveralls
-  - coverage
-  - codacy-coverage
-  - damask
+  - damask=3.0.0
   - matplotlib
   - fenics
   - mshr
-  - numpy
-  - pyiron
+  - pyiron_base
   - pyiron-data
   - pyvista
   - scipy
   - seaborn
-  - scikit-image
-  - papermill
   - pip:
     - git+https://github.com/pyiron/pyiron_continuum.git
