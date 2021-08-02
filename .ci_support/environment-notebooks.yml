@@ -7,8 +7,8 @@ dependencies:
   - codacy-coverage
   - damask
   - matplotlib
-  - fenics
-  - mshr
+  - fenics =2019.1.0=*_21
+  - mshr =2019.1.0=*_4
   - numpy
   - pyiron
   - pyiron-data >=0.0.16
