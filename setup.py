@@ -35,7 +35,7 @@ setup(
     install_requires=[
         'matplotlib==3.4.2',
         'numpy==1.21.1',
-        'pyiron_base==0.2.20'
+        'pyiron_base==0.2.21'
     ],
     extras_require={'fenics': [
         'fenics==2019.1.0',
