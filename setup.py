@@ -34,7 +34,7 @@ setup(
     packages=find_packages(exclude=["*tests*"]),
     install_requires=[
         'matplotlib==3.4.2',
-        'numpy==1.21.1',
+        'numpy==1.21.2',
         'pyiron_base==0.2.22'
     ],
     extras_require={'fenics': [
