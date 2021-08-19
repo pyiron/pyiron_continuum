@@ -3,7 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron_base import GenericJob, DataContainer
+from pyiron_base import PyironFactory
+from pyiron_base import Settings
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -87,18 +88,14 @@ def is_initialized(func):
                 self._bulk_modulus,
                 self._poissons_ratio,
                 self._youngs_modulus
-            ])
+            ]])
             if v < 2:
                 return None
-        return func_self)
+        return func(self)
 
-class LinearElasticityJob:
-    def __init__(self):
-        super(LinearElasticityJob, self).__init__(project, job_name)
-        self.__version__ = "0.0.1"
-        self.__name__ = "LinearElasticityJob"
+class LinearElasticity:
+    def __init__(self, elastic_tensor):
         self._elastic_tensor = None
-        self._python_only_job = True
         self.isotropy_tolerance = 1.0e-4
         self._frame = np.eye(3)
 
@@ -199,7 +196,7 @@ class LinearElasticityJob:
     def shear_modulus(self):
         if self._shear_modulus is None:
             if self._elastic_tensor is not None:
-                self._shear_modulus = 1/self.compliance_matrix.[3:,3:].diagonal().mean()
+                self._shear_modulus = 1/self.compliance_matrix[3:,3:].diagonal().mean()
             elif self.lame_coefficient is not None:
                 if self.youngs_modulus is not None:
                     R = self.youngs_modulus**2
