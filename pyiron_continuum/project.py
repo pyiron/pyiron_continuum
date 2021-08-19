@@ -173,7 +173,7 @@ class Project(ProjectCore):
 
 
 class MediumFactory(PyironFactory):
-    def elastic_medium(self, elastic_tensor):
+    def elastic_medium(self, elastic_tensor=None):
         return LinearElasticity(elastic_tensor)
 
 

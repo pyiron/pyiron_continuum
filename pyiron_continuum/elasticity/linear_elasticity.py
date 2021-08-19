@@ -34,7 +34,7 @@ def C_from_voigt(C_in):
     return C
 
 def C_to_voigt(C_in):
-    C = np.zeros(6, 6)
+    C = np.zeros((6, 6))
     for i in range(3):
         for j in range(i+1):
             for k in range(3):
@@ -80,8 +80,6 @@ def value_or_none(func):
 def is_initialized(func):
     def f(self):
         if self._elastic_tensor is None:
-            return None
-        else:
             v = np.sum([param is not None for param in [
                 self._lame_coefficient,
                 self._shear_modulus,
@@ -92,12 +90,14 @@ def is_initialized(func):
             if v < 2:
                 return None
         return func(self)
+    return f
 
 class LinearElasticity:
-    def __init__(self, elastic_tensor):
-        self._elastic_tensor = None
+    def __init__(self, elastic_tensor=None):
+        self._elastic_tensor = elastic_tensor
         self.isotropy_tolerance = 1.0e-4
         self._frame = np.eye(3)
+        self.initialize()
 
     def initialize(self):
         self._lame_coefficient = None
