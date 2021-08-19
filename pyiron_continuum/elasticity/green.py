@@ -83,6 +83,18 @@ class Isotropic:
         v[distance_condition] *= 0
         return v
 
+    def get_greens_function(self, r, derivative=0, fourier=False):
+        if fourier:
+            return self.G_fourier(r)
+        elif derivative == 0:
+            return self.G(r)
+        elif derivative == 1:
+            return self.dG(r)
+        elif derivative == 2:
+            return self.ddG(self, r)
+        else:
+            raise ValueError('Derivative can be up to 2')
+
 def normalize(x):
     return (x.T/np.linalg.norm(x, axis=-1).T).T
 
@@ -132,7 +144,7 @@ class Anisotropic:
     def Ms(self):
         if self._Ms is None:
             self._Ms = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T)
-            self._Ms = np.linalg.inv(M)
+            self._Ms = np.linalg.inv(self._Ms)
         return self._Ms
 
     @property
@@ -159,8 +171,8 @@ class Anisotropic:
 
     @property
     def MF(self):
-        MF = np.einsum('...ij,...nr->...ijnr', self.F, self.Ms)
-        MF = MF+np.einsum('...ijnr->...nrij', MF)
+        self._MF = np.einsum('...ij,...nr->...ijnr', self.F, self.Ms)
+        self._MF = self._MF+np.einsum('...ijnr->...nrij', self._MF)
         return self._MF
 
     @property
@@ -168,34 +180,38 @@ class Anisotropic:
         Air = np.einsum('...pw,...ijnr->...ijnrpw', self.zT, self.MF)
         Air -= 2*np.einsum('...ij,...nr,...p,...w->...ijnrpw', self.Ms, self.Ms, self.T, self.T)
         Air = np.einsum('jpnw,...ijnrpw->...ir', self.C, Air)
+        return self.Air
 
     @property
     def _integrand_second_derivative(self):
-        results = 2*np.einsum('...s,...m,...ir->...irsm', self.T, self.T, self.Ms)
-        results -= 2*np.einsum('...sm,...ir->...irsm', self.zT, self.F)
-        results += np.einsum('...s,...m,...ir->...irsm', self.z, self.z, self.Air)
+        results = 2*np.einsum('...s,...m,...ir->...isrm', self.T, self.T, self.Ms)
+        results -= 2*np.einsum('...sm,...ir->...isrm', self.zT, self.F)
+        results += np.einsum('...s,...m,...ir->...isrm', self.z, self.z, self.Air)
         return results
 
     @property
     def _integrand_first_derivative(self):
-        results = -np.einsum('s,ir->irs', self.T, self.Ms)
-        results += np.einsum('s,ir->irs', self.z, self.F)
+        results = -np.einsum('s,ir->isr', self.T, self.Ms)
+        results += np.einsum('s,ir->isr', self.z, self.F)
         return results
 
-    def get_greens_function(r, derivative=0):
+    def get_greens_function(self, r, derivative=0, fourier=False):
+        if fourier:
+            G = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T)
+            return np.linalg.inv(G)
         self.initialize()
         self.r = r
         if derivative == 0:
             M = np.einsum('...nij->...ij', self.Ms)*self.phi/(4*np.pi**2)
             return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
         elif derivative == 1:
-            M = np.einsum('n...irs->...irs', self._integrand_first_derivative)/(4*np.pi**2)*self.dphi
-            return np.einsum('...ijs,...->...ijs', M, 1/np.linalg.norm(self.r, axis=-1)**2)
+            M = np.einsum('n...isr->...isr', self._integrand_first_derivative)/(4*np.pi**2)*self.dphi
+            return np.einsum('...isr,...->...isr', M, 1/np.linalg.norm(self.r, axis=-1)**2)
         elif derivative == 2:
             M = np.einsum(
-                'n...irsm->...irsm', self._integrand_second_derivative
+                'n...isrm->...isrm', self._integrand_second_derivative
             )/(4*np.pi**2)*self.dphi
-            return np.einsum('...ijsm,...->...ijsm', M, 1/np.linalg.norm(self.r, axis=-1)**3)
+            return np.einsum('...isrm,...->...isrm', M, 1/np.linalg.norm(self.r, axis=-1)**3)
 
 def displacement_field(r, dipole_tensor, poissons_ratio, shear_modulus, min_distance=0):
     r = np.array(r)
@@ -256,4 +272,3 @@ def fourier_strain_field(
         raise ValueError('dipole tensor must be a 3d vector 3x3 matrix or Nx3x3 matrix')
     v = 0.5*(v+np.einsum('nij->nji', v))
     return v.reshape(k.shape+(3,))
-

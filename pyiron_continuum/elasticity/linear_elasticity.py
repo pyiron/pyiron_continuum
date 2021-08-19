@@ -5,6 +5,7 @@
 import numpy as np
 from pyiron_base import PyironFactory
 from pyiron_base import Settings
+from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -162,20 +163,6 @@ class LinearElasticity:
     def is_isotropic(self):
         return np.absolute(self.zener_ratio-1) < self.isotropy_tolerance
 
-    @is_initialized
-    def get_greens_function(r, n_mesh=100, second_derivative=False):
-        T = normalize(r)
-        x, y = get_plane(T)
-        phi_range, dphi = np.linspace(0, np.pi, n_mesh, endpoint=False, retstep=True)
-        z = np.einsum('...x,n->n...x', x, np.cos(phi_range))+np.einsum('...x,n->n...x', y, np.sin(phi_range))
-        Ms = get_Ms(z, self.elastic_tensor)
-        if not second_derivative:
-            M = np.einsum('...nij->...ij', Ms)*dphi/(4*np.pi**2)
-            return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(r, axis=-1))
-        else:
-            M = np.einsum('n...irsm->...irsm', _get_integrand(self.elastic_tensor, z, T, Ms), optimize=True)/(4*np.pi**2)*dphi
-            return np.einsum('...ijsm,...->...ijsm', M, 1/np.linalg.norm(r, axis=-1)**3, optimize=True)
-
     @property
     @is_initialized
     def lame_coefficient(self):
@@ -249,4 +236,13 @@ class LinearElasticity:
                 elif self.shear_modulus is not None:
                     self._youngs_modulus = 2*self.shear_modulus*(1+self.poissons_ratio)
         return self._youngs_modulus
+
+    def get_greens_function(
+        self, positions, derivative=0, fourier=False, n_mesh=100, isotropic=False, optimize=True
+    ):
+        if isotropic or self.is_isotropic:
+            C = Isotropic(self.poissons_ratio, self.shear_modulus)
+        else:
+            C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
+        return C.get_greens_function(positions, derivative, fourier)
 
