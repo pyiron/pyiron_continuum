@@ -1,10 +1,11 @@
 import numpy as np
 
 class Isotropic:
-    def __init__(self, poissons_ratio, shear_modulus, min_distance=0):
+    def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
         self.poissons_ratio = poissons_ratio
         self.shear_modulus = shear_modulus
         self.min_dist = min_distance
+        self.optimize = optimize
         self._A = None
         self._B = None
 
@@ -23,7 +24,9 @@ class Isotropic:
     def G(self, r):
         """ Green's function """
         R_inv = 1/np.linalg.norm(r, axis=-1)
-        G = self.A*np.eye(3)+self.B*np.einsum('...i,...j,...->...ij', r, r, R_inv**2)
+        G = self.A*np.eye(3)+self.B*np.einsum(
+            '...i,...j,...->...ij', r, r, R_inv**2, optimize=self.optimize
+        )
         return np.einsum('...ij,...->...ij', G, R_inv)
 
     def G_fourier(self, k):
@@ -43,7 +46,7 @@ class Isotropic:
             + self.B*np.einsum(
                 '...,...i,...j->nij',
                 np.cos(K*self.min_dist)/K**4-3*np.sin(K*self.min_dist)/(K**5*self.min_dist),
-                k, k)
+                k, k, optimize=self.optimize)
         )
 
     def dG(self, x):
@@ -56,7 +59,7 @@ class Isotropic:
         v = -self.A*np.einsum('ik,...j->...ijk', E, r)
         v += self.B*np.einsum('ij,...k->...ijk', E, r)
         v += self.B*np.einsum('jk,...i->...ijk', E, r)
-        v -= 3*self.B*np.einsum('...i,...j,...k->...ijk', r, r, r)
+        v -= 3*self.B*np.einsum('...i,...j,...k->...ijk', r, r, r, optimize=self.optimize)
         v = np.einsum('...ijk,...->...ijk', v, 1/R**2)
         v[distance_condition] *= 0
         return v
@@ -69,15 +72,15 @@ class Isotropic:
         R[distance_condition] = 1
         r = np.einsum('...i,...->...i', r, 1/R)
         v = -self.A*np.einsum('ik,jl->ijkl', E, E)
-        v = v+3*self.A*np.einsum('ik,...j,...l->...ijkl', E, r, r)
+        v = v+3*self.A*np.einsum('ik,...j,...l->...ijkl', E, r, r, optimize=self.optimize)
         v = v+self.B*np.einsum('il,jk->ijkl', E, E)
-        v -= 3*self.B*np.einsum('il,...j,...k->...ijkl', E, r, r)
+        v -= 3*self.B*np.einsum('il,...j,...k->...ijkl', E, r, r, optimize=self.optimize)
         v = v+self.B*np.einsum('ij,kl->ijkl', E, E)
-        v -= 3*self.B*np.einsum('...i,...j,kl->...ijkl', r, r, E)
-        v -= 3*self.B*np.einsum('ij,...k,...l->...ijkl', E, r, r)
-        v -= 3*self.B*np.einsum('jk,...i,...l->...ijkl', E, r, r)
-        v -= 3*self.B*np.einsum('jl,...i,...k->...ijkl', E, r, r)
-        v += 15*self.B*np.einsum('...i,...j,...k,...l->...ijkl', r, r, r, r)
+        v -= 3*self.B*np.einsum('...i,...j,kl->...ijkl', r, r, E, optimize=self.optimize)
+        v -= 3*self.B*np.einsum('ij,...k,...l->...ijkl', E, r, r, optimize=self.optimize)
+        v -= 3*self.B*np.einsum('jk,...i,...l->...ijkl', E, r, r, optimize=self.optimize)
+        v -= 3*self.B*np.einsum('jl,...i,...k->...ijkl', E, r, r, optimize=self.optimize)
+        v += 15*self.B*np.einsum('...i,...j,...k,...l->...ijkl', r, r, r, r, optimize=self.optimize)
         v = np.einsum('...ijkl,...->...ijkl', v, 1/R**3)
         v[distance_condition] *= 0
         return v
@@ -235,63 +238,3 @@ class Anisotropic:
                 'n...isrm->...isrm', self._integrand_second_derivative
             )/(4*np.pi**2)*self.dphi
             return np.einsum('...isrm,...->...isrm', M, 1/np.linalg.norm(self.r, axis=-1)**3)
-
-def displacement_field(r, dipole_tensor, poissons_ratio, shear_modulus, min_distance=0):
-    r = np.array(r)
-    g_tmp = Green(
-        poissons_ratio=poissons_ratio, shear_modulus=shear_modulus, min_distance=min_distance
-    ).dG(r)
-    if dipole_tensor.shape==(3,):
-        return -np.einsum(
-            'nijk,k,kj->ni', g_tmp, dipole_tensor, np.eye(3)
-        ).reshape(r.shape)
-    elif dipole_tensor.shape==(3,3,):
-        return -np.einsum(
-            'nijk,kj->ni', g_tmp, dipole_tensor
-        ).reshape(r.shape)
-    elif dipole_tensor.shape==(r.shape+(3,)):
-        return -np.einsum(
-            'nijk,nkj->ni', g_tmp, dipole_tensor.reshape(-1, 3, 3)
-        ).reshape(r.shape)
-    else:
-        raise ValueError('dipole tensor must be a 3d vector 3x3 matrix or Nx3x3 matrix')
-
-def strain_field(r, dipole_tensor, poissons_ratio, shear_modulus, min_distance=0):
-    r = np.array(r)
-    g_tmp = Green(
-        poissons_ratio=poissons_ratio, shear_modulus=shear_modulus, min_distance=min_distance
-    ).ddG(r)
-    if dipole_tensor.shape==(3,) or dipole_tensor.shape==(3,3,):
-        v = -np.einsum(
-            'nijkl,kl->nij', g_tmp, dipole_tensor*np.eye(3)
-        )
-    elif dipole_tensor.shape==(r.shape+(3,)):
-        v = -np.einsum(
-            'nijkl,nkl->nij', g_tmp, dipole_tensor.reshape(-1,3,3)
-        )
-    else:
-        raise ValueError('dipole tensor must be a 3d vector 3x3 matrix or Nx3x3 matrix')
-    v = 0.5*(v+np.einsum('nij->nji', v))
-    return v.reshape(r.shape+(3,))
-
-def fourier_strain_field(
-    k, dipole_tensor, poissons_ratio, shear_modulus, min_distance=0, safe_shift=1.0e-8
-):
-    k = np.array(k)
-    if safe_shift > 0:
-        k[np.linalg.norm(k, axis=-1)<safe_shift, 0] = safe_shift
-    g_tmp = Green(
-        poissons_ratio=poissons_ratio, shear_modulus=shear_modulus, min_distance=min_distance
-    ).G_fourier(k)
-    if dipole_tensor.shape==(3,) or dipole_tensor.shape==(3,3,):
-        v = np.einsum(
-            'nik,kl,nj,nl->nij', g_tmp, dipole_tensor*np.eye(3), k, k
-        )
-    elif dipole_tensor.shape==(k.shape+(3,)):
-        v = np.einsum(
-            'nik,nkl,nj,nl->nij', g_tmp, dipole_tensor.reshape(-1,3,3), k, k
-        )
-    else:
-        raise ValueError('dipole tensor must be a 3d vector 3x3 matrix or Nx3x3 matrix')
-    v = 0.5*(v+np.einsum('nij->nji', v))
-    return v.reshape(k.shape+(3,))

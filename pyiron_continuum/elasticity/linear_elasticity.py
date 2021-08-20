@@ -298,10 +298,67 @@ class LinearElasticity:
                 Green's function (ignored if isotropic=True or fourier=True)
             isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
                 is isotropic, it will automatically be set to isotropic=True
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+
+        Returns:
+            ((n,3)-array): Green's function values for the given positions
         """
         if isotropic or self._is_isotropic:
-            C = Isotropic(self.poissons_ratio, self.shear_modulus)
+            C = Isotropic(self.poissons_ratio, self.shear_modulus, optimize=optimize)
         else:
             C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
         return C.get_greens_function(positions, derivative, fourier)
+
+    def get_displacement_field(positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True):
+        """
+        Displacement field around a point defect
+
+        Args:
+            positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
+            dipole_tensor ((3,3)-array): Dipole tensor
+            n_mesh (int): Number of mesh points in the radial integration in case if anisotropic
+                Green's function (ignored if isotropic=True or fourier=True)
+            isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
+                is isotropic, it will automatically be set to isotropic=True
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+
+        Returns:
+            ((n,3)-array): Displacement field
+        """
+        g_tmp = self.get_greens_function(
+            positions,
+            derivative=1,
+            fourier=False,
+            n_mesh=n_mesh,
+            isotropic=isotropic,
+            optimize=optimize
+        )
+        return -np.einsum('...ijk,...kj->...i', g_tmp, dipole_tensor)
+
+    def get_displacement_field(positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True):
+        """
+        Strain field around a point defect
+
+        Args:
+            positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
+            dipole_tensor ((3,3)-array): Dipole tensor
+            n_mesh (int): Number of mesh points in the radial integration in case if anisotropic
+                Green's function (ignored if isotropic=True or fourier=True)
+            isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
+                is isotropic, it will automatically be set to isotropic=True
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+
+        Returns:
+            ((n,3,3)-array): Strain field
+        """
+        g_tmp = self.get_greens_function(
+            positions,
+            derivative=2,
+            fourier=False,
+            n_mesh=n_mesh,
+            isotropic=isotropic,
+            optimize=optimize
+        )
+        v = -np.einsum('...ijkl,...kl->...ij', g_tmp, dipole_tensor)
+        return 0.5*(v+np.einsum('...ij->...ji', v))
 
