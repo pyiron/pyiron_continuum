@@ -72,6 +72,20 @@ class LinearElasticity:
     sigma_ij = C_ijkl*epsilon_kl
 
     where sigma_ij is the ij-component of stress and epsilon_kl is the kl-component of strain.
+
+    Examples I: Get bulk modulus from the elastic tensor:
+
+    >>> medium = LinearElasticity(elastic_tensor)
+    >>> print(medium.bulk_modulus)
+
+    Example II: Get strain field around a point defect:
+
+    >>> import numpy as np
+    >>> medium = LinearElasticity(elastic_tensor)
+    >>> random_positions = np.random.random((10, 3))-0.5
+    >>> dipole_tensor = np.eye(3)
+    >>> print(medium.get_strain_field(random_positions, dipole_tensor))
+
     """
     def __init__(self, elastic_tensor=None):
         """
