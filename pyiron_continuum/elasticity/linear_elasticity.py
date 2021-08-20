@@ -123,8 +123,8 @@ class LinearElasticity:
         """
         frame = self._frame.copy()
         frame[:2] = f[:2]
-        frame = normalize(frame)
-        frame[3] = np.cross(frame[0], frame[1])
+        frame = (frame.T/np.linalg.norm(frame, axis=-1).T).T
+        frame[2] = np.cross(frame[0], frame[1])
         if np.isclose(np.linalg.det(frame), 0):
             raise ValueError('Vectors not independent')
         self._frame = np.einsum('ij,i->ij', self._frame, 1/np.linalg.norm(self._frame, axis=-1))
@@ -269,7 +269,7 @@ class LinearElasticity:
         """
         if self._poissons_ratio is None:
             if self._elastic_tensor is not None:
-                self._poissons_ratio = -(self.compliance_matrix.sum()*self.youngs_modulus-3)/6
+                self._poissons_ratio = -(self.compliance_matrix[:3,:3].sum()*self.youngs_modulus-3)/6
             elif self.bulk_modulus is not None:
                 if self.shear_modulus is not None:
                     self._poissons_ratio = (3*self.bulk_modulus-2*self.shear_modulus)
