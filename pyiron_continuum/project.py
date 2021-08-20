@@ -3,11 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-import os
-import posixpath
 # import warnings
-from string import punctuation
-from shutil import copyfile
 from pyiron_base import Settings, ProjectHDFio, JobType, JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
@@ -173,7 +169,8 @@ class Project(ProjectCore):
 
 
 class MediumFactory(PyironFactory):
-    def elastic_medium(self, elastic_tensor=None):
+    @staticmethod
+    def elastic_medium(elastic_tensor=None):
         return LinearElasticity(elastic_tensor)
 
 

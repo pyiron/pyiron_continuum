@@ -91,7 +91,7 @@ class Isotropic:
         elif derivative == 1:
             return self.dG(r)
         elif derivative == 2:
-            return self.ddG(self, r)
+            return self.ddG(r)
         else:
             raise ValueError('Derivative can be up to 2')
 
@@ -106,7 +106,7 @@ def get_plane(T):
 
 class Anisotropic:
     def __init__(self, elastic_constants, n_mesh=100, optimize=True):
-        self.C = elstic_constants
+        self.C = elastic_constants
         self.phi_range, self.dphi = np.linspace(0, np.pi, n_mesh, endpoint=False, retstep=True)
         self.optimize = optimize
         self.initialize()
@@ -202,7 +202,7 @@ class Anisotropic:
         self.initialize()
         self.r = r
         if derivative == 0:
-            M = np.einsum('...nij->...ij', self.Ms)*self.phi/(4*np.pi**2)
+            M = np.einsum('...nij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
             return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
         elif derivative == 1:
             M = np.einsum('n...isr->...isr', self._integrand_first_derivative)/(4*np.pi**2)*self.dphi

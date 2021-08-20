@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron_base import PyironFactory
 from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 
@@ -95,7 +94,7 @@ def is_initialized(func):
 
 class LinearElasticity:
     def __init__(self, elastic_tensor=None):
-        self._elastic_tensor = elastic_tensor
+        self.elastic_tensor = elastic_tensor
         self.isotropy_tolerance = 1.0e-4
         self._frame = np.eye(3)
         self.initialize()
