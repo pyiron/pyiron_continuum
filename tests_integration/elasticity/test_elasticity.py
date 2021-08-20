@@ -9,6 +9,10 @@ class TestFenicsTutorials(unittest.TestCase):
         medium.frame = np.random.random((3,3))
         self.assertAlmostEqual(np.linalg.det(medium.frame), 1)
 
+    def test_not_initialized(self):
+        medium = LinearElasticity()
+        self.assertNone(medium.bulk_modulus)
+
     def test_youngs_modulus(self):
         medium = LinearElasticity(np.eye(6))
         self.assertAlmostEqual(medium.youngs_modulus, 1)
@@ -16,6 +20,8 @@ class TestFenicsTutorials(unittest.TestCase):
     def test_poissons_ratio(self):
         medium = LinearElasticity(np.eye(6))
         self.assertAlmostEqual(medium.poissons_ratio, 0)
+
+    # def test_bulk_modulus(self):
 
 if __name__ == "__main__":
     unittest.main()
