@@ -119,6 +119,7 @@ class Anisotropic:
         self._y = None
         self._z = None
         self._Ms = None
+        self._MF = None
 
     @property
     def x(self):
@@ -136,14 +137,14 @@ class Anisotropic:
     def z(self):
         if self._z is None:
             self._z = np.einsum(
-                '...x,n->n...x', x, np.cos(phi_range)
-            )+np.einsum('...x,n->n...x', y, np.sin(phi_range))
+                '...x,n->n...x', self.x, np.cos(self.phi_range)
+            )+np.einsum('...x,n->n...x', self.y, np.sin(self.phi_range))
         return self._z
 
     @property
     def Ms(self):
         if self._Ms is None:
-            self._Ms = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T)
+            self._Ms = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T, optimize=self.optimize)
             self._Ms = np.linalg.inv(self._Ms)
         return self._Ms
 
@@ -171,22 +172,30 @@ class Anisotropic:
 
     @property
     def MF(self):
-        self._MF = np.einsum('...ij,...nr->...ijnr', self.F, self.Ms)
-        self._MF = self._MF+np.einsum('...ijnr->...nrij', self._MF)
+        if self._MF is None:
+            self._MF = np.einsum('...ij,...nr->...ijnr', self.F, self.Ms)
+            self._MF = self._MF+np.einsum('...ijnr->...nrij', self._MF)
         return self._MF
 
     @property
     def Air(self):
         Air = np.einsum('...pw,...ijnr->...ijnrpw', self.zT, self.MF)
-        Air -= 2*np.einsum('...ij,...nr,...p,...w->...ijnrpw', self.Ms, self.Ms, self.T, self.T)
+        Air -= 2*np.einsum(
+            '...ij,...nr,...p,...w->...ijnrpw',
+            self.Ms, self.Ms, self.T, self.T, optimize=self.optimize
+        )
         Air = np.einsum('jpnw,...ijnrpw->...ir', self.C, Air)
-        return self.Air
+        return Air
 
     @property
     def _integrand_second_derivative(self):
-        results = 2*np.einsum('...s,...m,...ir->...isrm', self.T, self.T, self.Ms)
-        results -= 2*np.einsum('...sm,...ir->...isrm', self.zT, self.F)
-        results += np.einsum('...s,...m,...ir->...isrm', self.z, self.z, self.Air)
+        results = -2*np.einsum('...sm,...ir->...isrm', self.zT, self.F)
+        results += 2*np.einsum(
+            '...s,...m,...ir->...isrm', self.T, self.T, self.Ms, optimize=self.optimize
+        )
+        results += np.einsum(
+            '...s,...m,...ir->...isrm', self.z, self.z, self.Air, optimize=self.optimize
+        )
         return results
 
     @property
@@ -197,7 +206,7 @@ class Anisotropic:
 
     def get_greens_function(self, r, derivative=0, fourier=False):
         if fourier:
-            G = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T)
+            G = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T, optimize=self.optimize)
             return np.linalg.inv(G)
         self.initialize()
         self.r = r
@@ -205,7 +214,9 @@ class Anisotropic:
             M = np.einsum('...nij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
             return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
         elif derivative == 1:
-            M = np.einsum('n...isr->...isr', self._integrand_first_derivative)/(4*np.pi**2)*self.dphi
+            M = np.einsum(
+                'n...isr->...isr', self._integrand_first_derivative
+            )/(4*np.pi**2)*self.dphi
             return np.einsum('...isr,...->...isr', M, 1/np.linalg.norm(self.r, axis=-1)**2)
         elif derivative == 2:
             M = np.einsum(
