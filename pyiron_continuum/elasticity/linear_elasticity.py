@@ -42,33 +42,6 @@ def C_to_voigt(C_in):
                     C[index_from_voigt(i,j), index_from_voigt(k,l)] = C_in[i,j,k,l]
     return C
 
-def normalize(x):
-    return (x.T/np.linalg.norm(x, axis=-1).T).T
-
-def get_Ms(T, elastic_tensor):
-    M = np.einsum('ijkl,...j,...l->...ik', elastic_tensor, T, T, optimize=True)
-    return np.linalg.inv(M)
-
-def get_plane(T):
-    x = normalize(np.random.random(T.shape))
-    x = normalize(x-np.einsum('...i,...i,...j->...j', x, T, T, optimize=True))
-    y = np.cross(T, x)
-    return x,y
-
-def _get_integrand(C, z, T, Ms):
-    zT = np.einsum('...p,...w->...pw', z, T)
-    zT = zT+np.einsum('...ij->...ji', zT)
-    F = np.einsum('jpnw,...ij,...nr,...pw->...ir', C, Ms, Ms, zT, optimize=True)
-    MF = np.einsum('...ij,...nr->...ijnr', F, Ms, optimize=True)
-    MF = MF+np.einsum('...ijnr->...nrij', MF, optimize=True)
-    Air = np.einsum('...pw,...ijnr->...ijnrpw', zT, MF, optimize=True)
-    Air -= 2*np.einsum('...ij,...nr,...p,...w->...ijnrpw', Ms, Ms, T, T, optimize=True)
-    Air = np.einsum('jpnw,...ijnrpw->...ir', C, Air, optimize=True)
-    results = 2*np.einsum('...s,...m,...ir->...irsm', T, T, Ms, optimize=True)
-    results -= 2*np.einsum('...sm,...ir->...irsm', zT, F, optimize=True)
-    results += np.einsum('...s,...m,...ir->...irsm', z, z, Air, optimize=True)
-    return results
-
 def value_or_none(func):
     def f(self):
         if self.elastic_tensor is None:
@@ -93,13 +66,27 @@ def is_initialized(func):
     return f
 
 class LinearElasticity:
-    def __init__(self, elastic_tensor=None):
-        self.elastic_tensor = elastic_tensor
-        self.isotropy_tolerance = 1.0e-4
-        self._frame = np.eye(3)
-        self.initialize()
+    """
+    Linear elastic field class based on the 3x3x3x3 elastic tensor C_ijkl:
 
-    def initialize(self):
+    sigma_ij = C_ijkl*epsilon_kl
+
+    where sigma_ij is the ij-component of stress and epsilon_kl is the kl-component of strain.
+    """
+    def __init__(self, elastic_tensor=None):
+        """
+        Args:
+
+            elastic_tensor ((3,3,3,3)- or (6,6)-array): Elastic tensor (in C_ijkl notation or
+                Voigt notation).
+
+        It is not mandatory to set the `elastic_tensor` during the initialization. Instead, at
+        least two of the elastic constants (such as `youngs_modulus`, `poissons_ratio` or
+        `shear_modulus`) can be set and `elastic_tensor` will be calculated automatically.
+        """
+        self.elastic_tensor = elastic_tensor
+        self._isotropy_tolerance = 1.0e-4
+        self._frame = np.eye(3)
         self._lame_coefficient = None
         self._shear_modulus = None
         self._bulk_modulus = None
@@ -119,7 +106,6 @@ class LinearElasticity:
         if np.isclose(np.linalg.det(frame), 0):
             raise ValueError('Vectors not independent')
         self._frame = np.einsum('ij,i->ij', self._frame, 1/np.linalg.norm(self._frame, axis=-1))
-        self.initialize()
 
     @property
     def _is_rotated(self):
@@ -156,6 +142,16 @@ class LinearElasticity:
     @is_initialized
     def zener_ratio(self):
         return 2*(1+self.poissons_ratio)*self.shear_modulus/self.youngs_modulus
+
+    @property
+    def isotropy_tolerance(self):
+        return self._isotropy_tolerance
+
+    @isotropy_tolerance.setter
+    def isotropy_tolerance(self, value):
+        if value < 0:
+            raise ValueError('`isotropy_tolerance` must be a positive float')
+        self._isotropy_tolerance = value
 
     @property
     @is_initialized

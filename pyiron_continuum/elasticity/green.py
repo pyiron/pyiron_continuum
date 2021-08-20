@@ -105,6 +105,19 @@ def get_plane(T):
     return x,y
 
 class Anisotropic:
+    """
+    Calculation of Green's functions (and their derivatives) for the anisotropic elasticity
+    theory based on Barnett's approach. All notations follow Barnett's paper.
+
+    [Link](https://doi.org/10.1002/pssb.2220490238)
+    
+    Notes:
+
+    - In some cases this class can become extremely RAM-intensive. If possible do not keep
+      the results in a variable.
+    - If the medium is isotropic, use Isotropic instead, which has analytical solutions and is
+      therefore much faster.
+    """
     def __init__(self, elastic_constants, n_mesh=100, optimize=True):
         self.C = elastic_constants
         self.phi_range, self.dphi = np.linspace(0, np.pi, n_mesh, endpoint=False, retstep=True)
@@ -200,16 +213,16 @@ class Anisotropic:
 
     @property
     def _integrand_first_derivative(self):
-        results = -np.einsum('s,ir->isr', self.T, self.Ms)
-        results += np.einsum('s,ir->isr', self.z, self.F)
+        results = np.einsum('...s,...ir->...isr', self.z, self.F)
+        results -= np.einsum('...s,...ir->...isr', self.T, self.Ms)
         return results
 
     def get_greens_function(self, r, derivative=0, fourier=False):
+        self.r = r
         if fourier:
             G = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T, optimize=self.optimize)
             return np.linalg.inv(G)
         self.initialize()
-        self.r = r
         if derivative == 0:
             M = np.einsum('...nij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
             return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
