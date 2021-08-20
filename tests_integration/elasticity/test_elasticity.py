@@ -11,7 +11,7 @@ class TestFenicsTutorials(unittest.TestCase):
 
     def test_not_initialized(self):
         medium = LinearElasticity()
-        self.assertNone(medium.bulk_modulus)
+        self.assertIsNone(medium.bulk_modulus)
 
     def test_youngs_modulus(self):
         medium = LinearElasticity(np.eye(6))
@@ -21,7 +21,11 @@ class TestFenicsTutorials(unittest.TestCase):
         medium = LinearElasticity(np.eye(6))
         self.assertAlmostEqual(medium.poissons_ratio, 0)
 
-    # def test_bulk_modulus(self):
+    def test_isotropic(self):
+        medium = LinearElasticity()
+        medium.poissons_ratio = 0.3
+        medium.youngs_modulus = 1
+        self.assertTrue(medium._is_isotropic)
 
 if __name__ == "__main__":
     unittest.main()

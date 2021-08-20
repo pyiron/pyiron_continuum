@@ -148,11 +148,12 @@ class LinearElasticity:
 
     @elastic_tensor.setter
     def elastic_tensor(self, C):
-        C = np.asarray(C)
-        if C.shape != (6, 6) and C.shape != (3, 3, 3, 3):
-            raise ValueError('Elastic tensor must be a (6,6) or (3,3,3,3) array')
-        if C.shape == (6, 6):
-            C = C_from_voigt(C)
+        if C is not None:
+            C = np.asarray(C)
+            if C.shape != (6, 6) and C.shape != (3, 3, 3, 3):
+                raise ValueError('Elastic tensor must be a (6,6) or (3,3,3,3) array')
+            if C.shape == (6, 6):
+                C = C_from_voigt(C)
         self._elastic_tensor = C
 
     @property
@@ -217,6 +218,12 @@ class LinearElasticity:
                     self._lame_coefficient /= 9*self.bulk_modulus-self.youngs_modulus
         return self._lame_coefficient
 
+    @lame_coefficient.setter
+    def lame_coefficient(self, value):
+        if value < 0:
+            raise ValueError('lame_coefficient must be a positive float')
+        self._lame_coefficient = value
+
     @property
     @is_initialized
     def shear_modulus(self):
@@ -234,14 +241,19 @@ class LinearElasticity:
                 if self.youngs_modulus is not None:
                     R = self.youngs_modulus**2
                     R += 9*self.lame_coefficient**2
-                    R += 2*self.youngs_modufus*self.lame_coefficient
+                    R += 2*self.youngs_modulus*self.lame_coefficient
                     R = np.sqrt(R)
-                    self._shear_modulus = 2*self.lame_coefficient
-                    self._shear_modulus /= self.youngs_modufus+self.lame_coefficient+R
+                    self._shear_modulus = (self.youngs_modulus-3*self.lame_coefficient+R)/4
                 elif self.poissons_ratio is not None:
                     self._shear_modulus = self.lame_coefficient*(1-2*self.poissons_ratio)
                     self._shear_modulus /= 2*self.poissons_ratio
         return self._shear_modulus
+
+    @shear_modulus.setter
+    def shear_modulus(self, value):
+        if value < 0:
+            raise ValueError('shear_modulus must be a positive float')
+        self._shear_modulus = value
 
     @property
     @is_initialized
@@ -258,6 +270,12 @@ class LinearElasticity:
                     self._bulk_modulus = self.youngs_modulus*self.shear_modulus
                     self._bulk_modulus /= 3*(3*self.youngs_modulus-self.shear_modulus)
         return self._bulk_modulus
+
+    @bulk_modulus.setter
+    def bulk_modulus(self, value):
+        if value < 0:
+            raise ValueError('bulk_modulus must be a positive float')
+        self._bulk_modulus = value
 
     @property
     @is_initialized
@@ -279,6 +297,12 @@ class LinearElasticity:
                     self._poissons_ratio /= 3*self.bulk_modulus-self.lame_coefficient
         return self._poissons_ratio
 
+    @poissons_ratio.setter
+    def poissons_ratio(self, value):
+        if value < 0:
+            raise ValueError('poissons_ratio must be a positive float')
+        self._poissons_ratio = value
+
     @property
     @is_initialized
     def youngs_modulus(self):
@@ -296,6 +320,12 @@ class LinearElasticity:
                 elif self.shear_modulus is not None:
                     self._youngs_modulus = 2*self.shear_modulus*(1+self.poissons_ratio)
         return self._youngs_modulus
+
+    @youngs_modulus.setter
+    def youngs_modulus(self, value):
+        if value < 0:
+            raise ValueError('youngs_modulus must be a positive float')
+        self._youngs_modulus = value
 
     def get_greens_function(
         self, positions, derivative=0, fourier=False, n_mesh=100, isotropic=False, optimize=True
