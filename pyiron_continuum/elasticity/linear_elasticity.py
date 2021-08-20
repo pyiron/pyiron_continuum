@@ -95,10 +95,18 @@ class LinearElasticity:
 
     @property
     def frame(self):
+        """
+        Rotation matrix that defines the orientation of the system. If set, the elastic tensor
+        and (optionally) the dipole tensor will be rotated.
+        """
         return self._frame
 
     @frame.setter
     def frame(self, f):
+        """
+        Rotation matrix that defines the orientation of the system. If set, the elastic tensor
+        and (optionally) the dipole tensor will be rotated.
+        """
         frame = self._frame.copy()
         frame[:2] = f[:2]
         frame = normalize(frame)
@@ -113,6 +121,11 @@ class LinearElasticity:
 
     @property
     def elastic_tensor(self):
+        """
+        Elastic tensor. Regardless of whether it was given in the Voigt notation or in the
+        full form, always the full tensor (i.e. (3,3,3,3)-array) is returned. For Voigt
+        notation, use `elastic_tensor_voigt`
+        """
         if self._elastic_tensor is None:
             self._update()
         if self._elastic_tensor is not None and not self._is_rotated:
@@ -131,6 +144,10 @@ class LinearElasticity:
     @property
     @value_or_none
     def elastic_tensor_voigt(self):
+        """
+        Voigt notation of the elastic tensor, i.e. (i,j) = i, if i==j and
+        (i,j) = 6-i-j if i!=j.
+        """
         return C_to_voigt(self.elastic_tensor)
 
     @property
@@ -141,10 +158,19 @@ class LinearElasticity:
     @property
     @is_initialized
     def zener_ratio(self):
+        """
+        Zener ratio or the anistropy index. If 1, the medium is isotropic. If isotropic, the
+        analytical form of the Green's function is used for the calculation of strain and
+        displacement fields.
+        """
         return 2*(1+self.poissons_ratio)*self.shear_modulus/self.youngs_modulus
 
     @property
     def isotropy_tolerance(self):
+        """
+        Maximum tolerance deviation from 1 for the Zener ratio to determine whether the medium
+        is isotropic or not.
+        """
         return self._isotropy_tolerance
 
     @isotropy_tolerance.setter
@@ -155,12 +181,16 @@ class LinearElasticity:
 
     @property
     @is_initialized
-    def is_isotropic(self):
+    def _is_isotropic(self):
         return np.absolute(self.zener_ratio-1) < self.isotropy_tolerance
 
     @property
     @is_initialized
     def lame_coefficient(self):
+        """
+        Lame's first parameter. It is calculated either from Young's modulus and Poisson's ratio
+        or Young's modulus and bulk modulus (depending on what is available)
+        """
         if self._lame_coefficient is None:
             if self.youngs_modulus is not None:
                 if self.poissons_ratio is not None:
@@ -176,6 +206,13 @@ class LinearElasticity:
     @property
     @is_initialized
     def shear_modulus(self):
+        """
+        Shear modulus (also known as Lame's second parameter). It is calculated from the
+        average shear components of the compliance matrix if the elastic tensor is available.
+        Otherwise it is calculated either from Lame's first parameter and Young's modulus and
+        Poisson's ratio or Lame's first parameter and Poisson's ratio (depending on what is
+        available)
+        """
         if self._shear_modulus is None:
             if self._elastic_tensor is not None:
                 self._shear_modulus = 1/self.compliance_matrix[3:,3:].diagonal().mean()
@@ -195,6 +232,10 @@ class LinearElasticity:
     @property
     @is_initialized
     def bulk_modulus(self):
+        """
+        Bulk modulus. It is calculated either from shear modulus and Lame's first parameter or
+        shear modulus and Young's modulus (depending on what is available)
+        """
         if self._bulk_modulus is None:
             if self.shear_modulus is not None:
                 if self.lame_coefficient is not None:
@@ -207,6 +248,11 @@ class LinearElasticity:
     @property
     @is_initialized
     def poissons_ratio(self):
+        """
+        Poisson's ratio. If the elastic tensor is available, it is calculated from the compliance
+        matrix. Otherwise it is calculated either from bulk modulus and shear modulus or from bulk
+        modulus and lame coefficient (depending on what is available)
+        """
         if self._poissons_ratio is None:
             if self._elastic_tensor is not None:
                 self._poissons_ratio = -(self.compliance_matrix.sum()*self.youngs_modulus-3)/6
@@ -222,6 +268,11 @@ class LinearElasticity:
     @property
     @is_initialized
     def youngs_modulus(self):
+        """
+        Young's modulus. If the elastic tensor is available, it is calculated from the compliance
+        matrix. Otherwise it is calculated either from Poisson's ratio and bulk modulus or from
+        Poisson's ratio and shear modulus (depending on what is available)
+        """
         if self._youngs_modulus is None:
             if self._elastic_tensor is not None:
                 self._youngs_modulus = 1/self.compliance_matrix[:3,:3].diagonal().mean()
@@ -235,7 +286,20 @@ class LinearElasticity:
     def get_greens_function(
         self, positions, derivative=0, fourier=False, n_mesh=100, isotropic=False, optimize=True
     ):
-        if isotropic or self.is_isotropic:
+        """
+        Green's function of the free force condition:
+
+        C_ijkl d^2u_k/dx_jdx_l = 0
+
+        Args:
+            positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
+            derivative (int): 0th, 1st or 2nd derivative of the Green's function
+            n_mesh (int): Number of mesh points in the radial integration in case if anisotropic
+                Green's function (ignored if isotropic=True or fourier=True)
+            isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
+                is isotropic, it will automatically be set to isotropic=True
+        """
+        if isotropic or self._is_isotropic:
             C = Isotropic(self.poissons_ratio, self.shear_modulus)
         else:
             C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
