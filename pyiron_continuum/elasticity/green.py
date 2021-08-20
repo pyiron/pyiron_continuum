@@ -28,19 +28,20 @@ class Isotropic:
 
     def G_fourier(self, k):
         """Fourier transform of the Green's function"""
-        k = np.array(k).reshape(-1, 3)
         K = np.linalg.norm(k, axis=-1)
         if self.min_dist==0:
             return 4*np.pi*(
-                self.A*np.einsum('n,ij->nij', 1/K**2, np.eye(3))
-                + self.B*np.einsum('n,ij->nij', 1/K**2, np.eye(3))
-                - 2*self.B*np.einsum('n,ni,nj->nij',  1/K**3, k, k)
+                self.A*np.einsum('...,ij->...ij', 1/K**2, np.eye(3))
+                + self.B*np.einsum('...,ij->...ij', 1/K**2, np.eye(3))
+                - 2*self.B*np.einsum('...,...i,...j->...ij',  1/K**3, k, k)
             )
         return 4*np.pi*(
-            self.A*np.einsum('n,ij->nij', np.cos(K*self.min_dist)/K**2, np.eye(3))
-            + self.B*np.einsum('n,ij->nij', np.sin(K*self.min_dist)/(K**3*self.min_dist), np.eye(3))
+            self.A*np.einsum('...,ij->...ij', np.cos(K*self.min_dist)/K**2, np.eye(3))
             + self.B*np.einsum(
-                'n,ni,nj->nij',
+                '...,ij->...ij', np.sin(K*self.min_dist)/(K**3*self.min_dist), np.eye(3)
+            )
+            + self.B*np.einsum(
+                '...,...i,...j->nij',
                 np.cos(K*self.min_dist)/K**4-3*np.sin(K*self.min_dist)/(K**5*self.min_dist),
                 k, k)
         )
@@ -48,38 +49,36 @@ class Isotropic:
     def dG(self, x):
         """ first derivative of the Green's function """
         E = np.eye(3)
-        r = np.array(x).reshape(-1, 3)
         R = np.linalg.norm(r, axis=-1)
         distance_condition = R<self.min_dist
         R[distance_condition] = 1
-        r = np.einsum('ni,n->ni', r, 1/R)
-        v = -self.A*np.einsum('ik,nj->nijk', E, r)
-        v += self.B*np.einsum('ij,nk->nijk', E, r)
-        v += self.B*np.einsum('jk,ni->nijk', E, r)
-        v -= 3*self.B*np.einsum('ni,nj,nk->nijk', r, r, r)
-        v = np.einsum('nijk,n->nijk', v, 1/R**2)
+        r = np.einsum('...i,...->...i', r, 1/R)
+        v = -self.A*np.einsum('ik,...j->...ijk', E, r)
+        v += self.B*np.einsum('ij,...k->...ijk', E, r)
+        v += self.B*np.einsum('jk,...i->...ijk', E, r)
+        v -= 3*self.B*np.einsum('...i,...j,...k->...ijk', r, r, r)
+        v = np.einsum('...ijk,...->...ijk', v, 1/R**2)
         v[distance_condition] *= 0
         return v
 
     def ddG(self, x):
         """ Second derivative of the Green's function """
         E = np.eye(3)
-        r = np.array(x).reshape(-1, 3)
         R = np.linalg.norm(r, axis=-1)
         distance_condition = R<self.min_dist
         R[distance_condition] = 1
-        r = np.einsum('ni,n->ni', r, 1/R)
+        r = np.einsum('...i,...->...i', r, 1/R)
         v = -self.A*np.einsum('ik,jl->ijkl', E, E)
-        v = v+3*self.A*np.einsum('ik,nj,nl->nijkl', E, r, r)
+        v = v+3*self.A*np.einsum('ik,...j,...l->...ijkl', E, r, r)
         v = v+self.B*np.einsum('il,jk->ijkl', E, E)
-        v -= 3*self.B*np.einsum('il,nj,nk->nijkl', E, r, r)
+        v -= 3*self.B*np.einsum('il,...j,...k->...ijkl', E, r, r)
         v = v+self.B*np.einsum('ij,kl->ijkl', E, E)
-        v -= 3*self.B*np.einsum('ni,nj,kl->nijkl', r, r, E)
-        v -= 3*self.B*np.einsum('ij,nk,nl->nijkl', E, r, r)
-        v -= 3*self.B*np.einsum('jk,ni,nl->nijkl', E, r, r)
-        v -= 3*self.B*np.einsum('jl,ni,nk->nijkl', E, r, r)
-        v += 15*self.B*np.einsum('ni,nj,nk,nl->nijkl', r, r, r, r)
-        v = np.einsum('nijkl,n->nijkl', v, 1/R**3)
+        v -= 3*self.B*np.einsum('...i,...j,kl->...ijkl', r, r, E)
+        v -= 3*self.B*np.einsum('ij,...k,...l->...ijkl', E, r, r)
+        v -= 3*self.B*np.einsum('jk,...i,...l->...ijkl', E, r, r)
+        v -= 3*self.B*np.einsum('jl,...i,...k->...ijkl', E, r, r)
+        v += 15*self.B*np.einsum('...i,...j,...k,...l->...ijkl', r, r, r, r)
+        v = np.einsum('...ijkl,...->...ijkl', v, 1/R**3)
         v[distance_condition] *= 0
         return v
 
