@@ -331,7 +331,7 @@ class LinearElasticity:
         self, positions, derivative=0, fourier=False, n_mesh=100, isotropic=False, optimize=True
     ):
         """
-        Green's function of the free force condition:
+        Green's function of the equilibrium condition:
 
         C_ijkl d^2u_k/dx_jdx_l = 0
 
