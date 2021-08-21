@@ -5,6 +5,7 @@
 import numpy as np
 from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
+from pyiron_continuum.elasticity.hirth_lothe import HirthLothe
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -106,6 +107,7 @@ class LinearElasticity:
         self._bulk_modulus = None
         self._poissons_ratio = None
         self._youngs_modulus = None
+        self._hirth_lothe = None
 
     @property
     def frame(self):
@@ -353,7 +355,9 @@ class LinearElasticity:
             C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
         return C.get_greens_function(positions, derivative, fourier)
 
-    def get_displacement_field(positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True):
+    def get_point_defect_displacement(
+        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+    ):
         """
         Displacement field around a point defect
 
@@ -379,7 +383,9 @@ class LinearElasticity:
         )
         return -np.einsum('...ijk,...kj->...i', g_tmp, dipole_tensor)
 
-    def get_displacement_field(positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True):
+    def get_point_defect_strain(
+        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+    ):
         """
         Strain field around a point defect
 
@@ -406,3 +412,14 @@ class LinearElasticity:
         v = -np.einsum('...ijkl,...kl->...ij', g_tmp, dipole_tensor)
         return 0.5*(v+np.einsum('...ij->...ji', v))
 
+    def get_dislocation_displacement(self, positions, burgers_vector):
+        hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
+        return hirth_lothe.get_displacement(positions)
+
+    def get_dislocation_strain(self, positions, burgers_vector):
+        hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
+        return hirth_lothe.get_strain(positions)
+
+    def get_dislocation_stress(self, positions, burgers_vector):
+        strain = self.get_dislocation_strain(positions, burgers_vector)
+        return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
