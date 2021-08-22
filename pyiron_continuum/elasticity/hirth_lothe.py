@@ -55,9 +55,13 @@ class HirthLothe:
         return np.einsum('nk,...k->...n', z, np.asarray(positions)[...,:2])
 
     def get_displacement(self, positions):
-        return np.real(np.einsum('nk,n,...n->...k', self.Ak, self.D, np.log(self.get_z(positions))))/(2*np.pi)
+        return np.imag(
+            np.einsum('nk,n,...n->...k', self.Ak, self.D, np.log(self.get_z(positions)))
+        )/(2*np.pi)
 
     def get_strain(self, positions):
-        strain = 0.5*np.real(np.einsum('ni,n,...n,nj->...ij', self.Ak, self.D, 1/self.get_z(positions), self.dzdx))
+        strain = np.imag(
+            np.einsum('ni,n,...n,nj->...ij', self.Ak, self.D, 1/self.get_z(positions), self.dzdx)
+        )
         strain = strain+np.einsum('...ij->...ji', strain)
-        return strain/2/np.pi
+        return strain/4/np.pi
