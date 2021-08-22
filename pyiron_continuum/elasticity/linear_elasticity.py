@@ -85,7 +85,15 @@ class LinearElasticity:
     >>> medium = LinearElasticity(elastic_tensor)
     >>> random_positions = np.random.random((10, 3))-0.5
     >>> dipole_tensor = np.eye(3)
-    >>> print(medium.get_strain_field(random_positions, dipole_tensor))
+    >>> print(medium.get_point_defect_strain(random_positions, dipole_tensor))
+
+    Example III: Get stress field around a dislocation:
+
+    >>> import numpy as np
+    >>> medium = LinearElasticity(elastic_tensor)
+    >>> random_positions = np.random.random((10, 3))-0.5
+    >>> burgers_vector = np.array([0, 0, 1])
+    >>> print(medium.get_dislocation_stress(random_positions, burgers_vector))
 
     """
     def __init__(self, elastic_tensor=None):
@@ -119,10 +127,6 @@ class LinearElasticity:
 
     @frame.setter
     def frame(self, f):
-        """
-        Rotation matrix that defines the orientation of the system. If set, the elastic tensor
-        and (optionally) the dipole tensor will be rotated.
-        """
         frame = self._frame.copy()
         frame[:2] = f[:2]
         frame = (frame.T/np.linalg.norm(frame, axis=-1).T).T
@@ -176,6 +180,7 @@ class LinearElasticity:
     @property
     @value_or_none
     def compliance_matrix(self):
+        """Compliance matrix in Voigt notation"""
         return np.linalg.inv(self.elastic_tensor_voigt)
 
     @property
