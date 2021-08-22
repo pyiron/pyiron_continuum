@@ -129,7 +129,7 @@ class LinearElasticity:
         frame[2] = np.cross(frame[0], frame[1])
         if np.isclose(np.linalg.det(frame), 0):
             raise ValueError('Vectors not independent')
-        self._frame = np.einsum('ij,i->ij', self._frame, 1/np.linalg.norm(self._frame, axis=-1))
+        self._frame = np.einsum('ij,i->ij', frame, 1/np.linalg.norm(frame, axis=-1))
 
     @property
     def _is_rotated(self):
@@ -157,6 +157,12 @@ class LinearElasticity:
             if C.shape == (6, 6):
                 C = C_from_voigt(C)
         self._elastic_tensor = C
+
+    def _update(self):
+        S = np.zeros((6,6))
+        S[:3,:3] = (np.eye(3)-self.poissons_ratio*(1-np.eye(3)))/self.youngs_modulus
+        S[3:,3:] = np.eye(3)/self.shear_modulus
+        self.elastic_tensor = np.linalg.inv(S)
 
     @property
     @value_or_none
