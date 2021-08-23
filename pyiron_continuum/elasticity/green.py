@@ -49,7 +49,7 @@ class Isotropic:
                 k, k, optimize=self.optimize)
         )
 
-    def dG(self, x):
+    def dG(self, r):
         """ first derivative of the Green's function """
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
@@ -64,7 +64,7 @@ class Isotropic:
         v[distance_condition] *= 0
         return v
 
-    def ddG(self, x):
+    def ddG(self, r):
         """ Second derivative of the Green's function """
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
