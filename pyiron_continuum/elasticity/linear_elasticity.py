@@ -6,6 +6,7 @@ import numpy as np
 from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 from pyiron_continuum.elasticity.hirth_lothe import HirthLothe
+from pyiron_continuum.elasticity.tools import *
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -18,30 +19,6 @@ __date__ = "Feb 20, 2020"
 
 s = Settings()
 
-
-def index_from_voigt(i, j):
-    if i==j:
-        return i
-    else:
-        return 6-i-j
-
-def C_from_voigt(C_in):
-    C = np.zeros((3,3,3,3))
-    for i in range(3):
-        for j in range(3):
-            for k in range(3):
-                for l in range(3):
-                    C[i,j,k,l] = C_in[index_from_voigt(i,j), index_from_voigt(k,l)]
-    return C
-
-def C_to_voigt(C_in):
-    C = np.zeros((6, 6))
-    for i in range(3):
-        for j in range(i+1):
-            for k in range(3):
-                for l in range(k+1):
-                    C[index_from_voigt(i,j), index_from_voigt(k,l)] = C_in[i,j,k,l]
-    return C
 
 def value_or_none(func):
     def f(self):
@@ -131,12 +108,7 @@ class LinearElasticity:
     def frame(self, f):
         frame = self._frame.copy()
         frame[:2] = f[:2]
-        frame = (frame.T/np.linalg.norm(frame, axis=-1).T).T
-        frame[1] = frame[1]-np.einsum('i,i,j->j', frame[0], frame[1], frame[0])
-        frame[2] = np.cross(frame[0], frame[1])
-        if np.isclose(np.linalg.det(frame), 0):
-            raise ValueError('Vectors not independent')
-        self._frame = np.einsum('ij,i->ij', frame, 1/np.linalg.norm(frame, axis=-1))
+        self._frame = orthonormalize(frame)
 
     @property
     def _is_rotated(self):

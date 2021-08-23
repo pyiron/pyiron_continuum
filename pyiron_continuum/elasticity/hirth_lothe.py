@@ -31,8 +31,8 @@ class HirthLothe:
         if self._Ak is None:
             self._Ak = []
             for mat in self.get_pmat(self.p):
-                values, vectors = np.linalg.eig(mat)
-                self._Ak.append(vectors[np.absolute(values).argmin()])
+                values, vectors = np.linalg.eig(mat.T)
+                self._Ak.append(vectors.T[np.absolute(values).argmin()])
             self._Ak = np.array(self._Ak)
         return self._Ak
 
@@ -42,8 +42,8 @@ class HirthLothe:
             F = np.einsum('n,ij->nij', self.p, self.elastic_tensor[:,1,:,1])
             F += self.elastic_tensor[:,1,:,0]
             F = np.einsum('nik,nk->ni', F, self.Ak)
-            F = np.concatenate((F, self.Ak), axis=0)
-            F = np.concatenate((np.real(F), np.imag(F)), axis=-1)
+            F = np.concatenate((F.T, self.Ak.T), axis=0)
+            F = np.concatenate((np.real(F), -np.imag(F)), axis=-1)
             self._D = np.linalg.solve(F, np.concatenate((np.zeros(3), self.burgers_vector)))
             self._D = self._D[:3]+1j*self._D[3:]
         return self._D
@@ -57,12 +57,12 @@ class HirthLothe:
         return np.einsum('nk,...k->...n', z, np.asarray(positions)[...,:2])
 
     def get_displacement(self, positions):
-        return -np.imag(
+        return np.imag(
             np.einsum('nk,n,...n->...k', self.Ak, self.D, np.log(self.get_z(positions)))
         )/(2*np.pi)
 
     def get_strain(self, positions):
-        strain = -np.imag(
+        strain = np.imag(
             np.einsum('ni,n,...n,nj->...ij', self.Ak, self.D, 1/self.get_z(positions), self.dzdx)
         )
         strain = strain+np.einsum('...ij->...ji', strain)

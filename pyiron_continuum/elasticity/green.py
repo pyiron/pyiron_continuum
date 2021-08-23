@@ -1,4 +1,5 @@
 import numpy as np
+from pyiron_continuum.elasticity.tools import *
 
 class Isotropic:
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
@@ -97,15 +98,6 @@ class Isotropic:
         else:
             raise ValueError('Derivative can be up to 2')
 
-def normalize(x):
-    return (x.T/np.linalg.norm(x, axis=-1).T).T
-
-def get_plane(T):
-    x = normalize(np.random.random(T.shape))
-    x = normalize(x-np.einsum('...i,...i,...j->...j', x, T, T))
-    y = np.cross(T, x)
-    return x,y
-
 class Anisotropic:
     """
     Calculation of Green's functions (and their derivatives) for the anisotropic elasticity
@@ -159,7 +151,9 @@ class Anisotropic:
     @property
     def Ms(self):
         if self._Ms is None:
-            self._Ms = np.einsum('ijkl,...j,...l->...ik', self.C, self.z, self.z, optimize=self.optimize)
+            self._Ms = np.einsum(
+                'ijkl,...j,...l->...ik', self.C, self.z, self.z, optimize=self.optimize
+            )
             self._Ms = np.linalg.inv(self._Ms)
         return self._Ms
 
