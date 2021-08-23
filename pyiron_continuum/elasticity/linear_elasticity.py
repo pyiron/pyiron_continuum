@@ -124,7 +124,7 @@ class LinearElasticity:
         if self._elastic_tensor is None:
             self._update()
         if self._elastic_tensor is not None and not self._is_rotated:
-            return np.einsum('iI,IjKl,kK->ijkl', self.frame, self._elastic_tensor, self.frame)
+            return np.einsum('Ii,IjKl,Kk->ijkl', self.frame, self._elastic_tensor, self.frame)
         return self._elastic_tensor
 
     @elastic_tensor.setter
