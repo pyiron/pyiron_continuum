@@ -12,7 +12,9 @@ class HirthLothe:
     def get_pmat(self, x):
         return (
             self.elastic_tensor[:,0,:,0]
-            + np.einsum('...,ij->...ij', x, self.elastic_tensor[:,0,:,1]+self.elastic_tensor[:,1,:,0])
+            + np.einsum(
+                '...,ij->...ij', x, self.elastic_tensor[:,0,:,1]+self.elastic_tensor[:,1,:,0]
+            )
             + np.einsum('...,ij->...ij', x**2, self.elastic_tensor[:,1,:,1])
         )
 
@@ -55,12 +57,12 @@ class HirthLothe:
         return np.einsum('nk,...k->...n', z, np.asarray(positions)[...,:2])
 
     def get_displacement(self, positions):
-        return np.imag(
+        return -np.imag(
             np.einsum('nk,n,...n->...k', self.Ak, self.D, np.log(self.get_z(positions)))
         )/(2*np.pi)
 
     def get_strain(self, positions):
-        strain = np.imag(
+        strain = -np.imag(
             np.einsum('ni,n,...n,nj->...ij', self.Ak, self.D, 1/self.get_z(positions), self.dzdx)
         )
         strain = strain+np.einsum('...ij->...ji', strain)

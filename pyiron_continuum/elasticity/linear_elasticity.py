@@ -105,7 +105,9 @@ class LinearElasticity:
 
         It is not mandatory to set the `elastic_tensor` during the initialization. Instead, at
         least two of the elastic constants (such as `youngs_modulus`, `poissons_ratio` or
-        `shear_modulus`) can be set and `elastic_tensor` will be calculated automatically.
+        `shear_modulus`) can be set and `elastic_tensor` will be calculated automatically. If
+        only two constants are given, the system will be isotropic. If more than two constants
+        are given, it will be anisotropic (if the constants are not correlated).
         """
         self.elastic_tensor = elastic_tensor
         self._isotropy_tolerance = 1.0e-4
@@ -367,7 +369,7 @@ class LinearElasticity:
         return C.get_greens_function(positions, derivative, fourier)
 
     def get_point_defect_displacement(
-        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+        self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
         """
         Displacement field around a point defect
@@ -395,7 +397,7 @@ class LinearElasticity:
         return -np.einsum('...ijk,...kj->...i', g_tmp, dipole_tensor)
 
     def get_point_defect_strain(
-        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+        self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
         """
         Strain field around a point defect
@@ -423,6 +425,30 @@ class LinearElasticity:
         v = -np.einsum('...ijkl,...kl->...ij', g_tmp, dipole_tensor)
         return 0.5*(v+np.einsum('...ij->...ji', v))
 
+    def get_point_defect_stress(
+        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+    ):
+        strain = self.get_point_defect_strain(
+            positions=positions,
+            dipole_tensor=dipole_tensor,
+            n_mesh=n_mesh,
+            isotropic=isotropic,
+            optimize=optimize
+        )
+        return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
+
+    def get_point_defect_energy_density(
+        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+    ):
+        strain = self.get_point_defect_strain(
+            positions=positions,
+            dipole_tensor=dipole_tensor,
+            n_mesh=n_mesh,
+            isotropic=isotropic,
+            optimize=optimize
+        )
+        return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
+
     def get_dislocation_displacement(self, positions, burgers_vector):
         hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
         return hirth_lothe.get_displacement(positions)
@@ -434,3 +460,7 @@ class LinearElasticity:
     def get_dislocation_stress(self, positions, burgers_vector):
         strain = self.get_dislocation_strain(positions, burgers_vector)
         return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
+
+    def get_dislocation_energy_density(self, positions, burgers_vector):
+        strain = self.get_dislocation_strain(positions, burgers_vector)
+        return np.einsum('ijkl,...kl...ij->...', self.elastic_tensor, strain, strain)
