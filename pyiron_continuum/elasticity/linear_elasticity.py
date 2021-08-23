@@ -464,4 +464,4 @@ class LinearElasticity:
 
     def get_dislocation_energy_density(self, positions, burgers_vector):
         strain = self.get_dislocation_strain(positions, burgers_vector)
-        return np.einsum('ijkl,...kl...ij->...', self.elastic_tensor, strain, strain)
+        return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
