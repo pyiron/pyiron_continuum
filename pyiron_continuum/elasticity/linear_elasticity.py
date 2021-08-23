@@ -394,7 +394,7 @@ class LinearElasticity:
             isotropic=isotropic,
             optimize=optimize
         )
-        return -np.einsum('...ijk,...kj->...i', g_tmp, dipole_tensor)
+        return -np.einsum('...ijk,...jk->...i', g_tmp, dipole_tensor)
 
     def get_point_defect_strain(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
@@ -426,7 +426,7 @@ class LinearElasticity:
         return 0.5*(v+np.einsum('...ij->...ji', v))
 
     def get_point_defect_stress(
-        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+        self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
         strain = self.get_point_defect_strain(
             positions=positions,
@@ -438,7 +438,7 @@ class LinearElasticity:
         return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
 
     def get_point_defect_energy_density(
-        positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+        self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
         strain = self.get_point_defect_strain(
             positions=positions,

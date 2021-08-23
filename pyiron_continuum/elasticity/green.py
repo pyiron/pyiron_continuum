@@ -159,7 +159,7 @@ class Anisotropic:
     @property
     def Ms(self):
         if self._Ms is None:
-            self._Ms = np.einsum('ijkl,...j,...l->...ik', self.C, self.T, self.T, optimize=self.optimize)
+            self._Ms = np.einsum('ijkl,...j,...l->...ik', self.C, self.z, self.z, optimize=self.optimize)
             self._Ms = np.linalg.inv(self._Ms)
         return self._Ms
 
