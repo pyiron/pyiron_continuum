@@ -132,6 +132,7 @@ class LinearElasticity:
         frame = self._frame.copy()
         frame[:2] = f[:2]
         frame = (frame.T/np.linalg.norm(frame, axis=-1).T).T
+        frame[1] = frame[1]-np.einsum('i,i,j->j', frame[0], frame[1], frame[0])
         frame[2] = np.cross(frame[0], frame[1])
         if np.isclose(np.linalg.det(frame), 0):
             raise ValueError('Vectors not independent')
