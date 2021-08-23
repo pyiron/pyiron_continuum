@@ -3,13 +3,14 @@ import unittest
 from pyiron_continuum.elasticity.hirth_lothe import HirthLothe
 from pyiron_continuum.elasticity.tools import *
 
-def create_random_HL():
+def create_random_HL(b=None):
     C = np.zeros((6,6))
     C[:3,:3] = np.random.random()
     C[:3,:3] += np.random.random()*np.eye(3)
     C[3:,3:] = np.random.random()*np.eye(3)
     C = C_from_voigt(C)
-    b = np.random.random(3)
+    if b is None:
+        b = np.random.random(3)
     return HirthLothe(C, b)
 
 class TestFenicsTutorials(unittest.TestCase):
@@ -36,6 +37,18 @@ class TestFenicsTutorials(unittest.TestCase):
         F = np.einsum('nik,nk->ni', F, hl.Ak)
         self.assertTrue(
             np.isclose(np.real(np.einsum('nk,n->k', F, hl.D)), 0).all()
+        )
+
+    def test_strain(self):
+        hl = create_random_HL(b=[0,0,1])
+        positions = (np.random.random((100, 2))-0.5)*10
+        strain_analytical = positions[:,0]/np.sum(positions**2, axis=-1)/4/np.pi
+        self.assertTrue(
+            np.all(np.absolute(hl.get_strain(positions)[:,1,2]-strain_analytical) < 1.0e-4)
+        )
+        strain_analytical = -positions[:,1]/np.sum(positions**2, axis=-1)/4/np.pi
+        self.assertTrue(
+            np.all(np.absolute(hl.get_strain(positions)[:,0,2]-strain_analytical) < 1.0e-4)
         )
 
 if __name__ == "__main__":
