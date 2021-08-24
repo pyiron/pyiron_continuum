@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from pyiron_continuum.elasticity.hirth_lothe import HirthLothe
+from pyiron_continuum.elasticity.eschelby import Eschelby
 from pyiron_continuum.elasticity.tools import *
 
 def create_random_HL(b=None):
@@ -11,7 +11,7 @@ def create_random_HL(b=None):
     C = C_from_voigt(C)
     if b is None:
         b = np.random.random(3)
-    return HirthLothe(C, b)
+    return Eschelby(C, b)
 
 class TestFenicsTutorials(unittest.TestCase):
     def test_p(self):

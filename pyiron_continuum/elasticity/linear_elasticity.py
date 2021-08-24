@@ -5,7 +5,7 @@
 import numpy as np
 from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
-from pyiron_continuum.elasticity.hirth_lothe import HirthLothe
+from pyiron_continuum.elasticity.eschelby import Eschelby
 from pyiron_continuum.elasticity.tools import *
 
 __author__ = "Jan Janssen"
@@ -94,7 +94,7 @@ class LinearElasticity:
         self._bulk_modulus = None
         self._poissons_ratio = None
         self._youngs_modulus = None
-        self._hirth_lothe = None
+        self._eschelby = None
 
     @property
     def frame(self):
@@ -467,7 +467,7 @@ class LinearElasticity:
     def get_dislocation_displacement(self, positions, burgers_vector):
         """
         Displacement field around a dislocation according to anisotropic elasticity theory
-        described by Hirth and Lothe (1967).
+        described by [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
@@ -477,13 +477,13 @@ class LinearElasticity:
         Returns:
             ((n, 3)-array): Displacement field (z-axis coincides with the dislocation line)
         """
-        hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
-        return hirth_lothe.get_displacement(positions)
+        eschelby = Eschelby(self.elastic_tensor, burgers_vector)
+        return eschelby.get_displacement(positions)
 
     def get_dislocation_strain(self, positions, burgers_vector):
         """
         Strain field around a dislocation according to anisotropic elasticity theory
-        described by Hirth and Lothe (1967).
+        described by [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
@@ -493,13 +493,13 @@ class LinearElasticity:
         Returns:
             ((n, 3, 3)-array): Strain field (z-axis coincides with the dislocation line)
         """
-        hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
-        return hirth_lothe.get_strain(positions)
+        eschelby = Eschelby(self.elastic_tensor, burgers_vector)
+        return eschelby.get_strain(positions)
 
     def get_dislocation_stress(self, positions, burgers_vector):
         """
         Stress field around a dislocation according to anisotropic elasticity theory
-        described by Hirth and Lothe (1967).
+        described by [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis

@@ -1,11 +1,11 @@
 import numpy as np
 
-class HirthLothe:
+class Eschelby:
     """
-    Anisotropic elasticity theory for dislocations described by Hirth and Lothe (1967).
+    Anisotropic elasticity theory for dislocations described by
+    [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
-    The notations follow [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6) and
-    original book.
+    All notations follow the original paper.
     """
     def __init__(self, elastic_tensor, burgers_vector):
         self.elastic_tensor = elastic_tensor
