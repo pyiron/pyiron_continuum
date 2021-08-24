@@ -385,7 +385,7 @@ class LinearElasticity:
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
         """
-        Strain field around a point defect
+        Strain field around a point defect using the Green's function method
 
         Args:
             positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
@@ -413,6 +413,21 @@ class LinearElasticity:
     def get_point_defect_stress(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
+        """
+        Stress field around a point defect using the Green's function method
+
+        Args:
+            positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
+            dipole_tensor ((3,3)-array): Dipole tensor
+            n_mesh (int): Number of mesh points in the radial integration in case if anisotropic
+                Green's function (ignored if isotropic=True or fourier=True)
+            isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
+                is isotropic, it will automatically be set to isotropic=True
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+
+        Returns:
+            ((n,3,3)-array): Stress field
+        """
         strain = self.get_point_defect_strain(
             positions=positions,
             dipole_tensor=dipole_tensor,
@@ -425,6 +440,21 @@ class LinearElasticity:
     def get_point_defect_energy_density(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
+        """
+        Energy density field around a point defect using the Green's function method
+
+        Args:
+            positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
+            dipole_tensor ((3,3)-array): Dipole tensor
+            n_mesh (int): Number of mesh points in the radial integration in case if anisotropic
+                Green's function (ignored if isotropic=True or fourier=True)
+            isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
+                is isotropic, it will automatically be set to isotropic=True
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+
+        Returns:
+            ((n,)-array): Energy density field
+        """
         strain = self.get_point_defect_strain(
             positions=positions,
             dipole_tensor=dipole_tensor,
@@ -435,17 +465,65 @@ class LinearElasticity:
         return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
 
     def get_dislocation_displacement(self, positions, burgers_vector):
+        """
+        Displacement field around a dislocation according to anisotropic elasticity theory
+        described by Hirth and Lothe (1967).
+
+        Args:
+            positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
+                coinsides with the dislocation line.
+            burgers_vectors ((3,)-array): Burgers vector
+
+        Returns:
+            ((n, 3)-array): Displacement field (z-axis coincides with the dislocation line)
+        """
         hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
         return hirth_lothe.get_displacement(positions)
 
     def get_dislocation_strain(self, positions, burgers_vector):
+        """
+        Strain field around a dislocation according to anisotropic elasticity theory
+        described by Hirth and Lothe (1967).
+
+        Args:
+            positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
+                coinsides with the dislocation line.
+            burgers_vectors ((3,)-array): Burgers vector
+
+        Returns:
+            ((n, 3, 3)-array): Strain field (z-axis coincides with the dislocation line)
+        """
         hirth_lothe = HirthLothe(self.elastic_tensor, burgers_vector)
         return hirth_lothe.get_strain(positions)
 
     def get_dislocation_stress(self, positions, burgers_vector):
+        """
+        Stress field around a dislocation according to anisotropic elasticity theory
+        described by Hirth and Lothe (1967).
+
+        Args:
+            positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
+                coinsides with the dislocation line.
+            burgers_vectors ((3,)-array): Burgers vector
+
+        Returns:
+            ((n, 3, 3)-array): Stress field (z-axis coincides with the dislocation line)
+        """
         strain = self.get_dislocation_strain(positions, burgers_vector)
         return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
 
     def get_dislocation_energy_density(self, positions, burgers_vector):
+        """
+        Energy density field around a dislocation (product of stress and strain, cf. corresponding
+        methods)
+
+        Args:
+            positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
+                coinsides with the dislocation line.
+            burgers_vectors ((3,)-array): Burgers vector
+
+        Returns:
+            ((n,)-array): Energy density field
+        """
         strain = self.get_dislocation_strain(positions, burgers_vector)
         return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
