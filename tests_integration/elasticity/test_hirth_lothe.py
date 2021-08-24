@@ -39,6 +39,14 @@ class TestFenicsTutorials(unittest.TestCase):
             np.isclose(np.real(np.einsum('nk,n->k', F, hl.D)), 0).all()
         )
 
+    def test_displacement(self):
+        hl = create_random_HL(b=[0,0,1])
+        positions = (np.random.random((100, 2))-0.5)*10
+        d_analytical = np.arctan2(*positions.T[:2][::-1])/2/np.pi
+        self.assertTrue(
+            np.all(np.absolute(hl.get_displacement(positions)[:,-1]-d_analytical) < 1.0e-4)
+        )
+
     def test_strain(self):
         hl = create_random_HL(b=[0,0,1])
         positions = (np.random.random((100, 2))-0.5)*10
