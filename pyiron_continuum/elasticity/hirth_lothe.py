@@ -1,6 +1,12 @@
 import numpy as np
 
 class HirthLothe:
+    """
+    Anisotropic elasticity theory for dislocations described by Hirth and Lothe (1967).
+
+    The notations follow [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6) and
+    original book.
+    """
     def __init__(self, elastic_tensor, burgers_vector):
         self.elastic_tensor = elastic_tensor
         self.burgers_vector = burgers_vector
