@@ -100,7 +100,11 @@ class LinearElasticity:
     def frame(self):
         """
         Rotation matrix that defines the orientation of the system. If set, the elastic tensor
-        and (optionally) the dipole tensor will be rotated.
+        will be rotated. For example a box with a dislocation should get:
+
+        ```
+        >>> medium.frame = np.array([[1,1,1],[1,0,-1],[1,-2,1]])
+        ```
         """
         return self._frame
 
@@ -124,7 +128,15 @@ class LinearElasticity:
         if self._elastic_tensor is None:
             self._update()
         if self._elastic_tensor is not None and not self._is_rotated:
-            return np.einsum('Ii,IjKl,Kk->ijkl', self.frame, self._elastic_tensor, self.frame)
+            return np.einsum(
+                'Ii,Jj,Kk,Ll,ijkl->IJKL',
+                self.frame,
+                self.frame,
+                self.frame,
+                self.frame,
+                self._elastic_tensor,
+                optimize=True
+            )
         return self._elastic_tensor
 
     @elastic_tensor.setter
