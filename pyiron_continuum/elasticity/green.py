@@ -122,30 +122,18 @@ class Anisotropic:
         self._zT = None
         self._F = None
         self._T = None
-        self._x = None
-        self._y = None
         self._z = None
         self._Ms = None
         self._MF = None
 
     @property
-    def x(self):
-        if self._x is None:
-            self._x, self._y = get_plane(self.T)
-        return self._x
-
-    @property
-    def y(self):
-        if self._y is None:
-            self._x, self._y = get_plane(self.T)
-        return self._y
-
-    @property
     def z(self):
         if self._z is None:
             self._z = np.einsum(
-                '...x,n->n...x', self.x, np.cos(self.phi_range)
-            )+np.einsum('...x,n->n...x', self.y, np.sin(self.phi_range))
+                'i...x,in->n...x',
+                get_plane(self.T),
+                [np.cos(self.phi_range), np.sin(self.phi_range)]
+            )
         return self._z
 
     @property
@@ -220,7 +208,7 @@ class Anisotropic:
             return np.linalg.inv(G)
         self.initialize()
         if derivative == 0:
-            M = np.einsum('...nij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
+            M = np.einsum('n...ij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
             return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
         elif derivative == 1:
             M = np.einsum(
