@@ -115,7 +115,7 @@ class DAMASK(GenericJob):
         load_case = damask.Config(solver={'mechanical':'spectral_basic'},
                           loadstep=[])
         if loadtype=='tensile':
-            dotF = [1.0e-3,0,0, 0,'x',0,  0,0,'x']
+            dotF = [1.0e-2,0,0, 0,'x',0,  0,0,'x']
             P = ['x' if i != 'x' else 0 for i in dotF]
 
             load_case['loadstep'].append({'boundary_conditions':{},
@@ -137,34 +137,18 @@ class DAMASK(GenericJob):
         print('Result is saved to:',resultfile)
         self.resultfile=resultfile
         result=damask.Result(self.resultfile)
-        #result.enable_user_function(avg_sigma)
 
         # add Cauchy stress
-        #result.add_stress_Cauchy()
-        # add pk2 stress
-        #result.add_stress_second_Piola_Kirchhoff()
-        # add strain
-        #result.add_strain()
-        # add equivalent von Mises stress
-        #result.add_equivalent_Mises('sigma')
-        #result.add_equivalent_Mises('epsilon_V^0.0(F)')
-        #result.add_calculation('avg_sigma',"np.average(#sigma_vM#)")
-        #result.add_calculation('avg_epsilon',"np.average(#epsilon_V^0.0(F)_vM#)")
-
-        # save result to vtk file
-        #result.export_VTK()
-        #self.result=result
-        
-        #result.enable_user_function(damask.mechanics.equivalent_stress_Mises)
-
         result.add_stress_Cauchy()
+        # add strain
         result.add_strain()
+        # add equivalent von Mises stress
         result.add_equivalent_Mises('sigma')
         result.add_equivalent_Mises('epsilon_V^0.0(F)')
-        
-        #result.add_calculation('equivalent_stress_Mises',"np.average(#sigma_vM#)")
-        #result.add_calculation('avg_epsilon',"np.average(#epsilon_V^0.0(F)_vM#)")
-        #result.export_VTK(['sigma','epsilon_V^0.0(F)','sigma_vM','epsilon_V^0.0(F)_vM'])
+
+        self.epsilon_avg=np.array([np.average(eps,0) for eps in result.get('epsilon_V^0.0(F)_vM').values()])
+
+        self.sigma_avg=np.array([np.average(sig,0) for sig in result.get('sigma_vM').values()])/1.0e6
         result.export_VTK()
         self.result=result
 
@@ -176,24 +160,10 @@ class DAMASK(GenericJob):
         ax (matplotlib axis /None): axis to plot on (created if None)
         """
         ### for stress
-        stress_path = self.result.get_dataset_location('avg_sigma')
-        stress = np.zeros(len(stress_path))
-        hdf = h5py.File(self.result.fname)
-        for count,path in enumerate(stress_path):
-            stress[count] = np.array(hdf[path])
-        self.output.stress = np.array(stress)/1E6
-
-        ### for strain
-        stress_path = self.result.get_dataset_location('avg_sigma')
-        strain = np.zeros(len(stress_path))
-        hdf = h5py.File(self.results.fname)
-        for count,path in enumerate(stress_path):
-            strain[count] = np.array(hdf[path.split('avg_sigma')[0]+ 'avg_epsilon'])
-        self.output.strain = strain
 
         fig, ax = plt.subplots()
 
-        ax.plot(self.output.strain, self.output.stress, linestyle='-', linewidth='2.5')
+        ax.plot(self.epsilon_avg, self.sigma_avg, linestyle='-', linewidth='2.5')
         ax.grid(True)
         ax.set_xlabel(r'$\varepsilon_{VM} $', fontsize=18)
         ax.set_ylabel(r'$\sigma_{VM}$ (MPa)', fontsize=18)
