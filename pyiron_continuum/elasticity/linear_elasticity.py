@@ -88,7 +88,7 @@ class LinearElasticity:
         """
         self.elastic_tensor = elastic_tensor
         self._isotropy_tolerance = 1.0e-4
-        self._frame = np.eye(3)
+        self._rotation = np.eye(3)
         self._lame_coefficient = None
         self._shear_modulus = None
         self._bulk_modulus = None
@@ -97,26 +97,30 @@ class LinearElasticity:
         self._eschelby = None
 
     @property
-    def frame(self):
+    def rotation(self):
         """
         Rotation matrix that defines the orientation of the system. If set, the elastic tensor
-        will be rotated. For example a box with a dislocation should get:
+        will be rotated accordingly. For example a box with a dislocation should get:
 
         ```
-        >>> medium.frame = np.array([[1,1,1],[1,0,-1],[1,-2,1]])
+        >>> medium.rotation = np.array([[1,1,1],[1,0,-1],[1,-2,1]])
         ```
+
+        If a non-orthogonal rotation is set, the second vector is orthogonalized with the Gram
+        Schmidt process. It is not necessary to specify the third axis as it is automatically
+        calculated.
         """
-        return self._frame
+        return self._rotation
 
-    @frame.setter
-    def frame(self, f):
-        frame = self._frame.copy()
-        frame[:2] = f[:2]
-        self._frame = tools.orthonormalize(frame)
+    @rotation.setter
+    def rotation(self, r):
+        rotation = self._rotation.copy()
+        rotation[:2] = r[:2]
+        self._rotation = tools.orthonormalize(rotation)
 
     @property
     def _is_rotated(self):
-        return np.isclose(np.einsum('ii->', self.frame), 3)
+        return np.isclose(np.einsum('ii->', self.rotation), 3)
 
     @property
     def elastic_tensor(self):
@@ -130,10 +134,10 @@ class LinearElasticity:
         if self._elastic_tensor is not None and not self._is_rotated:
             return np.einsum(
                 'Ii,Jj,Kk,Ll,ijkl->IJKL',
-                self.frame,
-                self.frame,
-                self.frame,
-                self.frame,
+                self.rotation,
+                self.rotation,
+                self.rotation,
+                self.rotation,
                 self._elastic_tensor,
                 optimize=True
             )
