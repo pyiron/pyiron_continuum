@@ -1,14 +1,14 @@
 import numpy as np
 import unittest
 from pyiron_continuum.elasticity.eschelby import Eschelby
-from pyiron_continuum.elasticity.tools import *
+from pyiron_continuum.elasticity import tools
 
 def create_random_HL(b=None):
     C = np.zeros((6,6))
     C[:3,:3] = np.random.random()
     C[:3,:3] += np.random.random()*np.eye(3)
     C[3:,3:] = np.random.random()*np.eye(3)
-    C = C_from_voigt(C)
+    C = tools.C_from_voigt(C)
     if b is None:
         b = np.random.random(3)
     return Eschelby(C, b)
