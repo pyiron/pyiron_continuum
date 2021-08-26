@@ -58,7 +58,7 @@ class LinearElasticity:
     >>> print(medium.get_dislocation_stress(random_positions, burgers_vector))
 
     """
-    def __init__(self, elastic_tensor):
+    def __init__(self, elastic_tensor, orientation=None):
         """
         Args:
 
@@ -68,34 +68,36 @@ class LinearElasticity:
         """
         self.elastic_tensor = elastic_tensor
         self._isotropy_tolerance = 1.0e-4
-        self._rotation = np.eye(3)
+        self._orientation = np.eye(3)
+        if orientation is not None:
+            self.orientation = orientation
         self._eschelby = None
 
     @property
-    def rotation(self):
+    def orientation(self):
         """
         Rotation matrix that defines the orientation of the system. If set, the elastic tensor
         will be rotated accordingly. For example a box with a dislocation should get:
 
         ```
-        >>> medium.rotation = np.array([[1,1,1],[1,0,-1],[1,-2,1]])
+        >>> medium.orientation = np.array([[1,1,1],[1,0,-1],[1,-2,1]])
         ```
 
-        If a non-orthogonal rotation is set, the second vector is orthogonalized with the Gram
+        If a non-orthogonal orientation is set, the second vector is orthogonalized with the Gram
         Schmidt process. It is not necessary to specify the third axis as it is automatically
         calculated.
         """
-        return self._rotation
+        return self._orientation
 
-    @rotation.setter
-    def rotation(self, r):
-        rotation = self._rotation.copy()
-        rotation[:2] = r[:2]
-        self._rotation = tools.orthonormalize(rotation)
+    @orientation.setter
+    def orientation(self, r):
+        orientation = self._orientation.copy()
+        orientation[:2] = r[:2]
+        self._orientation = tools.orthonormalize(orientation)
 
     @property
     def _is_rotated(self):
-        return np.isclose(np.einsum('ii->', self.rotation), 3)
+        return np.isclose(np.einsum('ii->', self.orientation), 3)
 
     @property
     def elastic_tensor(self):
@@ -109,10 +111,10 @@ class LinearElasticity:
         if self._elastic_tensor is not None and not self._is_rotated:
             return np.einsum(
                 'Ii,Jj,Kk,Ll,ijkl->IJKL',
-                self.rotation,
-                self.rotation,
-                self.rotation,
-                self.rotation,
+                self.orientation,
+                self.orientation,
+                self.orientation,
+                self.orientation,
                 self._elastic_tensor,
                 optimize=True
             )

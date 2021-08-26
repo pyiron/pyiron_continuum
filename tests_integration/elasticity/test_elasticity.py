@@ -13,20 +13,20 @@ def create_random_C():
 class TestElasticity(unittest.TestCase):
     def test_frame(self):
         medium = LinearElasticity(np.random.random((6,6)))
-        self.assertAlmostEqual(np.linalg.det(medium.rotation), 1)
-        medium.rotation = np.random.random((3,3))
-        self.assertAlmostEqual(np.linalg.det(medium.rotation), 1)
+        self.assertAlmostEqual(np.linalg.det(medium.orientation), 1)
+        medium.orientation = np.random.random((3,3))
+        self.assertAlmostEqual(np.linalg.det(medium.orientation), 1)
 
-    def test_rotation(self):
+    def test_orientation(self):
         elastic_tensor = create_random_C()
         epsilon = np.random.random((3,3))
         epsilon += epsilon.T
         sigma = np.einsum('ijkl,kl->ij', elastic_tensor, epsilon)
         medium = LinearElasticity(elastic_tensor)
-        medium.rotation = np.array([[1,1,1],[1,0,-1]])
-        sigma = np.einsum('iI,jJ,IJ->ij', medium.rotation, medium.rotation, sigma)
+        medium.orientation = np.array([[1,1,1],[1,0,-1]])
+        sigma = np.einsum('iI,jJ,IJ->ij', medium.orientation, medium.orientation, sigma)
         sigma_calc = np.einsum(
-            'ijkl,kK,lL,KL->ij', medium.elastic_tensor, medium.rotation, medium.rotation, epsilon
+            'ijkl,kK,lL,KL->ij', medium.elastic_tensor, medium.orientation, medium.orientation, epsilon
         )
         self.assertTrue(np.allclose(sigma-sigma_calc, 0))
 
