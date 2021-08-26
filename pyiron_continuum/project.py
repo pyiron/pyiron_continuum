@@ -101,8 +101,8 @@ class Creator(CreatorCore):
 
     def __init__(self, project):
         super().__init__(project)
-        self._continuum = MediumFactory()
+        self._medium = MediumFactory()
 
     @property
-    def continuum(self):
-        return self._continuum
+    def medium(self):
+        return self._medium
