@@ -8,14 +8,14 @@ from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 from pyiron_continuum.elasticity.eschelby import Eschelby
 from pyiron_continuum.elasticity import tools
 
-__author__ = "Jan Janssen"
+__author__ = "Sam Waseda"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
                 "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
-__maintainer__ = "Jan Janssen"
-__email__ = "janssen@mpie.de"
+__maintainer__ = "Sam Waseda"
+__email__ = "waseda@mpie.de"
 __status__ = "development"
-__date__ = "Feb 20, 2020"
+__date__ = "Aug 21, 2021"
 
 s = Settings()
 

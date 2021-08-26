@@ -1,5 +1,17 @@
 import numpy as np
 from pyiron_continuum.elasticity import tools
+from pyiron_base import Settings
+
+__author__ = "Sam Waseda"
+__copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Sam Waseda"
+__email__ = "waseda@mpie.de"
+__status__ = "development"
+__date__ = "Aug 21, 2021"
+
+s = Settings()
 
 class Green:
     """
