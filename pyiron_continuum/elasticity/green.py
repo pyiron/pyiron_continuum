@@ -44,7 +44,7 @@ class Isotropic(Green):
     """
     This class calculates the Green's function according to the isotropic elasticity theory. For
     anisotropic calculations, cf. `Anisotropic`.
-    
+
     Green's function `G` is given by:
 
     \begin{align}
@@ -69,14 +69,14 @@ class Isotropic(Green):
 
     @property
     def A(self):
-        """First coeffcient of the Green's function. For more, cf. DocString in the class level. """
+        """First coeffcient of the Green's function. For more, cf. DocString in the class level."""
         if self._A is None:
             self._A = (3-4*self.poissons_ratio)*self.B
         return self._A
 
     @property
     def B(self):
-        """SeconD coeffcient of the Green's function. For more, cf. DocString in the class level. """
+        """SeconD coeffcient of the Green's function. For more, cf. DocString in the class level."""
         if self._B is None:
             self._B = 1/(16*np.pi*self.shear_modulus*(1-self.poissons_ratio))
         return self._B
@@ -110,7 +110,7 @@ class Isotropic(Green):
         )
 
     def dG(self, r):
-        """ first derivative of the Green's function """
+        """First derivative of the Green's function"""
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
         distance_condition = R<self.min_dist
@@ -125,7 +125,7 @@ class Isotropic(Green):
         return v
 
     def ddG(self, r):
-        """ Second derivative of the Green's function """
+        """Second derivative of the Green's function"""
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
         distance_condition = R<self.min_dist
@@ -181,8 +181,14 @@ class Anisotropic(Green):
     - If the medium is isotropic, use Isotropic instead, which has analytical solutions and is
       therefore much faster.
     """
-    def __init__(self, elastic_constants, n_mesh=100, optimize=True):
-        self.C = elastic_constants
+    def __init__(self, elastic_tensor, n_mesh=100, optimize=True):
+        """
+        Args:
+            elastic_tensor ((3,3,3,3)-array): Elastic tensor
+            n_mesh (int): Number of mesh points for the numerical integration along the azimuth
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+        """
+        self.C = elastic_tensor
         self.phi_range, self.dphi = np.linspace(0, np.pi, n_mesh, endpoint=False, retstep=True)
         self.optimize = optimize
         self._initialize()
