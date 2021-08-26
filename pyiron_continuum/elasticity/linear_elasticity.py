@@ -156,7 +156,7 @@ class LinearElasticity:
         analytical form of the Green's function is used for the calculation of strain and
         displacement fields.
         """
-        return 2*(1+self.poissons_ratio)*self.shear_modulus/self.youngs_modulus
+        return 2*(1+self.poissons_ratio.mean())*self.shear_modulus.mean()/self.youngs_modulus.mean()
 
     @property
     def isotropy_tolerance(self):
