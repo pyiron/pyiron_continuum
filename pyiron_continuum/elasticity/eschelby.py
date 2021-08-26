@@ -15,7 +15,7 @@ class Eschelby:
         self._Ak = None
         self._D = None
 
-    def get_pmat(self, x):
+    def _get_pmat(self, x):
         return (
             self.elastic_tensor[:,0,:,0]
             + np.einsum(
@@ -27,7 +27,7 @@ class Eschelby:
     @property
     def p(self):
         if self._p is None:
-            coeff = np.polyfit(self.fit_range, np.linalg.det(self.get_pmat(self.fit_range)), 6)
+            coeff = np.polyfit(self.fit_range, np.linalg.det(self._get_pmat(self.fit_range)), 6)
             self._p = np.roots(coeff)
             self._p = self._p[np.imag(self._p)>0]
         return self._p
@@ -36,7 +36,7 @@ class Eschelby:
     def Ak(self):
         if self._Ak is None:
             self._Ak = []
-            for mat in self.get_pmat(self.p):
+            for mat in self._get_pmat(self.p):
                 values, vectors = np.linalg.eig(mat.T)
                 self._Ak.append(vectors.T[np.absolute(values).argmin()])
             self._Ak = np.array(self._Ak)
@@ -58,18 +58,36 @@ class Eschelby:
     def dzdx(self):
         return np.stack((np.ones_like(self.p), self.p, np.zeros_like(self.p)), axis=-1)
 
-    def get_z(self, positions):
+    def _get_z(self, positions):
         z = np.stack((np.ones_like(self.p), self.p), axis=-1)
         return np.einsum('nk,...k->...n', z, np.asarray(positions)[...,:2])
 
     def get_displacement(self, positions):
+        """
+        Displacement vectors
+
+        Args:
+            positions ((n,3)-array): Positions for which the displacements are to be calculated
+
+        Returns:
+            ((n,3)-array): Displacement vectors
+        """
         return np.imag(
-            np.einsum('nk,n,...n->...k', self.Ak, self.D, np.log(self.get_z(positions)))
+            np.einsum('nk,n,...n->...k', self.Ak, self.D, np.log(self._get_z(positions)))
         )/(2*np.pi)
 
     def get_strain(self, positions):
+        """
+        Strain tensors
+
+        Args:
+            positions ((n,3)-array): Positions for which the strains are to be calculated
+
+        Returns:
+            ((n,3,3)-array): Strain tensors
+        """
         strain = np.imag(
-            np.einsum('ni,n,...n,nj->...ij', self.Ak, self.D, 1/self.get_z(positions), self.dzdx)
+            np.einsum('ni,n,...n,nj->...ij', self.Ak, self.D, 1/self._get_z(positions), self.dzdx)
         )
         strain = strain+np.einsum('...ij->...ji', strain)
         return strain/4/np.pi
