@@ -4,7 +4,7 @@
 
 import numpy as np
 from pyiron_base import Settings
-from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
+from pyiron_continuum.elasticity.green import Anisotropic, Isotropic, Green
 from pyiron_continuum.elasticity.eschelby import Eschelby
 from pyiron_continuum.elasticity import tools
 
@@ -27,6 +27,51 @@ def value_or_none(func):
         else:
             return func(self)
     return f
+
+point_defect_explanation = '''
+According to the definition of the Green's function (cf. docstring of `get_greens_function`):
+
+.. math:
+    u_i(r) = \\sum_a G_{ij}(r-a)f_j(a)
+
+where :math:`u_i(r)` is the displacement field of component :math:`i` at position :math:`r` and
+:math:`f_j(a)` is the force component :math:`j` of the atom at position :math:`a`. By taking the
+polynomial development we obtain:
+
+.. math:
+    u_i(r) \\approx G_{ij}(r)\\sum_a f_j(a)-\\frac{\partial G_{ij}}{\\partial r_k}(r)\\sum_a a_k f_j(a)
+
+The first term disappears because the sum of the forces is zero. From the second term we define
+the dipole tensor :math:`P_{jk} = a_k f_j(a)`. Following the definition above, we can obtain the
+displacement field, strain field, stress field and energy density field if the dipole tensor and
+the elastic tensor are known.
+
+The dipole tensor ob a point defect is commonly obtained from the following equation:
+
+.. math:
+    U = \\frac{V}{2} \\varepsilon_{ij}C_{ijkl}\\varepsilon_{kl}-P_{kl}\\varepsilon_{kl}
+
+where :math:`U` is the potential energy, :math:`V` is the volume and :math:`\\varepsilon` is the
+strain field. At equilibrium, the derivative of the potential energy with respect to the strain
+disappears:
+
+.. math:
+    P_{ij} = VC_{ijkl}\\varepsilon_{kl} = V\\sigma_{ij}
+
+With this in mind, we can calculate the dipole tensor of Ni in Al with the following lines:
+
+```python
+from pyiron_atomistics import Project
+pr = Project('dipole_tensor')
+job = pr.create.job.Lammps('dipole')
+n_repeat = 3
+job.structure = pr.create.structure.bulk('Al', cubic=True).repeat(n_repeat)
+job.structure[0] = 'Ni'
+job.calc_minimize()
+job.run()
+dipole_tensor = -job.structure.get_volume()*job['output/generic/pressures'][-1]
+```
+'''
 
 class LinearElasticity:
     """
@@ -238,6 +283,8 @@ class LinearElasticity:
             C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
         return C.get_greens_function(positions, derivative, fourier)
 
+    get_greens_function.__doc__ += Green.__doc__
+
     def get_point_defect_displacement(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
@@ -265,6 +312,8 @@ class LinearElasticity:
             optimize=optimize
         )
         return -np.einsum('...ijk,...jk->...i', g_tmp, dipole_tensor)
+
+    get_point_defect_displacement.__doc__ += point_defect_explanation
 
     def get_point_defect_strain(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
@@ -295,6 +344,8 @@ class LinearElasticity:
         v = -np.einsum('...ijkl,...kl->...ij', g_tmp, dipole_tensor)
         return 0.5*(v+np.einsum('...ij->...ji', v))
 
+    get_point_defect_strain.__doc__ += point_defect_explanation
+
     def get_point_defect_stress(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
@@ -322,6 +373,8 @@ class LinearElasticity:
         )
         return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
 
+    get_point_defect_stress.__doc__ += point_defect_explanation
+
     def get_point_defect_energy_density(
         self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
     ):
@@ -348,6 +401,8 @@ class LinearElasticity:
             optimize=optimize
         )
         return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
+
+    get_point_defect_energy_density.__doc__ += point_defect_explanation
 
     def get_dislocation_displacement(self, positions, burgers_vector):
         """

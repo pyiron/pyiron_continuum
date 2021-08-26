@@ -16,25 +16,22 @@ s = Settings()
 class Green:
     """
     Green's function according to the linear elasticity theory. According to the equilibrium
-    condition:
+    condition, we have:
 
-    \begin{align}
-        \frac{\partial \sigma_{ij}}{\partial r_j} + f_i = 0
-    \end{align}
+    .. math::
+        \\frac{\\partial \\sigma_{ij}}{\\partial r_j} + f_i = 0
 
-    where $\sigma_{ij}$ is stress tensor and $f_i$ is force. From this, we obtain the differential
-    equations:
+    where :math:`\\sigma_{ij}` is stress tensor and :math:`f_i` is force. From this, we obtain the
+    differential equations:
 
-    \begin{align}
-        C_{ijkl}\frac{\partial^2 u_k}{\partial r_j\partial r_l} + f_i = 0
-    \end{align}
+    .. math::
+        C_{ijkl}\\frac{\\partial^2 u_k}{\\partial r_j\\partial r_l} + f_i = 0
 
-    with the elastic tensor $C_{ijkl}$ and the displacement field $u_k$. This defines the Green's
-    function:
+    with the elastic tensor :math:`C_{ijkl}` and the displacement field :math:`u_k`. This defines
+    the Green's function:
 
-    \begin{align}
-        C_{ijkl}\frac{\partial^2 G_{km}}{\partial r_j\partial r_l} + \delta_{im}\delta(\vec r) = 0
-    \end{align}
+    .. math::
+        C_{ijkl}\\frac{\\partial^2 G_{km}}{\\partial r_j\\partial r_l} + \\delta_{im}\\delta(\\vec r) = 0
 
     The Fourier transform of this equation can be analytically solved for the isotropic elasticity
     theory. For the anisotropic case, the integration along the azimuthal angle is required.
@@ -59,9 +56,8 @@ class Isotropic(Green):
 
     Green's function `G` is given by:
 
-    \begin{align}
-        G = A \delta_{ij} / r + B r_i r_j / r^3
-    \end{align}
+    .. math:
+        G = A \\delta_{ij} / r + B r_i r_j / r^3
     """
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
         """
