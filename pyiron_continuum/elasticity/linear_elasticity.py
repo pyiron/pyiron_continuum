@@ -6,7 +6,7 @@ import numpy as np
 from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 from pyiron_continuum.elasticity.eschelby import Eschelby
-from pyiron_continuum.elasticity.tools import tools
+from pyiron_continuum.elasticity import tools
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \

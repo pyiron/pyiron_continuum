@@ -16,12 +16,12 @@ def create_random_HL(b=None):
 class TestFenicsTutorials(unittest.TestCase):
     def test_p(self):
         hl = create_random_HL()
-        self.assertTrue(np.isclose(np.absolute(np.linalg.det(hl.get_pmat(hl.p))), 0).all())
+        self.assertTrue(np.isclose(np.absolute(np.linalg.det(hl._get_pmat(hl.p))), 0).all())
 
     def test_Ak(self):
         hl = create_random_HL()
         self.assertTrue(
-            np.isclose(np.absolute(np.einsum('nk,nik->ni', hl.Ak, hl.get_pmat(hl.p))), 0).all()
+            np.isclose(np.absolute(np.einsum('nk,nik->ni', hl.Ak, hl._get_pmat(hl.p))), 0).all()
         )
 
     def test_DAk(self):

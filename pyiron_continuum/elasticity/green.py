@@ -1,5 +1,5 @@
 import numpy as np
-from pyiron_continuum.elasticity.tools import tools
+from pyiron_continuum.elasticity import tools
 
 class Isotropic:
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):

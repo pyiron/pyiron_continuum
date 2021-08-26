@@ -1,14 +1,14 @@
 import numpy as np
 import unittest
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
-from pyiron_continuum.elasticity.tools import *
+from pyiron_continuum.elasticity import tools
 
 def create_random_C():
     C = np.zeros((6,6))
     C[:3,:3] = np.random.random()
     C[:3,:3] += np.random.random()*np.eye(3)
     C[3:,3:] = np.random.random()*np.eye(3)
-    return C_from_voigt(C)
+    return tools.C_from_voigt(C)
 
 class TestFenicsTutorials(unittest.TestCase):
     def test_frame(self):
