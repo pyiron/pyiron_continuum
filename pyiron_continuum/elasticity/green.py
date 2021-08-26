@@ -2,7 +2,28 @@ import numpy as np
 from pyiron_continuum.elasticity import tools
 
 class Isotropic:
+    """
+    Green's function according to the isotropic elasticity theory. For anisotropic calculations,
+    cf. `Anisotropic`.
+    
+    Green's function `G` is given by:
+
+    \begin{align}
+        G = A \delta_{ij} / r + B r_i r_j / r^3
+    \end{align}
+
+    All functions are calculated analytically in this class, therefore the computation is
+    (probably) faster than in `Anisotropic`.
+    """
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
+        """
+        Args:
+            poissons_ratio (float): Poissons ratio
+            shear_modulus (float): Shear modulus
+            min_distance (float): Minimum distance from the origin to calculate in order to avoid
+                numerical instability for the Green's function
+            optimize (bool): cf. `optimize` in `numpy.einsum`
+        """
         self.poissons_ratio = poissons_ratio
         self.shear_modulus = shear_modulus
         self.min_dist = min_distance
@@ -12,18 +33,20 @@ class Isotropic:
 
     @property
     def A(self):
+        """First coeffcient of the Green's function. For more, cf. DocString in the class level. """
         if self._A is None:
             self._A = (3-4*self.poissons_ratio)*self.B
         return self._A
 
     @property
     def B(self):
+        """SeconD coeffcient of the Green's function. For more, cf. DocString in the class level. """
         if self._B is None:
             self._B = 1/(16*np.pi*self.shear_modulus*(1-self.poissons_ratio))
         return self._B
 
     def G(self, r):
-        """ Green's function """
+        """Green's function"""
         R_inv = 1/np.linalg.norm(r, axis=-1)
         G = self.A*np.eye(3)+self.B*np.einsum(
             '...i,...j,...->...ij', r, r, R_inv**2, optimize=self.optimize
@@ -87,6 +110,16 @@ class Isotropic:
         return v
 
     def get_greens_function(self, r, derivative=0, fourier=False):
+        """
+        Args:
+            r ((n,3)-array): Positions for which to calculate the Green's function
+            derivative (int): The order of the derivative. Ignored if `fourier=True`
+            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
+
+        Returns:
+            (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
+                (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
+        """
         if fourier:
             return self.G_fourier(r)
         elif derivative == 0:
@@ -116,9 +149,9 @@ class Anisotropic:
         self.C = elastic_constants
         self.phi_range, self.dphi = np.linspace(0, np.pi, n_mesh, endpoint=False, retstep=True)
         self.optimize = optimize
-        self.initialize()
+        self._initialize()
 
-    def initialize(self):
+    def _initialize(self):
         self._zT = None
         self._F = None
         self._T = None
@@ -202,11 +235,21 @@ class Anisotropic:
         return results
 
     def get_greens_function(self, r, derivative=0, fourier=False):
+        """
+        Args:
+            r ((n,3)-array): Positions for which to calculate the Green's function
+            derivative (int): The order of the derivative. Ignored if `fourier=True`
+            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
+
+        Returns:
+            (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
+                (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
+        """
         self.r = r
         if fourier:
             G = np.einsum('ijkl,...j,...l->...ik', self.C, r, r, optimize=self.optimize)
             return np.linalg.inv(G)
-        self.initialize()
+        self._initialize()
         if derivative == 0:
             M = np.einsum('n...ij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
             return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
