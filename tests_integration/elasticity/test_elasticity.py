@@ -10,7 +10,7 @@ def create_random_C():
     C[3:,3:] = np.random.random()*np.eye(3)
     return tools.C_from_voigt(C)
 
-class TestFenicsTutorials(unittest.TestCase):
+class TestElasticity(unittest.TestCase):
     def test_frame(self):
         medium = LinearElasticity(np.random.random((6,6)))
         self.assertAlmostEqual(np.linalg.det(medium.frame), 1)

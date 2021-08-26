@@ -10,7 +10,7 @@ def create_random_C():
     C[3:,3:] = np.random.random()*np.eye(3)
     return C_from_voigt(C)
 
-class TestFenicsTutorials(unittest.TestCase):
+class TestGreen(unittest.TestCase):
     def test_derivative(self):
         aniso = Anisotropic(create_random_C())
         positions = np.tile(np.random.random(3), 2).reshape(-1, 3)

@@ -13,7 +13,7 @@ def create_random_HL(b=None):
         b = np.random.random(3)
     return Eschelby(C, b)
 
-class TestFenicsTutorials(unittest.TestCase):
+class TestEschelby(unittest.TestCase):
     def test_p(self):
         hl = create_random_HL()
         self.assertTrue(np.isclose(np.absolute(np.linalg.det(hl._get_pmat(hl.p))), 0).all())
