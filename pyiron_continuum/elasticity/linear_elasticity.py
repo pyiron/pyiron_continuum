@@ -6,7 +6,7 @@ import numpy as np
 from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 from pyiron_continuum.elasticity.eschelby import Eschelby
-from pyiron_continuum.elasticity.tools import *
+from pyiron_continuum.elasticity.tools import tools
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -112,7 +112,7 @@ class LinearElasticity:
     def frame(self, f):
         frame = self._frame.copy()
         frame[:2] = f[:2]
-        self._frame = orthonormalize(frame)
+        self._frame = tools.orthonormalize(frame)
 
     @property
     def _is_rotated(self):
@@ -146,7 +146,7 @@ class LinearElasticity:
             if C.shape != (6, 6) and C.shape != (3, 3, 3, 3):
                 raise ValueError('Elastic tensor must be a (6,6) or (3,3,3,3) array')
             if C.shape == (6, 6):
-                C = C_from_voigt(C)
+                C = tools.C_from_voigt(C)
         self._elastic_tensor = C
 
     def _update(self):
@@ -162,7 +162,7 @@ class LinearElasticity:
         Voigt notation of the elastic tensor, i.e. (i,j) = i, if i==j and
         (i,j) = 6-i-j if i!=j.
         """
-        return C_to_voigt(self.elastic_tensor)
+        return tools.C_to_voigt(self.elastic_tensor)
 
     @property
     @value_or_none

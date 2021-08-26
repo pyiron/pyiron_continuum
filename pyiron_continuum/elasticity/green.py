@@ -1,5 +1,5 @@
 import numpy as np
-from pyiron_continuum.elasticity.tools import *
+from pyiron_continuum.elasticity.tools import tools
 
 class Isotropic:
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
@@ -131,7 +131,7 @@ class Anisotropic:
         if self._z is None:
             self._z = np.einsum(
                 'i...x,in->n...x',
-                get_plane(self.T),
+                tools.get_plane(self.T),
                 [np.cos(self.phi_range), np.sin(self.phi_range)]
             )
         return self._z
@@ -148,7 +148,7 @@ class Anisotropic:
     @property
     def T(self):
         if self._T is None:
-            self._T = normalize(self.r)
+            self._T = tools.normalize(self.r)
         return self._T
 
     @property
