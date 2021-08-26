@@ -1,19 +1,55 @@
 import numpy as np
 from pyiron_continuum.elasticity import tools
 
-class Isotropic:
+class Green:
     """
-    Green's function according to the isotropic elasticity theory. For anisotropic calculations,
-    cf. `Anisotropic`.
+    Green's function according to the linear elasticity theory. According to the equilibrium
+    condition:
+
+    \begin{align}
+        \frac{\partial \sigma_{ij}}{\partial r_j} + f_i = 0
+    \end{align}
+
+    where $\sigma_{ij}$ is stress tensor and $f_i$ is force. From this, we obtain the differential
+    equations:
+
+    \begin{align}
+        C_{ijkl}\frac{\partial^2 u_k}{\partial r_j\partial r_l} + f_i = 0
+    \end{align}
+
+    with the elastic tensor $C_{ijkl}$ and the displacement field $u_k$. This defines the Green's
+    function:
+
+    \begin{align}
+        C_{ijkl}\frac{\partial^2 G_{km}}{\partial r_j\partial r_l} + \delta_{im}\delta(\vec r) = 0
+    \end{align}
+
+    The Fourier transform of this equation can be analytically solved for the isotropic elasticity
+    theory. For the anisotropic case, the integration along the azimuthal angle is required.
+    """
+    def get_greens_function(self, r, derivative=0, fourier=False):
+        """
+        Args:
+            r ((n,3)-array): Positions for which to calculate the Green's function
+            derivative (int): The order of the derivative. Ignored if `fourier=True`
+            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
+
+        Returns:
+            (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
+                (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
+        """
+        raise NotImplementedError('get_greens_function must be defined in the child class')
+
+class Isotropic(Green):
+    """
+    This class calculates the Green's function according to the isotropic elasticity theory. For
+    anisotropic calculations, cf. `Anisotropic`.
     
     Green's function `G` is given by:
 
     \begin{align}
         G = A \delta_{ij} / r + B r_i r_j / r^3
     \end{align}
-
-    All functions are calculated analytically in this class, therefore the computation is
-    (probably) faster than in `Anisotropic`.
     """
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
         """
@@ -131,10 +167,10 @@ class Isotropic:
         else:
             raise ValueError('Derivative can be up to 2')
 
-class Anisotropic:
+class Anisotropic(Green):
     """
-    Calculation of Green's functions (and their derivatives) for the anisotropic elasticity
-    theory based on Barnett's approach. All notations follow Barnett's paper.
+    This class calculates thef Green's functions (and their derivatives) for the anisotropic
+    elasticity theory based on Barnett's approach. All notations follow Barnett's paper.
 
     [Link](https://doi.org/10.1002/pssb.2220490238)
     
@@ -235,16 +271,6 @@ class Anisotropic:
         return results
 
     def get_greens_function(self, r, derivative=0, fourier=False):
-        """
-        Args:
-            r ((n,3)-array): Positions for which to calculate the Green's function
-            derivative (int): The order of the derivative. Ignored if `fourier=True`
-            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
-
-        Returns:
-            (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
-                (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
-        """
         self.r = r
         if fourier:
             G = np.einsum('ijkl,...j,...l->...ik', self.C, r, r, optimize=self.optimize)
@@ -263,3 +289,6 @@ class Anisotropic:
                 'n...isrm->...isrm', self._integrand_second_derivative
             )/(4*np.pi**2)*self.dphi
             return np.einsum('...isrm,...->...isrm', M, 1/np.linalg.norm(self.r, axis=-1)**3)
+
+Anisotropic.__doc__ = Green.__doc__+Anisotropic.__doc__
+Isotropic.__doc__ = Green.__doc__+Isotropic.__doc__
