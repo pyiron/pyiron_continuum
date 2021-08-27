@@ -1,5 +1,17 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import numpy as np
 
+__author__ = "Sam Waseda"
+__copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Sam Waseda"
+__email__ = "waseda@mpie.de"
+__status__ = "development"
+__date__ = "Aug 21, 2021"
 
 def normalize(x):
     return (x.T/np.linalg.norm(x, axis=-1).T).T
