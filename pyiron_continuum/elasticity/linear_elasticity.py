@@ -193,13 +193,13 @@ class LinearElasticity:
     @property
     @value_or_none
     def compliance_matrix(self):
-        """Compliance matrix in Voigt notation"""
+        """Compliance matrix in Voigt notation."""
         return np.linalg.inv(self.elastic_tensor_voigt)
 
     @property
     def zener_ratio(self):
         """
-        Zener ratio or the anistropy index. If 1, the medium is isotropic. If isotropic, the
+        Zener ratio or the anisotropy index. If 1, the medium is isotropic. If isotropic, the
         analytical form of the Green's function is used for the calculation of strain and
         displacement fields.
         """
@@ -412,7 +412,7 @@ class LinearElasticity:
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
-                coinsides with the dislocation line.
+                coincides with the dislocation line.
             burgers_vectors ((3,)-array): Burgers vector
 
         Returns:
@@ -428,7 +428,7 @@ class LinearElasticity:
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
-                coinsides with the dislocation line.
+                coincides with the dislocation line.
             burgers_vectors ((3,)-array): Burgers vector
 
         Returns:
@@ -444,7 +444,7 @@ class LinearElasticity:
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
-                coinsides with the dislocation line.
+                coincides with the dislocation line.
             burgers_vectors ((3,)-array): Burgers vector
 
         Returns:
@@ -460,7 +460,7 @@ class LinearElasticity:
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
-                coinsides with the dislocation line.
+                coincides with the dislocation line.
             burgers_vectors ((3,)-array): Burgers vector
 
         Returns:

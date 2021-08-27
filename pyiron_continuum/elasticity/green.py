@@ -77,20 +77,20 @@ class Isotropic(Green):
 
     @property
     def A(self):
-        """First coeffcient of the Green's function. For more, cf. DocString in the class level."""
+        """First coefficient of the Green's function. For more, cf. DocString in the class level."""
         if self._A is None:
             self._A = (3-4*self.poissons_ratio)*self.B
         return self._A
 
     @property
     def B(self):
-        """SeconD coeffcient of the Green's function. For more, cf. DocString in the class level."""
+        """Second coefficient of the Green's function. For more, cf. DocString in the class level."""
         if self._B is None:
             self._B = 1/(16*np.pi*self.shear_modulus*(1-self.poissons_ratio))
         return self._B
 
     def G(self, r):
-        """Green's function"""
+        """Green's function."""
         R_inv = 1/np.linalg.norm(r, axis=-1)
         G = self.A*np.eye(3)+self.B*np.einsum(
             '...i,...j,...->...ij', r, r, R_inv**2, optimize=self.optimize
@@ -118,7 +118,7 @@ class Isotropic(Green):
         )
 
     def dG(self, r):
-        """First derivative of the Green's function"""
+        """First derivative of the Green's function."""
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
         distance_condition = R<self.min_dist
@@ -133,7 +133,7 @@ class Isotropic(Green):
         return v
 
     def ddG(self, r):
-        """Second derivative of the Green's function"""
+        """Second derivative of the Green's function."""
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
         distance_condition = R<self.min_dist
@@ -177,7 +177,7 @@ class Isotropic(Green):
 
 class Anisotropic(Green):
     """
-    This class calculates thef Green's functions (and their derivatives) for the anisotropic
+    This class calculates the Green's functions (and their derivatives) for the anisotropic
     elasticity theory based on Barnett's approach. All notations follow Barnett's paper.
 
     [Link](https://doi.org/10.1002/pssb.2220490238)
