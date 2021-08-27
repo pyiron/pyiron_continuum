@@ -63,7 +63,7 @@ class Eschelby:
     def D(self):
         if self._D is None:
             F = np.einsum('n,ij->nij', self.p, self.elastic_tensor[:, 1, :, 1])
-            F += self.elastic_tensor[:,1,:,0]
+            F += self.elastic_tensor[:, 1, :, 0]
             F = np.einsum('nik,nk->ni', F, self.Ak)
             F = np.concatenate((F.T, self.Ak.T), axis=0)
             F = np.concatenate((np.real(F), -np.imag(F)), axis=-1)
