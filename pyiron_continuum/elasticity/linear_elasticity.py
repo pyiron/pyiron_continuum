@@ -28,6 +28,7 @@ def value_or_none(func):
             return func(self)
     return f
 
+
 point_defect_explanation = '''
 According to the definition of the Green's function (cf. docstring of `get_greens_function`):
 
@@ -72,6 +73,7 @@ job.run()
 dipole_tensor = -job.structure.get_volume()*job['output/generic/pressures'][-1]
 ```
 '''
+
 
 class LinearElasticity:
     """
@@ -125,7 +127,7 @@ class LinearElasticity:
         will be rotated accordingly. For example a box with a dislocation should get:
 
         ```
-        >>> medium.orientation = np.array([[1,1,1],[1,0,-1],[1,-2,1]])
+        >>> medium.orientation = np.array([[1, 1, 1], [1, 0, -1], [1, -2, 1]])
         ```
 
         If a non-orthogonal orientation is set, the second vector is orthogonalized with the Gram
@@ -185,8 +187,8 @@ class LinearElasticity:
     @value_or_none
     def elastic_tensor_voigt(self):
         """
-        Voigt notation of the elastic tensor, i.e. (i,j) = i, if i==j and
-        (i,j) = 6-i-j if i!=j.
+        Voigt notation of the elastic tensor, i.e. (i, j) = i, if i == j and
+        (i, j) = 6-i-j if i!=j.
         """
         return tools.C_to_voigt(self.elastic_tensor)
 
@@ -413,7 +415,7 @@ class LinearElasticity:
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
                 coincides with the dislocation line.
-            burgers_vectors ((3,)-array): Burgers vector
+            burgers_vector ((3,)-array): Burgers vector
 
         Returns:
             ((n, 3)-array): Displacement field (z-axis coincides with the dislocation line)
@@ -429,7 +431,7 @@ class LinearElasticity:
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
                 coincides with the dislocation line.
-            burgers_vectors ((3,)-array): Burgers vector
+            burgers_vector ((3,)-array): Burgers vector
 
         Returns:
             ((n, 3, 3)-array): Strain field (z-axis coincides with the dislocation line)
@@ -445,7 +447,7 @@ class LinearElasticity:
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
                 coincides with the dislocation line.
-            burgers_vectors ((3,)-array): Burgers vector
+            burgers_vector ((3,)-array): Burgers vector
 
         Returns:
             ((n, 3, 3)-array): Stress field (z-axis coincides with the dislocation line)
@@ -461,7 +463,7 @@ class LinearElasticity:
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
                 coincides with the dislocation line.
-            burgers_vectors ((3,)-array): Burgers vector
+            burgers_vector ((3,)-array): Burgers vector
 
         Returns:
             ((n,)-array): Energy density field

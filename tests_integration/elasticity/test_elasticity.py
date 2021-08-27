@@ -3,27 +3,29 @@ import unittest
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
 from pyiron_continuum.elasticity import tools
 
+
 def create_random_C():
-    C = np.zeros((6,6))
-    C[:3,:3] = np.random.random()
-    C[:3,:3] += np.random.random()*np.eye(3)
-    C[3:,3:] = np.random.random()*np.eye(3)
+    C = np.zeros((6, 6))
+    C[:3, :3] = np.random.random()
+    C[:3, :3] += np.random.random()*np.eye(3)
+    C[3:, 3:] = np.random.random()*np.eye(3)
     return tools.C_from_voigt(C)
+
 
 class TestElasticity(unittest.TestCase):
     def test_frame(self):
-        medium = LinearElasticity(np.random.random((6,6)))
+        medium = LinearElasticity(np.random.random((6, 6)))
         self.assertAlmostEqual(np.linalg.det(medium.orientation), 1)
-        medium.orientation = np.random.random((3,3))
+        medium.orientation = np.random.random((3, 3))
         self.assertAlmostEqual(np.linalg.det(medium.orientation), 1)
 
     def test_orientation(self):
         elastic_tensor = create_random_C()
-        epsilon = np.random.random((3,3))
+        epsilon = np.random.random((3, 3))
         epsilon += epsilon.T
         sigma = np.einsum('ijkl,kl->ij', elastic_tensor, epsilon)
         medium = LinearElasticity(elastic_tensor)
-        medium.orientation = np.array([[1,1,1],[1,0,-1]])
+        medium.orientation = np.array([[1, 1, 1],[1, 0, -1]])
         sigma = np.einsum('iI,jJ,IJ->ij', medium.orientation, medium.orientation, sigma)
         sigma_calc = np.einsum(
             'ijkl,kK,lL,KL->ij', medium.elastic_tensor, medium.orientation, medium.orientation, epsilon
@@ -39,11 +41,12 @@ class TestElasticity(unittest.TestCase):
         self.assertTrue(np.allclose(medium.poissons_ratio, 0))
 
     def test_isotropic(self):
-        C = np.zeros((6,6))
-        C[:3,:3] = np.ones((3,3))*np.random.random()+np.eye(3)*np.random.random()
-        C[3:,3:] = np.eye(3)*(C[0,0]-C[0,1])/2
+        C = np.zeros((6, 6))
+        C[:3, :3] = np.ones((3, 3))*np.random.random()+np.eye(3)*np.random.random()
+        C[3:, 3:] = np.eye(3)*(C[0, 0]-C[0, 1])/2
         medium = LinearElasticity(C)
         self.assertTrue(medium._is_isotropic)
+
 
 if __name__ == "__main__":
     unittest.main()

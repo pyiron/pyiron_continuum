@@ -30,11 +30,11 @@ class Eschelby:
 
     def _get_pmat(self, x):
         return (
-            self.elastic_tensor[:,0,:,0]
+            self.elastic_tensor[:, 0, :, 0]
             + np.einsum(
-                '...,ij->...ij', x, self.elastic_tensor[:,0,:,1]+self.elastic_tensor[:,1,:,0]
+                '...,ij->...ij', x, self.elastic_tensor[:, 0, :, 1]+self.elastic_tensor[:, 1, :, 0]
             )
-            + np.einsum('...,ij->...ij', x**2, self.elastic_tensor[:,1,:,1])
+            + np.einsum('...,ij->...ij', x**2, self.elastic_tensor[:, 1, :, 1])
         )
 
     @property
@@ -58,7 +58,7 @@ class Eschelby:
     @property
     def D(self):
         if self._D is None:
-            F = np.einsum('n,ij->nij', self.p, self.elastic_tensor[:,1,:,1])
+            F = np.einsum('n,ij->nij', self.p, self.elastic_tensor[:, 1, :, 1])
             F += self.elastic_tensor[:,1,:,0]
             F = np.einsum('nik,nk->ni', F, self.Ak)
             F = np.concatenate((F.T, self.Ak.T), axis=0)
@@ -73,7 +73,7 @@ class Eschelby:
 
     def _get_z(self, positions):
         z = np.stack((np.ones_like(self.p), self.p), axis=-1)
-        return np.einsum('nk,...k->...n', z, np.asarray(positions)[...,:2])
+        return np.einsum('nk,...k->...n', z, np.asarray(positions)[..., :2])
 
     def get_displacement(self, positions):
         """

@@ -13,6 +13,7 @@ __date__ = "Aug 21, 2021"
 
 s = Settings()
 
+
 class Green:
     """
     Green's function according to the linear elasticity theory. According to the equilibrium
@@ -48,6 +49,7 @@ class Green:
                 (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
         """
         raise NotImplementedError('get_greens_function must be defined in the child class')
+
 
 class Isotropic(Green):
     """
@@ -174,6 +176,7 @@ class Isotropic(Green):
             return self.ddG(r)
         else:
             raise ValueError('Derivative can be up to 2')
+
 
 class Anisotropic(Green):
     """
@@ -303,6 +306,7 @@ class Anisotropic(Green):
                 'n...isrm->...isrm', self._integrand_second_derivative
             )/(4*np.pi**2)*self.dphi
             return np.einsum('...isrm,...->...isrm', M, 1/np.linalg.norm(self.r, axis=-1)**3)
+
 
 Anisotropic.__doc__ = Green.__doc__+Anisotropic.__doc__
 Isotropic.__doc__ = Green.__doc__+Isotropic.__doc__
