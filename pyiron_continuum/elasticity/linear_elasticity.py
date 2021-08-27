@@ -268,6 +268,7 @@ class LinearElasticity:
             positions ((n,3)-array): Positions in real space or reciprocal space (if fourier=True).
             derivative (int): 0th, 1st or 2nd derivative of the Green's function. Ignored if
                 `fourier=True`.
+            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
             n_mesh (int): Number of mesh points in the radial integration in case if anisotropic
                 Green's function (ignored if isotropic=True or fourier=True)
             isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
