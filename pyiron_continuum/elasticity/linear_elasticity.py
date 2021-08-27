@@ -178,9 +178,9 @@ class LinearElasticity:
         self._elastic_tensor = C
 
     def _update(self):
-        S = np.zeros((6,6))
-        S[:3,:3] = (np.eye(3)-self.poissons_ratio*(1-np.eye(3)))/self.youngs_modulus
-        S[3:,3:] = np.eye(3)/self.shear_modulus
+        S = np.zeros((6, 6))
+        S[:3, :3] = (np.eye(3)-self.poissons_ratio*(1-np.eye(3)))/self.youngs_modulus
+        S[3:, 3:] = np.eye(3)/self.shear_modulus
         self.elastic_tensor = np.linalg.inv(S)
 
     @property
@@ -231,7 +231,7 @@ class LinearElasticity:
         Returns:
             ((3,)-array): yz-, xz-, xy-components of shear modulus
         """
-        return 1/self.compliance_matrix[3:,3:].diagonal()
+        return 1/self.compliance_matrix[3:, 3:].diagonal()
 
     @property
     def bulk_modulus(self):
@@ -247,8 +247,8 @@ class LinearElasticity:
         Returns:
             ((3,)-array): yz-, xz-, xy-components of Poisson's ratio
         """
-        nu = -self.compliance_matrix[:3,:3]*self.youngs_modulus
-        return np.array([nu[1,2], nu[0,2], nu[0,1]])
+        nu = -self.compliance_matrix[:3, :3]*self.youngs_modulus
+        return np.array([nu[1, 2], nu[0, 2], nu[0, 1]])
 
     @property
     def youngs_modulus(self):
@@ -256,7 +256,7 @@ class LinearElasticity:
         Returns:
             ((3,)-array): xx-, yy-, zz-components of Young's modulus
         """
-        return 1/self.compliance_matrix[:3,:3].diagonal()
+        return 1/self.compliance_matrix[:3, :3].diagonal()
 
     def get_greens_function(
         self, positions, derivative=0, fourier=False, n_mesh=100, isotropic=False, optimize=True
