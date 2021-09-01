@@ -16,7 +16,6 @@ not zero) cost in developer time.
 
 import unittest
 from pyiron_base import Project
-import pyiron_continuum
 import numpy as np
 from .tutorials import page_5, page_6, page_7, page_8, page_9
 
