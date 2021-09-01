@@ -20,29 +20,6 @@ import numpy as np
 from .tutorials import page_5, page_6, page_7, page_8, page_9
 
 
-# trying debugging the issue with the environment on GitHub
-#https://github.com/pyiron/pyiron_continuum/pull/52#issuecomment-910093516
-try:
-    from fenics import UnitSquareMesh
-except Exception as err_msg:
-    print(f"DEBUG: importing UnitSquareMesh")
-    print(f"DEBUG: {err_msg}")
-
-
-try:
-    from fenics import BoxMesh
-except Exception as err_msg:
-    print(f"DEBUG: importing BoxMesh")
-    print(f"DEBUG: {err_msg}")
-
-
-try:
-    from fenics import RectangleMesh
-except Exception as err_msg:
-    print(f"DEBUG: importing RectangleMesh")
-    print(f"DEBUG: {err_msg}")
-
-
 class TestFenicsTutorials(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
