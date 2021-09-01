@@ -12,8 +12,6 @@ on:
 
 jobs:
   build:
-    env:
-      CONDA_PREFIX: /usr/share/miniconda/
 
     runs-on: ${{ matrix.operating-system }}
     strategy:
