@@ -510,3 +510,7 @@ class LinearElasticity:
         return np.einsum(
             'ijkl,nkl,nij->', self.elastic_tensor, strain, strain
         )/np.diff(theta_range)[0]*r_min**2*np.log(r_max/r_min)
+
+    def get_dislocation_force(self, stress, glide_plane, burgers_vector):
+        g = np.asarray(glide_plane)/np.linalg.norm(glide_plane)
+        return np.einsum('i,ij,j,k->k', g, stress, burgers_vector, np.cross(g, [0, 0, 1]))
