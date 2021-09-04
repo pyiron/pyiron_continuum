@@ -104,6 +104,16 @@ class LinearElasticity:
     >>> burgers_vector = np.array([0, 0, 1])
     >>> print(medium.get_dislocation_stress(random_positions, burgers_vector))
 
+    Example IV: Estimate the distance between partial dislocations:
+
+    >>> medium = LinearElasticity(elastic_tensor)
+    >>> partial_one = np.array([-0.5, 0, np.sqrt(3)/2])*lattice_constant
+    >>> partial_two = np.array([0.5, 0, np.sqrt(3)/2])*lattice_constant
+    >>> distance = 100
+    >>> stress_one = medium.get_dislocation_stress([0, distance, 0], partial_one)
+    >>> print('Choose `distance` in the way that the value below corresponds to SFE')
+    >>> medium.get_dislocation_force(stress_one, [0, 1, 0], partial_two)
+
     """
     def __init__(self, elastic_tensor, orientation=None):
         """
@@ -512,5 +522,16 @@ class LinearElasticity:
         )/np.diff(theta_range)[0]*r_min**2*np.log(r_max/r_min)
 
     def get_dislocation_force(self, stress, glide_plane, burgers_vector):
+        """
+        Force per unit length along the dislocation line.
+
+        Args:
+            stress ((3,3)-array): External stress field at the dislocation line
+            glide_plane ((3,)-array): Glide plane
+            burgers_vector ((3,)-array): Burgers vector
+
+        Returns:
+            ((3,)-array): Force per unit length acting on the dislocation.
+        """
         g = np.asarray(glide_plane)/np.linalg.norm(glide_plane)
         return np.einsum('i,ij,j,k->k', g, stress, burgers_vector, np.cross(g, [0, 0, 1]))

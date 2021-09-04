@@ -59,6 +59,19 @@ class TestElasticity(unittest.TestCase):
         self.assertGreater(E_two, 0)
         self.assertAlmostEqual(E_one/np.log(r_max/r_min_one), E_two/np.log(r_max/r_min_two))
 
+    def test_force(self):
+        elastic_tensor = create_random_C()
+        medium = LinearElasticity(elastic_tensor)
+        medium.orientation = [[1, -2, 1], [1, 1, 1], [-1, 0, 1]]
+        lattice_constant = 3.52
+        partial_one = np.array([-0.5, 0, np.sqrt(3)/2])*lattice_constant
+        partial_two = np.array([0.5, 0, np.sqrt(3)/2])*lattice_constant
+        stress = medium.get_dislocation_stress([0, 100, 0], partial_one)
+        force = medium.get_dislocation_force(stress, [0, 1, 0], partial_two)
+        self.assertAlmostEqual(force[1], 0)
+        self.assertAlmostEqual(force[2], 0)
+        self.assertGreater(force[0], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
