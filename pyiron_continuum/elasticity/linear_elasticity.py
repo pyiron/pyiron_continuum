@@ -474,6 +474,33 @@ class LinearElasticity:
     def get_dislocation_energy(self, burgers_vector, r_min, r_max, mesh=100):
         """
         Energy per unit length along the dislocation line.
+
+        Args:
+            burgers_vector ((3,)-array): Burgers vector
+            r_min (float): Minimum distance from the dislocation core
+            r_max (float): Maximum distance from the dislocation core
+            mesh (int): Number of grid points for the numerical integration along the angle
+
+        Returns:
+            (float): Energy of dislocation per unit length
+
+        The energy is defined by the product of the stress and strain (i.e. energy density),
+        which is integrated over the plane vertical to the dislocation line. The energy density
+        :math:`w` according to the linear elasticity is given by:
+
+        .. math:
+            w(r, \\theta) = A(\\theta)/r^2
+
+        Therefore, the energy per unit length :math:`U` is given by:
+
+        .. math:
+            U = \\log(r_max/r_min)\\int A(\\theta)\\mathrm d\\theta
+
+        This implies :math:`r_min` cannot be 0 as well as :math:`r_max` cannot be infinity. This
+        is the consequence of the fact that the linear elasticity cannot describe the core
+        structure properly, and a real medium is not infinitely large. While :math:`r_max` can
+        be defined based on the real dislocation density, the choice of :math:`r_min` should be
+        done carefully.
         """
         if r_min <= 0:
             raise ValueError('r_min must be a positive float')
