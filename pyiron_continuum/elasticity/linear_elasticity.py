@@ -40,14 +40,14 @@ where :math:`u_i(r)` is the displacement field of component :math:`i` at positio
 polynomial development we obtain:
 
 .. math:
-    u_i(r) \\approx G_{ij}(r)\\sum_a f_j(a)-\\frac{\partial G_{ij}}{\\partial r_k}(r)\\sum_a a_k f_j(a)
+    u_i(r) \\approx G_{ij}(r)\\sum_a f_j(a)-\\frac{\\partial G_{ij}}{\\partial r_k}(r)\\sum_a a_k f_j(a)
 
 The first term disappears because the sum of the forces is zero. From the second term we define
 the dipole tensor :math:`P_{jk} = a_k f_j(a)`. Following the definition above, we can obtain the
 displacement field, strain field, stress field and energy density field if the dipole tensor and
 the elastic tensor are known.
 
-The dipole tensor ob a point defect is commonly obtained from the following equation:
+The dipole tensor of a point defect is commonly obtained from the following equation:
 
 .. math:
     U = \\frac{V}{2} \\varepsilon_{ij}C_{ijkl}\\varepsilon_{kl}-P_{kl}\\varepsilon_{kl}
@@ -470,3 +470,16 @@ class LinearElasticity:
         """
         strain = self.get_dislocation_strain(positions, burgers_vector)
         return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
+
+    def get_dislocation_energy(self, burgers_vector, r_min, r_max, mesh=100):
+        """
+        Energy per unit length along the dislocation line.
+        """
+        if r_min <= 0:
+            raise ValueError('r_min must be a positive float')
+        theta_range = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        r = np.stack((np.cos(theta_range), np.sin(theta_range)), axis=-1)*r_min
+        strain = self.get_dislocation_strain(r, burgers_vector=burgers_vector)
+        return np.einsum(
+            'ijkl,nkl,nij->', self.elastic_tensor, strain, strain
+        )/np.diff(theta_range)[0]*r_min**2*np.log(r_max/r_min)
