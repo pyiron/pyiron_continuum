@@ -1,15 +1,7 @@
 import numpy as np
 import unittest
 from pyiron_continuum.elasticity.green import Anisotropic
-from pyiron_continuum.elasticity import tools
-
-
-def create_random_C():
-    C = np.zeros((6, 6))
-    C[:3, :3] = np.random.random()
-    C[:3, :3] += np.random.random()*np.eye(3)
-    C[3:, 3:] = np.random.random()*np.eye(3)
-    return tools.C_from_voigt(C)
+from create_elastic_tensor import create_random_C
 
 
 class TestGreen(unittest.TestCase):

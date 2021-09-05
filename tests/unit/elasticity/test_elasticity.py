@@ -1,15 +1,7 @@
 import numpy as np
 import unittest
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
-from pyiron_continuum.elasticity import tools
-
-
-def create_random_C():
-    C = np.zeros((6, 6))
-    C[:3, :3] = np.random.random()
-    C[:3, :3] += np.random.random()*np.eye(3)
-    C[3:, 3:] = np.random.random()*np.eye(3)
-    return tools.C_from_voigt(C)
+from create_elastic_tensor import create_random_C
 
 
 class TestElasticity(unittest.TestCase):
@@ -41,10 +33,7 @@ class TestElasticity(unittest.TestCase):
         self.assertTrue(np.allclose(medium.poissons_ratio, 0))
 
     def test_isotropic(self):
-        C = np.zeros((6, 6))
-        C[:3, :3] = np.ones((3, 3))*np.random.random()+np.eye(3)*np.random.random()
-        C[3:, 3:] = np.eye(3)*(C[0, 0]-C[0, 1])/2
-        medium = LinearElasticity(C)
+        medium = LinearElasticity(create_random_C(isotropic=True))
         self.assertTrue(medium._is_isotropic)
 
     def test_energy(self):
@@ -66,11 +55,10 @@ class TestElasticity(unittest.TestCase):
         lattice_constant = 3.52
         partial_one = np.array([-0.5, 0, np.sqrt(3)/2])*lattice_constant
         partial_two = np.array([0.5, 0, np.sqrt(3)/2])*lattice_constant
-        stress = medium.get_dislocation_stress([0, 100, 0], partial_one)
+        stress = medium.get_dislocation_stress([0, 10, 0], partial_one)
         force = medium.get_dislocation_force(stress, [0, 1, 0], partial_two)
         self.assertAlmostEqual(force[1], 0)
         self.assertAlmostEqual(force[2], 0)
-        self.assertGreater(force[0], 0)
 
 
 if __name__ == "__main__":
