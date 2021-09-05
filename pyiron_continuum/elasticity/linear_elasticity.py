@@ -521,7 +521,8 @@ class LinearElasticity:
             'ijkl,nkl,nij->', self.elastic_tensor, strain, strain
         )/np.diff(theta_range)[0]*r_min**2*np.log(r_max/r_min)
 
-    def get_dislocation_force(self, stress, glide_plane, burgers_vector):
+    @staticmethod
+    def get_dislocation_force(stress, glide_plane, burgers_vector):
         """
         Force per unit length along the dislocation line.
 
