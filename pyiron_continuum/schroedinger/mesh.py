@@ -41,11 +41,13 @@ class RectMesh(HasStorage):
         mesh (numpy.ndarray): The spatial sampling points.
         steps (numpy.ndarray): The step size in each dimension.
     """
-    def __init__(self, bounds, divisions):
+
+    def __init__(self, bounds, divisions, simplify_1d=True):
         super().__init__()
         bounds, divisions = self._clean_input(bounds, divisions)
         self.storage.bounds = bounds
         self.storage.divisions = divisions
+        self.storage.simplify_1d = simplify_1d
         self._build_mesh()
 
     @property
@@ -68,9 +70,16 @@ class RectMesh(HasStorage):
         self.storage.divisions = new_divisions
         self._build_mesh()
 
-    @staticmethod
-    def _simplify_1d(x):
-        if len(x) == 1:
+    @property
+    def simplify_1d(self):
+        return self.storage.simplify_1d
+
+    @simplify_1d.setter
+    def simplify_1d(self, simplify: bool):
+        self.storage.simplify_1d = simplify
+
+    def _simplify_1d(self, x):
+        if len(x) == 1 and self.storage.simplify_1d:
             return x[0]   # 1D
         else:
             return x
@@ -126,3 +135,19 @@ class RectMesh(HasStorage):
     @staticmethod
     def _is_int(val):
         return np.issubdtype(type(val), np.integer)
+
+    def laplacian(self, fnc):
+        """
+        Discrete Laplacian operator applied to a given function assuming periodic boundary conditions.
+
+        Args:
+            fnc (function): A function taking the `mesh.mesh` value.
+
+        Returns:
+            (numpy.ndarray): The Laplacian of the function at each point on the grid.
+        """
+        val = fnc(self.mesh)
+        res = np.zeros(val.shape)
+        for ax, ds in enumerate(self.steps):
+            res += (np.roll(val, 1, axis=ax) + np.roll(val, -1, axis=ax) - 2 * val) / ds ** 2
+        return res

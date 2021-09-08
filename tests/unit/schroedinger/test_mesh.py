@@ -49,6 +49,8 @@ class TestRectMesh(PyironTestCase):
         mesh = RectMesh(L, n)
         self.assertTrue(np.allclose(mesh.mesh, [0, L/2]), msg='1D should get simplified')
         self.assertAlmostEqual(mesh.steps, L/2, msg='1D should get simplified')
+        mesh.simplify_1d = False
+        self.assertTrue(np.allclose(mesh.steps, [L/2]), msg='1D should stay list-like')
 
         mesh = RectMesh([L, 2 * L], n)
         self.assertTrue(
@@ -77,3 +79,21 @@ class TestRectMesh(PyironTestCase):
         self.assertTrue(np.allclose(mesh.mesh, 2 * init_mesh), msg='Should have doubled extent')
         mesh.divisions = 2 * n
         self.assertEqual(2 * n, len(mesh.mesh[0]), msg='Should have doubled sampling density')
+
+    def test_laplacian(self):
+        """
+        Check that the numeric laplacian matches an analytic reference better for denser meshes, even when mesh spacings
+        differ across dimensions.
+        """
+        def fnc(mesh):
+            """Product of sines. Analytic Laplacian is negative product of sines multiplied by number of dimensions."""
+            return np.prod([np.sin(m) for m in mesh], axis=0)
+
+        for dims in [1, 2, 3]:
+            convergence = []
+            for divs in [10, 50]:
+                mesh = RectMesh(dims * [2 * np.pi], [divs + d for d in range(dims)], simplify_1d=False)
+                analytic = -dims * fnc(mesh.mesh)
+                numeric = mesh.laplacian(fnc)
+                convergence.append(np.linalg.norm(analytic - numeric))
+            self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
