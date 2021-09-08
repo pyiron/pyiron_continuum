@@ -85,11 +85,11 @@ class RectMesh(HasStorage):
             return x
 
     @property
-    def mesh(self):
+    def mesh(self) -> np.ndarray:
         return self._simplify_1d(self.storage.mesh)
 
     @property
-    def steps(self):
+    def steps(self) -> np.ndarray:
         return self._simplify_1d(self.storage.steps)
 
     def _build_mesh(self):
