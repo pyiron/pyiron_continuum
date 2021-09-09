@@ -7,13 +7,37 @@ import numpy as np
 
 
 class Potential(HasStorage, ABC):
+    """
+    An abstract class for "potentials" that map (d, l, m, n)-dimensional `RectMesh` objects onto (l, m, n)-dimensional
+    fields.
+    """
+
     @abstractmethod
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
         pass
 
 
 class SquareWell(Potential):
+    """
+    Square potentials occupying some fraction of the mesh in each direction.
+
+    TODO: Allow different widths in each dimension.
+
+    TODO: Units?
+
+    Attributes:
+        width (float): What fraction of the mesh to set to a potential of 0. (Default is 0.5, half the space.)
+        depth (float): How high to make the rest of the space. (Default is 1.)
+    """
+
     def __init__(self, width=0.5, depth=1):
+        """
+        Instantiate a square well.
+
+        Args:
+            width (float): What fraction of the mesh to set to a potential of 0. (Default is 0.5, half the space.)
+            depth (float): How high to make the rest of the space. (Default is 1.)
+        """
         super().__init__()
         self.storage.width = width
         self.storage.depth = depth
@@ -46,7 +70,28 @@ class SquareWell(Potential):
 
 
 class Sinusoidal(Potential):
+    """
+    A product of sines that repeats periodically in each dimension of the mesh on which it is evaluated.
+
+    TODO: Allow different number of waves in each dimension.
+
+    TODO: Units?
+
+    TODO: Fix periodicity bug.
+
+    Attributes:
+        width (float): What fraction of the mesh to set to a potential of 0. (Default is 0.5, half the space.)
+        depth (float): How high to make the rest of the space. (Default is 1.)
+    """
+
     def __init__(self, n_waves=1, amplitude=1):
+        """
+        Instantiate a periodic product of sines.
+
+        Args:
+            n_waves (float): How many wave repetitions to have along all dimensions. (Default is 1.)
+            amplitude (float): The amplitude of the waves. (Default is 1.)
+        """
         super().__init__()
         self.storage.n_waves = self._clean_waves(n_waves)
         self.storage.amplitude = amplitude
