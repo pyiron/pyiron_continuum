@@ -12,28 +12,38 @@ class Potential(HasStorage, ABC):
         pass
 
 
-class InfiniteWell(Potential):
-    def __init__(self, fraction_zero=0.5):
+class SquareWell(Potential):
+    def __init__(self, width=0.5, depth=1):
         super().__init__()
-        self.storage.fraction_zero = fraction_zero
+        self.storage.width = width
+        self.storage.depth = depth
 
     @property
-    def fraction_zero(self):
-        return self.storage.fraction_zero
+    def width(self):
+        return self.storage.width
 
-    @fraction_zero.setter
-    def fraction_zero(self, fraction):
-        self.storage.fraction_zero = fraction
+    @width.setter
+    def width(self, width):
+        self.storage.width = width
+
+    @property
+    def depth(self):
+        return self.storage.depth
+
+    @depth.setter
+    def depth(self, depth):
+        self.storage.depth = depth
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
-        potential = np.ones_like(mesh.mesh) * np.nan
+        potential = np.ones_like(mesh.mesh) * self.depth
+        print(self.depth)
         lengths = np.array([np.amax(m) for m in mesh.mesh]) + mesh.steps
         mask = np.array([
-            (m > 0.5 * l * (1 - self.fraction_zero)) * (m < 0.5 * l * (1 + self.fraction_zero))
+            (m >= 0.5 * l * (1 - self.width)) * (m < 0.5 * l * (1 + self.width))
             for m, l in zip(mesh.mesh, lengths)
         ])
         potential[mask] = 0
-        return potential
+        return np.amax(potential, axis=0)
 
 
 class Sinusoidal(Potential):
