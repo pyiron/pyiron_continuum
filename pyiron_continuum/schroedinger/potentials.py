@@ -36,7 +36,6 @@ class SquareWell(Potential):
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
         potential = np.ones_like(mesh.mesh) * self.depth
-        print(self.depth)
         lengths = np.array([np.amax(m) for m in mesh.mesh]) + mesh.steps
         mask = np.array([
             (m >= 0.5 * l * (1 - self.width)) * (m < 0.5 * l * (1 + self.width))
