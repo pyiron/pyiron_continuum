@@ -39,7 +39,9 @@ class RectMesh(HasStorage):
         bounds (numpy.ndarray): The start and end point for each dimension.
         divisions (numpy.ndarray): How many sampling points in each dimension.
         mesh (numpy.ndarray): The spatial sampling points.
-        steps (numpy.ndarray): The step size in each dimension.
+        steps (numpy.ndarray/float): The step size in each dimension.
+        lengths (numpy.ndarray/float): How large the domain is in each dimension.
+        simplify_1d (bool): Whether to reduce dimension whenever the first dimension has length 1.
 
     Methods:
         laplacian: Given a callable that takes the mesh as its argument, or a numpy array with the same shape as the
@@ -115,6 +117,10 @@ class RectMesh(HasStorage):
     @property
     def shape(self):
         return self.mesh.shape
+
+    @property
+    def lengths(self):
+        return self._simplify_1d(np.array([np.amax(m) for m in self.mesh]) + self.steps)
 
     def _build_mesh(self):
         linspaces = []

@@ -60,10 +60,9 @@ class SquareWell(Potential):
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
         potential = np.ones_like(mesh.mesh) * self.depth
-        lengths = np.array([np.amax(m) for m in mesh.mesh]) + mesh.steps
         mask = np.array([
-            (m >= 0.5 * l * (1 - self.width)) * (m < 0.5 * l * (1 + self.width))
-            for m, l in zip(mesh.mesh, lengths)
+            (m >= 0.5 * l * (1 - self.width)) * (m <= 0.5 * l * (1 + self.width))
+            for m, l in zip(mesh.mesh, mesh.lengths)
         ])
         potential[mask] = 0
         return np.amax(potential, axis=0)
@@ -76,8 +75,6 @@ class Sinusoidal(Potential):
     TODO: Allow different number of waves in each dimension.
 
     TODO: Units?
-
-    TODO: Fix periodicity bug.
 
     Attributes:
         width (float): What fraction of the mesh to set to a potential of 0. (Default is 0.5, half the space.)
@@ -120,4 +117,10 @@ class Sinusoidal(Potential):
         self.storage.amplitude = a
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
-        return np.prod([self.amplitude * np.sin(self.n_waves * m) for m in mesh.mesh], axis=0)
+        return np.prod(
+            [
+                self.amplitude * np.sin(2 * np.pi * self.n_waves * m / l)
+                for m, l in zip(mesh.mesh, mesh.lengths)
+            ],
+            axis=0
+        )
