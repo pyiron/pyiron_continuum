@@ -16,7 +16,7 @@ class RectMesh(HasStorage):
 
     Example 1-D)
 
-    >>> mesh = RectMesh(2, 2)
+    >>> mesh = RectMesh(2, 2, simplify_1d=True)
     >>> mesh.mesh
     array([0., 1.])
     >>> mesh.steps
@@ -42,7 +42,7 @@ class RectMesh(HasStorage):
         steps (numpy.ndarray): The step size in each dimension.
     """
 
-    def __init__(self, bounds, divisions, simplify_1d=True):
+    def __init__(self, bounds, divisions, simplify_1d=False):
         super().__init__()
         bounds, divisions = self._clean_input(bounds, divisions)
         self.storage.bounds = bounds
@@ -91,6 +91,10 @@ class RectMesh(HasStorage):
     @property
     def steps(self) -> np.ndarray:
         return self._simplify_1d(self.storage.steps)
+
+    @property
+    def shape(self):
+        return self.mesh.shape
 
     def _build_mesh(self):
         linspaces = []
@@ -141,12 +145,17 @@ class RectMesh(HasStorage):
         Discrete Laplacian operator applied to a given function assuming periodic boundary conditions.
 
         Args:
-            fnc (function): A function taking the `mesh.mesh` value.
+            fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value or the function already evaluated.
 
         Returns:
             (numpy.ndarray): The Laplacian of the function at each point on the grid.
         """
-        val = fnc(self.mesh)
+        if callable(fnc):
+            val = fnc(self)
+        elif np.all(fnc.shape == self.shape[1:]):
+            val = fnc
+        else:
+            raise TypeError('Argument for laplacian not recognized')
         res = np.zeros(val.shape)
         for ax, ds in enumerate(self.steps):
             res += (np.roll(val, 1, axis=ax) + np.roll(val, -1, axis=ax) - 2 * val) / ds ** 2

@@ -87,13 +87,13 @@ class TestRectMesh(PyironTestCase):
         """
         def fnc(mesh):
             """Product of sines. Analytic Laplacian is negative product of sines multiplied by number of dimensions."""
-            return np.prod([np.sin(m) for m in mesh], axis=0)
+            return np.prod([np.sin(m) for m in mesh.mesh], axis=0)
 
         for dims in [1, 2, 3]:
             convergence = []
             for divs in [10, 50]:
-                mesh = RectMesh(dims * [2 * np.pi], [divs + d for d in range(dims)], simplify_1d=False)
-                analytic = -dims * fnc(mesh.mesh)
+                mesh = RectMesh(dims * [2 * np.pi], [divs + d for d in range(dims)])
+                analytic = -dims * fnc(mesh)
                 numeric = mesh.laplacian(fnc)
                 convergence.append(np.linalg.norm(analytic - numeric))
             self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
