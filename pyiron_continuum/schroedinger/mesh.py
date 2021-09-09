@@ -40,9 +40,28 @@ class RectMesh(HasStorage):
         divisions (numpy.ndarray): How many sampling points in each dimension.
         mesh (numpy.ndarray): The spatial sampling points.
         steps (numpy.ndarray): The step size in each dimension.
+
+    Methods:
+        laplacian: Given a callable that takes the mesh as its argument, or a numpy array with the same shape as the
+            mesh's real-space dimensions (i.e. `self.shape[1:]`, since the first mesh dimension maps over the dimensions
+            themselves) returns the discrete Laplace operator on this mesh applied to that funcation/data.
     """
 
     def __init__(self, bounds, divisions, simplify_1d=False):
+        """
+        Instantiate a rectangular mesh.
+
+        Args:
+            bounds (float/list/numpy.ndarray): The upper and lower bounds for each dimension of the mesh. A single
+                value, L, creates a mesh on [0, L]. A list/array with shape (n<=3,) creates an n-dimensional mesh with
+                on [0, L_i] for each of the L_i values given. A two-dimensional list/array should have shape (n<=3,2)
+                and gives lower and upper bounds for each dimension, i.e. `[[0.5, 1]]` makes a 1D mesh on [0.5, 1].
+            divisions (int/list/numpy.ndarray): How many grid divisions to use in each dimension. An integer will be
+                mapped up to give that number of divisions on all dimensions provided in `bounds`, otherwise the
+                dimensionality between the two arguments must agree.
+            simplify_1d (bool): Whether to simplify the output for 1D meshes so they have shape (n,) instead of (1, n).
+                (Default is False.)
+        """
         super().__init__()
         bounds, divisions = self._clean_input(bounds, divisions)
         self.storage.bounds = bounds
@@ -90,6 +109,7 @@ class RectMesh(HasStorage):
 
     @property
     def steps(self) -> np.ndarray:
+        """Spacing between each mesh point."""
         return self._simplify_1d(self.storage.steps)
 
     @property
