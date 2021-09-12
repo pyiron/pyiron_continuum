@@ -1,12 +1,10 @@
 channels:
   - conda-forge
-  - conda-forge/label/broken
 dependencies:
   - ase
   - coveralls
   - coverage
   - codacy-coverage
-  - damask=3.0.0=*_9
   - matplotlib
   - fenics =2019.1.0=*_21
   - mshr =2019.1.0=*_4
