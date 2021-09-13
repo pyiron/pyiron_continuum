@@ -97,3 +97,8 @@ class TestRectMesh(PyironTestCase):
                 numeric = mesh.laplacian(fnc)
                 convergence.append(np.linalg.norm(analytic - numeric))
             self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
+
+    def test_length(self):
+        mesh = RectMesh([[0, 1], [1, 3]], 2)
+        self.assertAlmostEqual(1, mesh.lengths[0], msg='Real-space length in x-direction should be 1')
+        self.assertAlmostEqual(2, mesh.lengths[1], msg='Real-space length in y-direction should be 3-1=2')

@@ -120,7 +120,9 @@ class RectMesh(HasStorage):
 
     @property
     def lengths(self):
-        return self._simplify_1d(np.array([np.amax(m) for m in self.mesh]) + self.steps)
+        max_ = np.array([np.amax(m) for m in self.mesh]) + self.steps
+        min_ = np.array([np.amin(m) for m in self.mesh])
+        return self._simplify_1d(max_ - min_)
 
     def _build_mesh(self):
         linspaces = []
