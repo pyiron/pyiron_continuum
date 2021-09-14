@@ -67,8 +67,6 @@ class _TISEInput(DataContainer):
 
     @potential.setter
     def potential(self, new_potential):
-        if not callable(new_potential):
-            raise TypeError(f'Potentials must be callable (with a mesh argument) but got {type(new_potential)}')
         self._potential = new_potential
 
 
@@ -153,6 +151,12 @@ class TISE(PythonTemplateJob):
     def plot_3d(self):
         return _Plot3D(self)
 
+    def _potential_psi(self, psi):
+        try:
+            return self.potential(self.mesh) * psi
+        except TypeError:
+            return self.potential * psi
+
     def _hamiltonian(self, psi):
         """
         H = -(hbar^2 / 2 m)(del^2 / del x^2) + V
@@ -167,7 +171,7 @@ class TISE(PythonTemplateJob):
         https://www.wolframalpha.com/input/?i=1+%28atomic+mass+units%29*%28angstroms%5E2%29%2F%28s%5E2%29+in+eV
         Except that didn't seem to work, so for now just use HBAR as defined in the header
         """
-        return -(HBAR**2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) + self.potential(self.mesh) * psi
+        return -(HBAR**2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) + self._potential_psi(psi)
 
     def _flat_hamiltonian(self, psi_1d):
         """Matrix-vector product for `LinearOperator` to use."""
@@ -206,7 +210,10 @@ class _PlotCore(ABC):
         return fig, ax
 
     def potential(self, ax=None, **kwargs):
-        return self._make_plot(self._job.potential(self._job.mesh), ax=ax, **kwargs)
+        try:
+            return self._make_plot(self._job.potential(self._job.mesh), ax=ax, **kwargs)
+        except TypeError:
+            return self._make_plot(self._job.potential, ax=ax, **kwargs)
 
     def psi(self, i, ax=None, **kwargs):
         return self._make_plot(self._job.output.psi[i], ax=ax, **kwargs)
