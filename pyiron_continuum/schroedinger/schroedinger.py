@@ -17,7 +17,7 @@ from scipy.constants import physical_constants
 
 # TODO: Convert to pyiron units
 HBAR = 1  # EV_TO_U_ANGSTROMSQ_PER_SSQ * physical_constants['Planck constant in eV/Hz'][0] / (2 * np.pi)
-M_EL = 1 # physical_constants['electron mass in u'][0]
+M_EL = 1  # physical_constants['electron mass in u'][0]
 KB = physical_constants['Boltzmann constant in eV/K'][0]
 
 __author__ = "Liam Huber"
@@ -65,30 +65,44 @@ class _TISEInput(DataContainer):
 class _TISEOutput(DataContainer):
     def __init__(self, init=None, table_name='input', lazy=False):
         super().__init__(init=init, table_name=table_name, lazy=lazy)
-        self.eigenvalues = None
-        self.eigenvectors = None
+        self.energy = None
+        self.psi = None
         self._rho = None
 
     @property
+    def _space_axes(self):
+        return tuple(n for n in range(1, len(self.psi.shape)))
+
+    def _broadcast_vector_to_space(self, vector):
+        return vector.reshape(-1, *(1,)*len(self._space_axes))
+
+    def _normalize_per_state(self, states):
+        return states / self._broadcast_vector_to_space(np.linalg.norm(states, axis=self._space_axes))
+
+    def _weight_states(self, states, weights):
+        return states * self._broadcast_vector_to_space(weights)
+
+    @property
     def rho(self):
-        if self._rho is None and self.eigenvectors is not None:
-            rho_unnorm = self.eigenvectors ** 2
-            self._rho = rho_unnorm / np.linalg.norm(rho_unnorm, axis=0)
+        if self._rho is None and self.psi is not None:
+            self._rho = self._normalize_per_state(self.psi ** 2)
         return self._rho
 
-    def get_occupation(self, temperature):
-        if self.eigenvalues is not None:
-            return 1. / (np.exp(self.eigenvalues / (KB * temperature)) + 1)
+    def get_boltzmann_occupation(self, temperature):
+        if self.energy is not None:
+            return 1. / (np.exp(self.energy / (KB * temperature)) + 1)
 
-    def get_rho_tot(self, temperature):
-        try:
-            rho_tot = np.sum(
-                [occupation * psi for occupation, psi in zip(self.get_occupation(temperature), self.eigenvectors)],
-                axis=0
-            )**2
+    def get_boltzmann_psi(self, temperature):
+        if self.psi is not None:
+            weighted_psi = self._weight_states(self.psi, self.get_boltzmann_occupation(temperature))
+            psi_tot = np.sum(weighted_psi, axis=0)
+            return psi_tot / np.linalg.norm(psi_tot)
+
+    def get_boltzmann_rho(self, temperature):
+        if self.psi is not None:
+            weighted_psi = self._weight_states(self.psi, self.get_boltzmann_occupation(temperature))
+            rho_tot = np.sum(weighted_psi ** 2, axis=0)
             return rho_tot / np.linalg.norm(rho_tot)
-        except TypeError:
-            return None
 
 
 class TISE(PythonTemplateJob):
@@ -149,9 +163,9 @@ class TISE(PythonTemplateJob):
         n_mat = np.prod(self.mesh.shape[1:])
         A = LinearOperator((n_mat, n_mat), self._flat_hamiltonian)
 
-        ew, ev = eigsh(A, which='SA', k=self.input.n_states)
-        self.output.eigenvalues = ew
-        self.output.eigenvectors = np.array([np.reshape(v, self.mesh.shape[1:]) for v in ev.T])
+        eigenvalues, eigenvectors = eigsh(A, which='SA', k=self.input.n_states)
+        self.output.energy = eigenvalues
+        self.output.psi = np.array([np.reshape(v, self.mesh.shape[1:]) for v in eigenvectors.T])
         self.to_hdf()
         self.status.finished = True
 
@@ -180,13 +194,16 @@ class _PlotCore(ABC):
         return self._make_plot(self._job.potential(self._job.mesh), ax=ax, **kwargs)
 
     def psi(self, i, ax=None, **kwargs):
-        return self._make_plot(self._job.output.eigenvectors[i], ax=ax, **kwargs)
+        return self._make_plot(self._job.output.psi[i], ax=ax, **kwargs)
 
     def rho(self, i, ax=None, **kwargs):
         return self._make_plot(self._job.output.rho[i], ax=ax, **kwargs)
 
-    def rho_tot(self, temperature, ax=None, **kwargs):
-        return self._make_plot(self._job.output.get_rho_tot(temperature), ax=ax, **kwargs)
+    def boltzmann_psi(self, temperature, ax=None, **kwargs):
+        return self._make_plot(self._job.output.get_boltzmann_psi(temperature), ax=ax, **kwargs)
+
+    def boltzmann_rho(self, temperature, ax=None, **kwargs):
+        return self._make_plot(self._job.output.get_boltzmann_rho(temperature), ax=ax, **kwargs)
 
 
 class _Plot1D(_PlotCore):
@@ -200,7 +217,7 @@ class _Plot1D(_PlotCore):
         fig, ax = plt.subplots()
         self.potential(ax=ax, label='potl', color='k')
         for i in range(n_states):
-            self.psi(i, shift=self._job.output.eigenvalues[i], ax=ax, label=i)
+            self.psi(i, shift=self._job.output.energy[i], ax=ax, label=i)
         ax.legend()
         return fig, ax
 
