@@ -22,7 +22,6 @@ except ImportAlarm:
                             '`conda install -c conda-forge k3d`')
 
 
-
 # TODO: Convert to pyiron units
 HBAR = 1  # EV_TO_U_ANGSTROMSQ_PER_SSQ * physical_constants['Planck constant in eV/Hz'][0] / (2 * np.pi)
 M_EL = 1  # physical_constants['electron mass in u'][0]
@@ -169,9 +168,9 @@ class TISE(PythonTemplateJob):
     def run_static(self):
         self.status.running = True
         n_mat = np.prod(self.mesh.shape[1:])
-        A = LinearOperator((n_mat, n_mat), self._flat_hamiltonian)
+        flat_ham = LinearOperator((n_mat, n_mat), self._flat_hamiltonian)
 
-        eigenvalues, eigenvectors = eigsh(A, which='SA', k=self.input.n_states)
+        eigenvalues, eigenvectors = eigsh(flat_ham, which='SA', k=self.input.n_states)
         self.output.energy = eigenvalues
         self.output.psi = np.array([np.reshape(v, self.mesh.shape[1:]) for v in eigenvectors.T])
         self.to_hdf()
@@ -252,4 +251,3 @@ class _Plot3D(_PlotCore):
                                          bounds=self._job.mesh.bounds.flatten(), color=10)
         ax += plt_surface
         return ax
-
