@@ -38,10 +38,13 @@ setup(
         'pyiron_base==0.3.2',
         'scipy==1.7.1',
     ],
-    extras_require={'fenics': [
-        'fenics==2019.1.0',
-        'mshr==2019.1.0',
-    ]},
+    extras_require={
+        'fenics': [
+            'fenics==2019.1.0',
+            'mshr==2019.1.0',
+        ],
+        'schroedinger': ['k3d==2.11.0']
+    },
     cmdclass=versioneer.get_cmdclass(),
     
 )

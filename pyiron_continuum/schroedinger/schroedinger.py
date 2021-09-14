@@ -6,14 +6,22 @@
 A job class for solving the time-independent Schroedinger equation on a discrete mesh.
 """
 
-from pyiron_base import PythonTemplateJob, DataContainer
+from pyiron_base import PythonTemplateJob, DataContainer, ImportAlarm
 import numpy as np
 from pyiron_continuum.schroedinger.mesh import RectMesh
 from scipy.sparse.linalg import eigsh, LinearOperator
 from abc import ABC, abstractmethod
-import matplotlib.pyplot as plt
-import k3d
 from scipy.constants import physical_constants
+import matplotlib.pyplot as plt
+
+try:
+    import k3d
+    k3d_alarm = ImportAlarm()
+except ImportAlarm:
+    k3d_alarm = ImportAlarm('3d plotting requires the k3d package which is accessible by '
+                            '`conda install -c conda-forge k3d`')
+
+
 
 # TODO: Convert to pyiron units
 HBAR = 1  # EV_TO_U_ANGSTROMSQ_PER_SSQ * physical_constants['Planck constant in eV/Hz'][0] / (2 * np.pi)
@@ -229,6 +237,7 @@ class _Plot2D(_PlotCore):
 
 
 class _Plot3D(_PlotCore):
+    @k3d_alarm
     def _gen_ax(self, ax):
         if ax is None:
             return None, k3d.plot()
