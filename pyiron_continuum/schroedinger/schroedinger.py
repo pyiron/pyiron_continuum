@@ -18,8 +18,11 @@ try:
     import k3d
     k3d_alarm = ImportAlarm()
 except ImportAlarm:
-    k3d_alarm = ImportAlarm('3d plotting requires the k3d package which is accessible by '
-                            '`conda install -c conda-forge k3d`')
+    k3d_alarm = ImportAlarm(
+        '3d plotting requires the k3d package which is accessible by `conda install -c conda-forge k3d`. Using k3d in '
+        'a jupyter environment further requires the following shell commands: '
+        '`jupyter nbextension install --py --sys-prefix k3d; jupyter nbextension enable --py --sys-prefix k3d`.'
+    )
 
 
 # TODO: Convert to pyiron units
@@ -113,6 +116,10 @@ class _TISEOutput(DataContainer):
 
 
 class TISE(PythonTemplateJob):
+    """
+    A class for solving the time-independent Schroedinger equation on discrete meshes.
+    """
+
     def __init__(self, project, job_name):
         super().__init__(project=project, job_name=job_name)
         self._storage.input = _TISEInput()
@@ -158,6 +165,7 @@ class TISE(PythonTemplateJob):
         Thus, to get the first term to eV we need hbar in units of sqrt(eV Angstroms^2 u).
         Starting with hbar in eVs, we need to convert eV to (Angstroms^2 u / s^2) s.t. the first term comes out with eV.
         https://www.wolframalpha.com/input/?i=1+%28atomic+mass+units%29*%28angstroms%5E2%29%2F%28s%5E2%29+in+eV
+        Except that didn't seem to work, so for now just use HBAR as defined in the header
         """
         return -(HBAR**2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) + self.potential(self.mesh) * psi
 
@@ -215,14 +223,14 @@ class _PlotCore(ABC):
 
 class _Plot1D(_PlotCore):
     def _plot(self, ax, data, shift=0, **kwargs):
-        ax.plot(data + shift, **kwargs)
+        ax = ax.plot(data + shift, **kwargs)
         return ax
 
     def levels(self, n_states=None):
         if n_states is None:
             n_states = self._job.input.n_states
         fig, ax = plt.subplots()
-        self.potential(ax=ax, label='potl', color='k')
+        self.potential(ax=ax.twinx(), label='potl', color='k')
         for i in range(n_states):
             self.psi(i, shift=self._job.output.energy[i], ax=ax, label=i)
         ax.legend()
@@ -231,8 +239,8 @@ class _Plot1D(_PlotCore):
 
 class _Plot2D(_PlotCore):
     def _plot(self, ax, data, **kwargs):
-        ax.contourf(data, **kwargs)
-        return ax
+        img = ax.contourf(data, **kwargs)
+        return img
 
 
 class _Plot3D(_PlotCore):
