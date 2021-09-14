@@ -40,14 +40,14 @@ where :math:`u_i(r)` is the displacement field of component :math:`i` at positio
 polynomial development we obtain:
 
 .. math:
-    u_i(r) \\approx G_{ij}(r)\\sum_a f_j(a)-\\frac{\partial G_{ij}}{\\partial r_k}(r)\\sum_a a_k f_j(a)
+    u_i(r) \\approx G_{ij}(r)\\sum_a f_j(a)-\\frac{\\partial G_{ij}}{\\partial r_k}(r)\\sum_a a_k f_j(a)
 
 The first term disappears because the sum of the forces is zero. From the second term we define
 the dipole tensor :math:`P_{jk} = a_k f_j(a)`. Following the definition above, we can obtain the
 displacement field, strain field, stress field and energy density field if the dipole tensor and
 the elastic tensor are known.
 
-The dipole tensor ob a point defect is commonly obtained from the following equation:
+The dipole tensor of a point defect is commonly obtained from the following equation:
 
 .. math:
     U = \\frac{V}{2} \\varepsilon_{ij}C_{ijkl}\\varepsilon_{kl}-P_{kl}\\varepsilon_{kl}
@@ -103,6 +103,16 @@ class LinearElasticity:
     >>> random_positions = np.random.random((10, 3))-0.5
     >>> burgers_vector = np.array([0, 0, 1])
     >>> print(medium.get_dislocation_stress(random_positions, burgers_vector))
+
+    Example IV: Estimate the distance between partial dislocations:
+
+    >>> medium = LinearElasticity(elastic_tensor)
+    >>> partial_one = np.array([-0.5, 0, np.sqrt(3)/2])*lattice_constant
+    >>> partial_two = np.array([0.5, 0, np.sqrt(3)/2])*lattice_constant
+    >>> distance = 100
+    >>> stress_one = medium.get_dislocation_stress([0, distance, 0], partial_one)
+    >>> print('Choose `distance` in the way that the value below corresponds to SFE')
+    >>> medium.get_dislocation_force(stress_one, [0, 1, 0], partial_two)
 
     """
     def __init__(self, elastic_tensor, orientation=None):
@@ -470,3 +480,59 @@ class LinearElasticity:
         """
         strain = self.get_dislocation_strain(positions, burgers_vector)
         return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
+
+    def get_dislocation_energy(self, burgers_vector, r_min, r_max, mesh=100):
+        """
+        Energy per unit length along the dislocation line.
+
+        Args:
+            burgers_vector ((3,)-array): Burgers vector
+            r_min (float): Minimum distance from the dislocation core
+            r_max (float): Maximum distance from the dislocation core
+            mesh (int): Number of grid points for the numerical integration along the angle
+
+        Returns:
+            (float): Energy of dislocation per unit length
+
+        The energy is defined by the product of the stress and strain (i.e. energy density),
+        which is integrated over the plane vertical to the dislocation line. The energy density
+        :math:`w` according to the linear elasticity is given by:
+
+        .. math:
+            w(r, \\theta) = A(\\theta)/r^2
+
+        Therefore, the energy per unit length :math:`U` is given by:
+
+        .. math:
+            U = \\log(r_max/r_min)\\int A(\\theta)\\mathrm d\\theta
+
+        This implies :math:`r_min` cannot be 0 as well as :math:`r_max` cannot be infinity. This
+        is the consequence of the fact that the linear elasticity cannot describe the core
+        structure properly, and a real medium is not infinitely large. While :math:`r_max` can
+        be defined based on the real dislocation density, the choice of :math:`r_min` should be
+        done carefully.
+        """
+        if r_min <= 0:
+            raise ValueError('r_min must be a positive float')
+        theta_range = np.linspace(0, 2*np.pi, 100, endpoint=False)
+        r = np.stack((np.cos(theta_range), np.sin(theta_range)), axis=-1)*r_min
+        strain = self.get_dislocation_strain(r, burgers_vector=burgers_vector)
+        return np.einsum(
+            'ijkl,nkl,nij->', self.elastic_tensor, strain, strain
+        )/np.diff(theta_range)[0]*r_min**2*np.log(r_max/r_min)
+
+    @staticmethod
+    def get_dislocation_force(stress, glide_plane, burgers_vector):
+        """
+        Force per unit length along the dislocation line.
+
+        Args:
+            stress ((3,3)-array): External stress field at the dislocation line
+            glide_plane ((3,)-array): Glide plane
+            burgers_vector ((3,)-array): Burgers vector
+
+        Returns:
+            ((3,)-array): Force per unit length acting on the dislocation.
+        """
+        g = np.asarray(glide_plane)/np.linalg.norm(glide_plane)
+        return np.einsum('i,ij,j,k->k', g, stress, burgers_vector, np.cross(g, [0, 0, 1]))
