@@ -152,6 +152,7 @@ class TISE(PythonTemplateJob):
         ew, ev = eigsh(A, which='SA', k=self.input.n_states)
         self.output.eigenvalues = ew
         self.output.eigenvectors = np.array([np.reshape(v, self.mesh.shape[1:]) for v in ev.T])
+        self.to_hdf()
         self.status.finished = True
 
 
