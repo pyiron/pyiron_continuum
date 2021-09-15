@@ -93,7 +93,7 @@ class _TISEOutput(DataContainer):
     @property
     def rho(self):
         if self._rho is None and self.psi is not None:
-            self._rho = self._normalize_per_state(self.psi ** 2, ord=1)
+            self._rho = self.psi ** 2
         return self._rho
 
     def get_boltzmann_occupation(self, temperature):
