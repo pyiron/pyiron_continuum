@@ -9,9 +9,9 @@ import h5py
 import os
 from os.path import join
 
-class DAMASKjob(GenericJob):
+class DAMASK(GenericJob):
     def __init__(self, project, job_name):
-        super(DAMASKjob, self).__init__(project, job_name)
+        super(DAMASK, self).__init__(project, job_name)
         self.input = DataContainer()
         self._material = None 
         self._loading = None
