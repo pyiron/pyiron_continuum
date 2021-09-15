@@ -39,10 +39,10 @@ class DAMASKjob(GenericJob):
         self._loading = self.input.loading.read(path)
     
     def loading_write(self):
-        loading = self.input.loading.write('tensionX.yaml')
+        self.input.loading.write('tensionX.yaml')
         
     def material_write(self):
-        material = self.input.material.write('material.yaml')
+        self.input.material.write('material.yaml')
     
     def geometry_write(self):
         seed = seeds.from_random(self.input.geometry['size'], self.input.geometry['grains'])
@@ -56,7 +56,7 @@ class DAMASKjob(GenericJob):
         self.material_write()
              
     def collect_output(self): 
-        file = join(self.working_directory, "output") 
+        join(self.working_directory, "output") 
         with self.project_hdf5.open("output/generic") as h5out: 
             h5out["stress"] = self.stress()
             h5out["strain"] = self.strain()
