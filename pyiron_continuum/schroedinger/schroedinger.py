@@ -84,8 +84,8 @@ class _TISEOutput(DataContainer):
     def _broadcast_vector_to_space(self, vector):
         return vector.reshape(-1, *(1,)*len(self._space_axes))
 
-    def _normalize_per_state(self, states):
-        return states / self._broadcast_vector_to_space(np.linalg.norm(states, axis=self._space_axes))
+    def _normalize_per_state(self, states, ord=2):
+        return states / self._broadcast_vector_to_space(np.linalg.norm(states, axis=self._space_axes, ord=ord))
 
     def _weight_states(self, states, weights):
         return states * self._broadcast_vector_to_space(weights)
@@ -93,7 +93,7 @@ class _TISEOutput(DataContainer):
     @property
     def rho(self):
         if self._rho is None and self.psi is not None:
-            self._rho = self._normalize_per_state(self.psi ** 2)
+            self._rho = self._normalize_per_state(self.psi ** 2, ord=1)
         return self._rho
 
     def get_boltzmann_occupation(self, temperature):
@@ -108,9 +108,19 @@ class _TISEOutput(DataContainer):
 
     def get_boltzmann_rho(self, temperature):
         if self.psi is not None:
+            weighted_rho = self._weight_states(self.rho, self.get_boltzmann_occupation(temperature)**2)
+            rho_tot = np.sum(weighted_rho, axis=0)
+            return rho_tot / rho_tot.sum()
+
+    def _boltzmann_rho_from_psi(self, temperature):
+        """
+        Equivalent to weighting rho directly since the psi are all orthogonal, just need a small weight change since
+        rho = |psi|^2.
+        """
+        if self.psi is not None:
             weighted_psi = self._weight_states(self.psi, self.get_boltzmann_occupation(temperature))
             rho_tot = np.sum(weighted_psi ** 2, axis=0)
-            return rho_tot / np.linalg.norm(rho_tot)
+            return rho_tot / rho_tot.sum()
 
 
 class TISE(PythonTemplateJob):
