@@ -98,7 +98,7 @@ class _TISEOutput(DataContainer):
 
     def get_boltzmann_occupation(self, temperature):
         if self.energy is not None:
-            return 1. / (np.exp(self.energy / (KB * temperature)) + 1)
+            return np.exp(-self.energy / (KB * temperature))
 
     def get_boltzmann_psi(self, temperature):
         if self.psi is not None:
