@@ -188,9 +188,3 @@ class RectMesh(HasStorage):
         for ax, ds in enumerate(self.steps):
             res += (np.roll(val, 1, axis=ax) + np.roll(val, -1, axis=ax) - 2 * val) / ds ** 2
         return res
-
-    def to_hdf(self, hdf, group_name=None):
-        if group_name is not None:
-            hdf = hdf.create_group(group_name)
-        hdf['TYPE'] = str(type(self))
-        super().to_hdf(hdf)
