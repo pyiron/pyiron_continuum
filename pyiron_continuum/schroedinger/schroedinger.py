@@ -95,13 +95,13 @@ class _TISEOutput(DataContainer):
 
     def get_boltzmann_occupation(self, temperature):
         if self.energy is not None:
-            return np.exp(-self.energy / (KB * temperature))
+            w = np.exp(-self.energy / (KB * temperature))
+            return w / w.sum()
 
     def get_boltzmann_rho(self, temperature):
         if self.psi is not None:
             w = self.get_boltzmann_occupation(temperature)
-            Z = w.sum()
-            return self._weight_states(self.rho, w / Z).sum(axis=0)
+            return self._weight_states(self.rho, w).sum(axis=0)
 
 
 class TISE(PythonTemplateJob):
