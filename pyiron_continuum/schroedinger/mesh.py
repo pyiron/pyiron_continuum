@@ -41,7 +41,7 @@ class RectMesh(HasStorage):
         mesh (numpy.ndarray): The spatial sampling points.
         steps (numpy.ndarray/float): The step size in each dimension.
         lengths (numpy.ndarray/float): How large the domain is in each dimension.
-        simplify_1d (bool): Whether to reduce dimension whenever the first dimension has length 1.
+        simplify_1d (bool): Whether to reduce dimension whenever the first dimension is redundant, e.g. [[1,2]]->[1,2].
 
     Methods:
         laplacian: Given a callable that takes the mesh as its argument, or a numpy array with the same shape as the
