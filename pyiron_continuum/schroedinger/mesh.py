@@ -20,7 +20,7 @@ class RectMesh(HasStorage):
     >>> mesh.mesh
     array([0., 1.])
     >>> mesh.steps
-    1.0
+    array(1.)
 
     Example 2-D)
     >>> mesh = RectMesh(bounds=[[0, 1], [2, 5]], divisions=[2, 3])
@@ -101,7 +101,7 @@ class RectMesh(HasStorage):
 
     def _simplify_1d(self, x):
         if len(x) == 1 and self.storage.simplify_1d:
-            return x[0]   # 1D
+            return np.squeeze(x)
         else:
             return x
 
