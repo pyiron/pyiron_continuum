@@ -70,6 +70,9 @@ class TestRectMesh(PyironTestCase):
         )
         self.assertTrue(np.allclose(mesh.steps, [L / 2, L]))
 
+        with self.assertRaises(ValueError):
+            RectMesh([[1, 1+1E-12]])  # Mesh needs finite length
+
     def test_update(self):
         L = 2 * np.pi
         n = 2

@@ -120,9 +120,7 @@ class RectMesh(HasStorage):
 
     @property
     def lengths(self):
-        max_ = np.array([np.amax(m) for m in self.mesh]) + self.steps
-        min_ = np.array([np.amin(m) for m in self.mesh])
-        return self._simplify_1d(max_ - min_)
+        return self._simplify_1d(self.bounds.ptp(axis=-1))
 
     def _build_mesh(self):
         linspaces = []
@@ -146,6 +144,9 @@ class RectMesh(HasStorage):
 
         if np.any(bounds.shape > np.array([3, 2])):
             raise ValueError(f'Bounds can be shape (3,2) at the largest, but got {bounds.shape}')
+
+        if np.any(np.isclose(bounds.ptp(axis=-1), 0)):
+            raise ValueError(f'Bounds must be finite length in all dimensions, but found lengths {bounds.ptp(axis=-1)}')
 
         if hasattr(divisions, '__len__'):
             if len(divisions) != len(bounds):
