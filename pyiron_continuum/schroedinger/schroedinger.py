@@ -24,13 +24,11 @@ except ImportAlarm:
         '`jupyter nbextension install --py --sys-prefix k3d; jupyter nbextension enable --py --sys-prefix k3d`.'
     )
 
-
-# TODO: Convert to pyiron units
 HBAR = physical_constants['reduced Planck constant in eV s'][0]
 KB = physical_constants['Boltzmann constant in eV/K'][0]
 # conversion factor to convert the units of all terms in the Schroedinder equation are in eV. More documentation
 # in _hamiltonian of the TISE class.
-EV_S_PER_ANG_SQUARED_PER_AMU_IN_EV = 9.64853322e27
+EV2_S2_PER_ANG2_PER_AMU_IN_EV = 9.64853322e27
 M = 1.  # for the conversion factor to work, mass should always be in AMU!!!
 
 __author__ = "Liam Huber"
@@ -104,8 +102,7 @@ class _TISEOutput(DataContainer):
     def get_boltzmann_rho(self, temperature):
         if self.psi is not None:
             w = self.get_boltzmann_occupation(temperature)
-            weighted_rho = self._weight_states(self.rho, w).sum(axis=0)
-            return weighted_rho / weighted_rho.sum()
+            return self._weight_states(self.rho, w).sum(axis=0)
 
 
 class TISE(PythonTemplateJob):
