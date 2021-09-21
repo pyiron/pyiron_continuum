@@ -176,8 +176,8 @@ class TISE(PythonTemplateJob):
         eigenvalues, eigenvectors = eigsh(flat_ham, which='SA', k=self.input.n_states)
         self.output.energy = eigenvalues
         self.output.psi = np.array([np.reshape(v, self.mesh.shape[1:]) for v in eigenvectors.T])
-        self.to_hdf()
         self.status.finished = True
+        self.to_hdf()
 
 
 class _PlotCore(ABC):
