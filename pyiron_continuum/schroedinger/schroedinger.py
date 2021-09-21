@@ -161,7 +161,7 @@ class TISE(PythonTemplateJob):
         Thus, to get the first term to eV we need to multiply it by eV s / A**2 / u.
         The math is here: https://www.wolframalpha.com/input/?i=%28eV*s%29%5E2%2F%28AMU%29+%2F%28Angstrom%5E2%29+in+eV
         """
-        return -(HBAR ** 2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) * EV_S_PER_ANG_SQUARED_PER_AMU_IN_EV + \
+        return -(HBAR ** 2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) * EV2_S2_PER_ANG2_PER_AMU_IN_EV + \
                self._potential_psi(psi)
 
     def _flat_hamiltonian(self, psi_1d):
