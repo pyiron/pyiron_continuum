@@ -24,11 +24,12 @@ except ImportAlarm:
         '`jupyter nbextension install --py --sys-prefix k3d; jupyter nbextension enable --py --sys-prefix k3d`.'
     )
 
-
-# TODO: Convert to pyiron units
-HBAR = 1  # EV_TO_U_ANGSTROMSQ_PER_SSQ * physical_constants['Planck constant in eV/Hz'][0] / (2 * np.pi)
-M_EL = 1  # physical_constants['electron mass in u'][0]
+HBAR = physical_constants['reduced Planck constant in eV s'][0]
 KB = physical_constants['Boltzmann constant in eV/K'][0]
+# conversion factor to convert the units of all terms in the Schroedinder equation are in eV. More documentation
+# in _hamiltonian of the TISE class.
+EV2_S2_PER_ANG2_PER_AMU_IN_EV = 9.64853322e27
+M = 1.  # for the conversion factor to work, mass should always be in AMU!!!
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -48,7 +49,7 @@ class _TISEInput(DataContainer):
         self._mesh = None
         self._potential = None
         self.n_states = 1
-        self.mass = M_EL
+        self.mass = M
 
     @property
     def mesh(self) -> RectMesh:
@@ -157,12 +158,11 @@ class TISE(PythonTemplateJob):
             - x = Angstroms
             - V = eV
 
-        Thus, to get the first term to eV we need hbar in units of sqrt(eV Angstroms^2 u).
-        Starting with hbar in eVs, we need to convert eV to (Angstroms^2 u / s^2) s.t. the first term comes out with eV.
-        https://www.wolframalpha.com/input/?i=1+%28atomic+mass+units%29*%28angstroms%5E2%29%2F%28s%5E2%29+in+eV
-        Except that didn't seem to work, so for now just use HBAR as defined in the header
+        Thus, to get the first term to eV we need to multiply it by eV s / A**2 / u.
+        The math is here: https://www.wolframalpha.com/input/?i=%28eV*s%29%5E2%2F%28AMU%29+%2F%28Angstrom%5E2%29+in+eV
         """
-        return -(HBAR**2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) + self._potential_psi(psi)
+        return -(HBAR ** 2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) * EV2_S2_PER_ANG2_PER_AMU_IN_EV + \
+               self._potential_psi(psi)
 
     def _flat_hamiltonian(self, psi_1d):
         """Matrix-vector product for `LinearOperator` to use."""
