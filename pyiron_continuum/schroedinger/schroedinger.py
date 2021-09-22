@@ -29,7 +29,8 @@ KB = physical_constants['Boltzmann constant in eV/K'][0]
 # conversion factor to convert the units of all terms in the Schroedinder equation are in eV. More documentation
 # in _hamiltonian of the TISE class.
 EV2_S2_PER_ANG2_PER_AMU_IN_EV = 9.64853322e27
-M = 1.  # for the conversion factor to work, mass should always be in AMU!!!
+# keep the default mass as electron mass in AMU.
+M = physical_constants['electron mass in u'][0]
 
 __author__ = "Liam Huber"
 __copyright__ = (
