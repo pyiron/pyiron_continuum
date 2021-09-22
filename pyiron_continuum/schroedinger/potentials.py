@@ -58,10 +58,19 @@ class SquareWell(Potential):
     def depth(self, depth):
         self.storage.depth = depth
 
+    @staticmethod
+    def _left_edge_or_beyond(x, left_edge):
+        return x >= left_edge or np.isclose(x, left_edge)
+
+    @staticmethod
+    def _right_edge_or_before(x, right_edge):
+        return x <= right_edge or np.isclose(x, right_edge)
+
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
         potential = np.ones_like(mesh.mesh) * self.depth
         mask = np.array([
-            (m >= 0.5 * l * (1 - self.width)) * (m <= 0.5 * l * (1 + self.width))
+            self._left_edge_or_beyond(m, 0.5 * l * (1 - self.width)) *
+            self._right_edge_or_before(m, 0.5 * l * (1 + self.width))
             for m, l in zip(mesh.mesh, mesh.lengths)
         ])
         potential[mask] = 0
