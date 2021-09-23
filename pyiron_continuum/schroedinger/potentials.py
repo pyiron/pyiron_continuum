@@ -30,7 +30,7 @@ class SquareWell(Potential):
         depth (float): How high to make the rest of the space. (Default is 1.)
     """
 
-    def __init__(self, width=0.5, depth=1):
+    def __init__(self, width: float = 0.5, depth: float = 1):
         """
         Instantiate a square well.
 
@@ -43,19 +43,19 @@ class SquareWell(Potential):
         self.storage.depth = depth
 
     @property
-    def width(self):
+    def width(self) -> float:
         return self.storage.width
 
     @width.setter
-    def width(self, width):
+    def width(self, width: float) -> float:
         self.storage.width = width
 
     @property
-    def depth(self):
+    def depth(self) -> float:
         return self.storage.depth
 
     @depth.setter
-    def depth(self, depth):
+    def depth(self, depth: float):
         self.storage.depth = depth
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
@@ -81,7 +81,7 @@ class Sinusoidal(Potential):
         depth (float): How high to make the rest of the space. (Default is 1.)
     """
 
-    def __init__(self, n_waves=1, amplitude=1):
+    def __init__(self, n_waves: int = 1, amplitude: float = 1):
         """
         Instantiate a periodic product of sines.
 
@@ -93,7 +93,7 @@ class Sinusoidal(Potential):
         self.storage.n_waves = self._clean_waves(n_waves)
         self.storage.amplitude = amplitude
 
-    def _clean_waves(self, n_waves):
+    def _clean_waves(self, n_waves: int) -> int:
         if not np.issubdtype(type(n_waves), np.integer):
             raise TypeError(
                 f'Waves must come in integers to obey periodic boundary conditions, but got {type(n_waves)}'
@@ -101,19 +101,19 @@ class Sinusoidal(Potential):
         return n_waves
 
     @property
-    def n_waves(self):
+    def n_waves(self) -> int:
         return self.storage.n_waves
 
     @n_waves.setter
-    def n_waves(self, n):
+    def n_waves(self, n: int):
         self.storage.n_waves = self._clean_waves(n)
 
     @property
-    def amplitude(self):
+    def amplitude(self) -> float:
         return self.storage.amplitude
 
     @amplitude.setter
-    def amplitude(self, a):
+    def amplitude(self, a: float):
         self.storage.amplitude = a
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:

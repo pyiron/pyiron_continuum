@@ -8,6 +8,8 @@ A job class for solving the time-independent Schroedinger equation on a discrete
 
 from pyiron_base import HasStorage
 import numpy as np
+from typing import Union, List, Callable, Any
+BoundsList = List[Union[float, int, List[Union[float, int]]]]
 
 
 class RectMesh(HasStorage):
@@ -52,7 +54,12 @@ class RectMesh(HasStorage):
             themselves) returns the discrete Laplace operator on this mesh applied to that funcation/data.
     """
 
-    def __init__(self, bounds=1, divisions=1, simplify_1d=False):
+    def __init__(
+            self,
+            bounds: Union[float, int, BoundsList, np.ndarray] = 1,
+            divisions: Union[int, List[int], np.ndarray] = 1,
+            simplify_1d: bool = False
+    ):
         """
         Instantiate a rectangular mesh.
 
@@ -75,34 +82,34 @@ class RectMesh(HasStorage):
         self._build_mesh()
 
     @property
-    def bounds(self):
+    def bounds(self) -> np.ndarray:
         return self.storage.bounds
 
     @bounds.setter
-    def bounds(self, new_bounds):
+    def bounds(self, new_bounds: Union[float, int, BoundsList, np.ndarray]):
         new_bounds, _ = self._clean_input(new_bounds, self.divisions)
         self.storage.bounds = new_bounds
         self._build_mesh()
 
     @property
-    def divisions(self):
+    def divisions(self) -> Union[int, np.ndarray]:
         return self.storage.divisions
 
     @divisions.setter
-    def divisions(self, new_divisions):
+    def divisions(self, new_divisions: Union[int, List[int], np.ndarray]):
         _, new_divisions = self._clean_input(self.bounds, new_divisions)
         self.storage.divisions = new_divisions
         self._build_mesh()
 
     @property
-    def simplify_1d(self):
+    def simplify_1d(self) -> bool:
         return self.storage.simplify_1d
 
     @simplify_1d.setter
     def simplify_1d(self, simplify: bool):
         self.storage.simplify_1d = simplify
 
-    def _simplify_1d(self, x):
+    def _simplify_1d(self, x: np.ndarray) -> Union[int, float, np.ndarray]:
         if len(x) == 1 and self.storage.simplify_1d:
             return np.squeeze(x)
         else:
@@ -118,14 +125,14 @@ class RectMesh(HasStorage):
         return self._simplify_1d(self.storage.steps)
 
     @property
-    def shape(self):
+    def shape(self) -> tuple:
         return self.mesh.shape
 
     @property
-    def lengths(self):
+    def lengths(self) -> Union[float, np.ndarray]:
         return self._simplify_1d(self.bounds.ptp(axis=-1))
 
-    def _build_mesh(self):
+    def _build_mesh(self) -> None:
         linspaces = []
         steps = []
         for bound, ndiv in zip(self.storage.bounds, self.storage.divisions):
@@ -137,7 +144,11 @@ class RectMesh(HasStorage):
         self.storage.steps = np.array(steps)
         self.storage.mesh = np.array(mesh)
 
-    def _clean_input(self, bounds, divisions):
+    def _clean_input(
+            self,
+            bounds: Union[float, int, BoundsList, np.ndarray],
+            divisions: Union[int, List[int], np.ndarray]
+    ) -> (np.ndarray, np.ndarray):
         if not hasattr(bounds, '__len__'):
             bounds = [[0, bounds]]
         bounds = np.array(bounds)  # Enforce array to guarantee `shape`
@@ -169,10 +180,10 @@ class RectMesh(HasStorage):
         return bounds, np.array(divisions)
 
     @staticmethod
-    def _is_int(val):
+    def _is_int(val: Any) -> bool:
         return np.issubdtype(type(val), np.integer)
 
-    def laplacian(self, fnc):
+    def laplacian(self, fnc: Union[Callable, np.ndarray]) -> np.array:
         """
         Discrete Laplacian operator applied to a given function assuming periodic boundary conditions.
 
