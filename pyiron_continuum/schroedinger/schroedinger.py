@@ -235,9 +235,6 @@ class _PlotCore(ABC):
     def rho(self, i, ax=None, **kwargs):
         return self._make_plot(self._job.output.rho[i], ax=ax, **kwargs)
 
-    def boltzmann_psi(self, temperature, ax=None, **kwargs):
-        return self._make_plot(self._job.output.get_boltzmann_psi(temperature), ax=ax, **kwargs)
-
     def boltzmann_rho(self, temperature, ax=None, **kwargs):
         return self._make_plot(self._job.output.get_boltzmann_rho(temperature), ax=ax, **kwargs)
 
