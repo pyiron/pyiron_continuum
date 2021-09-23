@@ -35,6 +35,9 @@ class RectMesh(HasStorage):
     >>> mesh.steps
     array([0.5, 1. ])
 
+    Note: To get a 1D mesh starting somewhere other than 0, you need an extra set of brackets, i.e.
+    `bounds=[[start, end]]` as simply using `[start, end]` will actually give you a 2D array `[[0, start], [0, end]]`!
+
     Attributes:
         bounds (numpy.ndarray): The start and end point for each dimension.
         divisions (numpy.ndarray): How many sampling points in each dimension.
