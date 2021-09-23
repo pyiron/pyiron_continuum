@@ -4,6 +4,8 @@ __all__ = []
 
 from pyiron_base import JOB_CLASS_DICT
 from pyiron_continuum.project import Project
+from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.schroedinger.potentials import Potential
 
 # Make classes available for new pyiron version
 JOB_CLASS_DICT['Fenics'] = 'pyiron_continuum.fenics.job.generic'

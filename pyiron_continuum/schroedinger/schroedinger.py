@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 """
-A job class for solving the time-independent Schroedinger equation on a discrete mesh.
+A job class for solving the time-independent Schroedinger equation on a discrete periodic mesh for a single particle.
 """
 
 from pyiron_base import PythonTemplateJob, DataContainer, ImportAlarm
@@ -32,7 +32,7 @@ EV2_S2_PER_ANG2_PER_AMU_IN_EV = 9.64853322e27
 # keep the default mass as electron mass in AMU.
 M = physical_constants['electron mass in u'][0]
 
-__author__ = "Liam Huber"
+__author__ = "Liam Huber, Raynol Dsouza"
 __copyright__ = (
     "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -45,6 +45,7 @@ __date__ = "Sep 8, 2021"
 
 
 class _TISEInput(DataContainer):
+    """TISE custom input holder"""
     def __init__(self, init=None, table_name='input', lazy=False):
         super().__init__(init=init, table_name=table_name, lazy=lazy)
         self._mesh = None
@@ -73,6 +74,7 @@ class _TISEInput(DataContainer):
 
 
 class _TISEOutput(DataContainer):
+    """TISE custom output holder"""
     def __init__(self, init=None, table_name='input', lazy=False):
         super().__init__(init=init, table_name=table_name, lazy=lazy)
         self.energy = None
@@ -108,29 +110,49 @@ class _TISEOutput(DataContainer):
 
 class TISE(PythonTemplateJob):
     """
-    A class for solving the time-independent Schroedinger equation on discrete meshes.
+    A class for solving the time-independent Schroedinger equation on discrete, periodic meshes for a single particle.
+
+    Input:
+        mesh (pyiron_continuum.RectMesh): The 1-, 2-, or 3d mesh on which to solve. Assumes pyrion distance units.
+        potential (pyiron_continuum.Potential | numpy.ndarray): The background potential for which to solve. A dedicated
+            `Potential` can be provided, but any numpy array whose shape represents a scalar field on the mesh will
+            work. Assumes pyiron energy units.
+        n_states (int): The number of eigenstates for which to solve, starting with the ground state and working up.
+            (default is 1, just the ground state.)
+        mass (float): The mass of the particle. (Default is one electron mass.)
+
+    Output:
+        energy (numpy.ndarray): The eigen energy for each state.
+        psi (numpy.ndarray): The eigen vector for each state, i.e. wave function, on the mesh.
+        rho (numpy.ndarray): The probability density for each state, i.e. |psi|^2, on the mesh.
+
+    Output methods:
+        get_boltzmann_occupation: Given the temperature, returns the Boltzmann-weighted occupation probability for each
+            states, normalized by the partition function. Note: if the most excited states have non-trivial occupations,
+            you need to re-run the calculation solving for more states to get reliable results.
+        get_boltzmann_rho: Given the temperature, returns the Boltzmann-weighted sum of occupation probabilities, i.e.
+            the finite-temperature probability distribution for the system.
+
+    Attributes:
+        mesh (pyiron_continuum.RectMesh): read-only quick access to `.input.mesh`.
+        potential (pyiron_continuum.Potential | numpy.ndarray): read-only quick access to `.input.potential`.
+        plot_1/2/3d: hold quick-and-dirty plotting routines for various dimensions to get a quick peek at data. Some
+            customization is possible by passing in existing axes and kwargs. Note that 3d plotting requires the `k3d`
+            module.
     """
 
     def __init__(self, project, job_name):
         super().__init__(project=project, job_name=job_name)
-        self._storage.input = _TISEInput()
-        self._storage.output = _TISEOutput()
+        self.storage.input = _TISEInput()
+        self.storage.output = _TISEOutput()
 
     @property
     def mesh(self):
         return self.input.mesh
 
-    # @mesh.setter
-    # def mesh(self, new_mesh):
-    #     self.input.mesh = new_mesh
-
     @property
     def potential(self):
         return self.input.potential
-
-    # @potential.setter
-    # def potential(self, new_potential):
-    #     self.input.potential = new_potential
 
     @property
     def plot_1d(self):
