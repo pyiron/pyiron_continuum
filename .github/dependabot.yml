@@ -6,7 +6,3 @@ updates:
     interval: weekly
     day: monday
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: pyiron-base
-    versions:
-    - 0.2.11
