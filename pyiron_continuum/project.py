@@ -7,8 +7,12 @@ from __future__ import print_function
 from pyiron_base import Settings, JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
-from pyiron_continuum.damask.factory import Create as DAMASKCreator
-from pyiron_continuum.damask.factory import GridFactory
+with ImportAlarm(
+        'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
+        'requirements. Please install it and try again.'
+) as damask_alarm:
+    from pyiron_continuum.damask.factory import Create as DAMASKCreator
+    from pyiron_continuum.damask.factory import GridFactory
 
 try:
     from pyiron_base import ProjectGUI

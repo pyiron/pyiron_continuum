@@ -5,11 +5,11 @@
 A toolkit for managing extensions to the project from atomistics.
 """
 
-from pyiron_base import Toolkit, Project, JobFactoryCore
+from pyiron_base import Toolkit, Project, JobFactoryCore, ImportAlarm
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
-
 from pyiron_continuum.damask.damaskjob import DAMASK as DAMASKJob # Looks like Damask needs an import alarm
+
 from pyiron_continuum.project import DAMASKCreator
 
 from pyiron_continuum.schroedinger.schroedinger import TISE
