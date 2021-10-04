@@ -5,7 +5,7 @@
 from __future__ import print_function
 # import warnings
 from pyiron_base import Settings, JobTypeChoice, Project as ProjectCore
-from pyiron_base import Creator as CreatorCore, PyironFactory
+from pyiron_base import Creator as CreatorCore, PyironFactory, ImportAlarm
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
