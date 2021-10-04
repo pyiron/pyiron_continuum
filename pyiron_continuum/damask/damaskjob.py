@@ -1,8 +1,25 @@
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+"""
+DAMASK job, which runs a damask simulation, and create the necessary inputs
+"""
+
 from pyiron_base import TemplateJob
 import numpy as np
 from damask import Grid, Result, Config, ConfigMaterial, seeds
-
 import os
+
+
+__author__ = "Muhammad Hassani"
+__copyright__ = (
+    "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
+__version__ = "1.0"
+__maintainer__ = "Muhammad Hassani"
+__email__ = "hassani@mpie.de"
+__status__ = "development"
+__date__ = "Oct 04, 2021"
 
 
 class DAMASK(TemplateJob):
