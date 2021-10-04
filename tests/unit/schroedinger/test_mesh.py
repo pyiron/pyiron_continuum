@@ -40,7 +40,7 @@ class TestRectMesh(PyironTestCase):
         RectMesh([1, 1, 1, 1], 1)
 
         self.assertRaises(ValueError, RectMesh, [[0, 1, 2]], 1)  # Bounds can't exceed shape (n, 2)
-        self.assertRaises(ValueError, RectMesh, [1, 1, 1, 1], 1)  # Bounds can't exceed shape (3, 2)
+        self.assertRaises(ValueError, RectMesh, [[1, 1+1e-12]])  # Bounds must enclose a space noticeably bigger than 0
         self.assertRaises(ValueError, RectMesh, 1, [1, 1])  # Divisions must be a single value or match bounds
         self.assertRaises(TypeError, RectMesh, 1, np.pi)  # Only int-like divisions
         self.assertRaises(TypeError, RectMesh, 1, [[1]])  # Or lists of ints, nothing else like lists of lists
