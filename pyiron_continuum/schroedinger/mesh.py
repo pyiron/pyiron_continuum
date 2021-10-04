@@ -14,7 +14,7 @@ BoundsList = List[Union[float, int, List[Union[float, int]]]]
 
 class RectMesh(HasStorage):
     """
-    A helper class for building rectangular meshgrids in 1-, 2-, or 3-D
+    A helper class for building rectangular meshgrids in n-dimensions
 
     Example 1-D)
 
@@ -127,6 +127,10 @@ class RectMesh(HasStorage):
     @property
     def shape(self) -> tuple:
         return self.mesh.shape
+
+    @property
+    def dim(self) -> int:
+        return self.shape[0]
 
     @property
     def lengths(self) -> Union[float, np.ndarray]:
