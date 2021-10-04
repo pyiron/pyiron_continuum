@@ -6,18 +6,19 @@
 A job class for performing finite element simulations using the [FEniCS](https://fenicsproject.org) code.
 """
 
-import fenics as FEN
-import mshr
-import sympy
 from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from dolfin.cpp.mesh import Mesh
 from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
-from ufl import nabla_div as ufl_nabla_div
+from pyiron_continuum.fenics.import_control import fm
+FEN = fm.FEN
+mshr = fm.mshr
+sympy = fm.sympy
+Mesh = fm.cpp.mesh.Mesh
+ufl_nabla_div = fm.ufl.nabla_div
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (

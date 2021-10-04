@@ -9,20 +9,10 @@ copy and modify the functionality
 """
 
 import os
-from dolfin.common.plotting import (
-    _has_matplotlib,
-    _all_plottable_types,
-    _plot_x3dom,
-    _matplotlib_plottable_types,
-    mplot_mesh,
-    mplot_dirichletbc,
-    mplot_expression,
-    mplot_function,
-    mplot_meshfunction,
-    _meshfunction_types
-)
-import dolfin.cpp as cpp
-import ufl
+from pyiron_continuum.fenics.import_control import fm
+cpp = fm.cpp
+ufl = fm.ufl
+dcp = fm.dcp
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -96,7 +86,7 @@ def plot(object, *args, **kwargs):
         return
 
     # Return if Matplotlib is not available
-    if not _has_matplotlib():
+    if not dcp._has_matplotlib():
         cpp.log.info("Matplotlib is required to plot from Python.")
         return
 
@@ -131,7 +121,7 @@ def plot(object, *args, **kwargs):
         raise RuntimeError("Plotting backend %s not recognised" % backend)
 
     # Try to project if object is not a standard plottable type
-    if not isinstance(object, _all_plottable_types):
+    if not isinstance(object, dcp._all_plottable_types):
         from dolfin.fem.projection import project
         try:
             cpp.log.info("Object cannot be plotted directly, projecting to "
@@ -148,13 +138,13 @@ def plot(object, *args, **kwargs):
     if backend == "matplotlib":
         return _plot_matplotlib(object, mesh, kwargs)
     elif backend == "x3dom":
-        return _plot_x3dom(object, kwargs)
+        return dcp._plot_x3dom(object, kwargs)
     else:
         assert False, "This code should not be reached."
 
 
 def _plot_matplotlib(obj, mesh, kwargs):
-    if not isinstance(obj, _matplotlib_plottable_types):
+    if not isinstance(obj, dcp._matplotlib_plottable_types):
         print("Don't know how to plot type %s." % type(obj))
         return
 
@@ -202,14 +192,14 @@ def _plot_matplotlib(obj, mesh, kwargs):
                         "Ignoring it..." % kw)
 
     if isinstance(obj, cpp.function.Function):
-        return mplot_function(ax, obj, **kwargs)
+        return dcp.mplot_function(ax, obj, **kwargs)
     elif isinstance(obj, cpp.function.Expression):
-        return mplot_expression(ax, obj, mesh, **kwargs)
+        return dcp.mplot_expression(ax, obj, mesh, **kwargs)
     elif isinstance(obj, cpp.mesh.Mesh):
-        return mplot_mesh(ax, obj, **kwargs)
+        return dcp.mplot_mesh(ax, obj, **kwargs)
     elif isinstance(obj, cpp.fem.DirichletBC):
-        return mplot_dirichletbc(ax, obj, **kwargs)
-    elif isinstance(obj, _meshfunction_types):
-        return mplot_meshfunction(ax, obj, **kwargs)
+        return dcp.mplot_dirichletbc(ax, obj, **kwargs)
+    elif isinstance(obj, dcp._meshfunction_types):
+        return dcp.mplot_meshfunction(ax, obj, **kwargs)
     else:
         raise AttributeError('Failed to plot %s' % type(obj))

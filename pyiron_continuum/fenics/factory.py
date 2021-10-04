@@ -6,9 +6,10 @@
 Factories for Fenics-related object creation.
 """
 
-import fenics as FEN
-import mshr
 from pyiron_base import PyironFactory
+from pyiron_continuum.fenics.import_control import fm
+FEN = fm.FEN
+mshr = fm.mshr
 
 __author__ = "Liam Huber"
 __copyright__ = (

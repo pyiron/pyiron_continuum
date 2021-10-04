@@ -7,12 +7,13 @@ Store Fenics job plotting routines as a helper to declutter the main class.
 """
 
 from matplotlib.docstring import copy as copy_docstring
-from pyiron_continuum.fenics.fix_plotting import plot as modified_fenics_plot
-import fenics as FEN
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import numpy as np
 from matplotlib.colors import LogNorm
+from pyiron_continuum.fenics.fix_plotting import plot as modified_fenics_plot
+from pyiron_continuum.fenics.import_control import fm
+FEN = fm.FEN
 
 __author__ = "Liam Huber"
 __copyright__ = (
