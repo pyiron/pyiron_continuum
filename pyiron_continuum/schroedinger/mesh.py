@@ -159,7 +159,7 @@ class RectMesh(HasStorage):
 
         if len(bounds.shape) == 1:
             bounds = np.array([[0, b] for b in bounds])
-        elif len(bounds.shape) > 2:
+        elif len(bounds.shape) > 2 or bounds.shape[-1] > 2:
             raise ValueError(f'Bounds must be of the shape (n,) or (n, 2), but got {bounds.shape}')
 
         if np.any(np.isclose(bounds.ptp(axis=-1), 0)):

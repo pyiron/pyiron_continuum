@@ -37,6 +37,8 @@ class TestRectMesh(PyironTestCase):
         self.assertTrue(np.all(mesh.divisions == [n, 2*n]),
                         msg='Expected divisions to be preserved.')
 
+        RectMesh([1, 1, 1, 1], 1)
+
         self.assertRaises(ValueError, RectMesh, [[0, 1, 2]], 1)  # Bounds can't exceed shape (n, 2)
         self.assertRaises(ValueError, RectMesh, [1, 1, 1, 1], 1)  # Bounds can't exceed shape (3, 2)
         self.assertRaises(ValueError, RectMesh, 1, [1, 1])  # Divisions must be a single value or match bounds
