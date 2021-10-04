@@ -4,7 +4,13 @@
 Refactory of the damask classes and methods to a pyironized manner
 """
 
-from damask import Grid, Result, Config, ConfigMaterial, seeds
+from pyiron_base import ImportAlarm
+with ImportAlarm(
+        'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
+        'requirements. Please install it and try again.'
+) as damask_alarm:
+    from damask import Grid, Result, Config, ConfigMaterial, seeds
+import numpy as np
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -17,7 +23,7 @@ __email__ = "hassani@mpie.de"
 __status__ = "development"
 __date__ = "Oct 04, 2021"
 
-class MateriaFactory:
+class MaterialFactory:
     def __init__(self):
         """a refactory for damask ConfigMaterial class"""
         pass
@@ -92,3 +98,128 @@ class LoadStep(dict):
     @staticmethod
     def load_tensorial(arr):
         return [arr[0:3], arr[3:6], arr[6:9]]
+
+
+class Create:
+    def __init__(self):
+        """
+        The create refactory for the damask job
+        """
+        self._grid = GridFactory()
+
+    @property
+    def grid(self):
+        return self._grid
+
+    @grid.setter
+    def grid(self, value):
+        self._grid = value
+
+    @staticmethod
+    def loading(solver, load_steps):
+        """
+        Creates the required damask loading
+        Args:
+            solver(dict): a dictionary desrcribing the solver: e.g, {'mechanical': 'spectral_basic'}
+            load_steps(list/single dict): a list of dict or single dict, which describes the loading conditions
+            an example would be:
+            {'mech_bc_dict':{'dot_F':[1e-2,0,0, 0,'x',0,  0,0,'x'],
+                            'P':['x','x','x', 'x',0,'x',  'x','x',0]},
+            'discretization':{'t': 10.,'N': 40, 'f_out': 4},
+            'additional': {'f_out': 4}
+        """
+        return DamaskLoading(solver=solver, load_steps=load_steps)
+
+    @staticmethod
+    def material(rotation, elements, phase, homogenization):
+        """
+        creates the damask material
+        Args:
+            rotation(damask.Rotation): damask rotation object
+            elements(str): elements describing the phase
+            phase(dict): a dictionary describing the phase parameters
+            homogenization(dict): a dictionary describing the damask homogenization
+        """
+        return MaterialFactory.config(rotation, elements, phase, homogenization)
+
+    @staticmethod
+    def homogenization(method, parameters):
+        """
+        returns damask homogenization as a dictionary
+        Args:
+            method(str): homogenization method
+            parameters(dict): the required parameters
+        Examples:
+            homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
+        """
+        return {method: parameters}
+
+    @staticmethod
+    def phase(composition, lattice, output_list, elasticity, plasticity):
+        """
+        returns a dictionary describing the phases for damask
+        Args:
+            composition(str)
+            lattice(dict)
+            output_list(str)
+            elasticity(dict)
+            plasticity(dict)
+        Examples:
+            phase(composition='Aluminum', lattice= 'cF',
+                  output_list='[F, P, F_e, F_p, L_p, O]',
+                   elasticity=elasticity, plasticity=plasticity)
+            # elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
+                                        C_12= 60.41e9, C_44=28.34e9)
+            #  plasticity = plasticity(N_sl=[12], a_sl=2.25,
+                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
+                                    h_0_sl_sl=75e6,
+                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+                                    n_sl=20, output=['xi_sl'],
+                                    type='phenopowerlaw', xi_0_sl=[31e6],
+                                    xi_inf_sl=[63e6])
+        """
+        return {composition: {'lattice': lattice,
+                              'mechanical': {'output': output_list,
+                                             'elastic': elasticity,
+                                             'plasticity': plasticity}}}
+
+    @staticmethod
+    def elasticity(**kwargs):
+        """
+        returns a dictionary of elasticity parameters for damask input file
+        Examples:
+             elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
+                                        C_12= 60.41e9, C_44=28.34e9)
+        """
+        _elast = {}
+        for key, val in kwargs.items():
+            _elast[key] = val
+        return _elast
+
+    @staticmethod
+    def plasticity(**kwargs):
+        """
+        returns a dictionary of plasticity parameters for damask input file
+        Examples:
+            plasticity = plasticity(N_sl=[12], a_sl=2.25,
+                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
+                                    h_0_sl_sl=75e6,
+                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+                                    n_sl=20, output=['xi_sl'],
+                                    type='phenopowerlaw', xi_0_sl=[31e6],
+                                    xi_inf_sl=[63e6])
+        """
+        _plast = {}
+        for key, val in kwargs.items():
+            _plast[key] = val
+        return _plast
+
+    @staticmethod
+    def rotation(method, *args):
+        """
+        returns a damask.Rotation object by a given method
+        Args:
+            method(damask.Rotation.*): a method of damask.Rotation class which based on the
+                            given arguments creates the Rotation object
+        """
+        return method(*args)
