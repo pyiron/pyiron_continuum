@@ -16,15 +16,12 @@ import matplotlib.pyplot as plt
 from typing import Union, Type
 from pyiron_continuum.schroedinger.potentials import Potential
 
-try:
-    import k3d
-    k3d_alarm = ImportAlarm()
-except ImportAlarm:
-    k3d_alarm = ImportAlarm(
+with ImportAlarm(
         '3d plotting requires the k3d package which is accessible by `conda install -c conda-forge k3d`. Using k3d in '
         'a jupyter environment further requires the following shell commands: '
         '`jupyter nbextension install --py --sys-prefix k3d; jupyter nbextension enable --py --sys-prefix k3d`.'
-    )
+) as k3d_alarm:
+    import k3d
 
 HBAR = physical_constants['reduced Planck constant in eV s'][0]
 KB = physical_constants['Boltzmann constant in eV/K'][0]
