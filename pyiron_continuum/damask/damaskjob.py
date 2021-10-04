@@ -236,6 +236,7 @@ class Create:
 
 class MaterialRefactory:
     def __init__(self):
+        """a refactory for damask ConfigMaterial class"""
         pass
 
     @staticmethod
@@ -256,6 +257,7 @@ class MaterialRefactory:
 
 class GridRefactory:
     def __init__(self):
+        """a refactory for damask Grid class"""
         self.origin = Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
 
     @staticmethod
@@ -264,9 +266,9 @@ class GridRefactory:
 
     @staticmethod
     def via_voronoi_tessellation(grid_dim, num_grains, box_size):
-        if type(grid_dim) == int or type(grid_dim) == float:
+        if isinstance(grid_dim, int) or isinstance(grid_dim, float):
             grid_dim = np.array([grid_dim, grid_dim, grid_dim])
-        if type(box_size) == int or type(box_size) == float:
+        if isinstance(box_size, int) or isinstance(box_size, float):
             box_size = np.array([box_size, box_size, box_size])
         seed = seeds.from_random(box_size, num_grains)
         return Grid.from_Voronoi_tessellation(grid_dim, box_size, seed)
@@ -274,6 +276,7 @@ class GridRefactory:
 
 class DamaskLoading(Config):
     def __init__(self, load_steps, solver):
+        """a refactory for damask Loading class, which is a damask.Config object"""
         super(DamaskLoading, self).__init__(self)
         self["solver"] = solver
         if isinstance(load_steps, list):
@@ -292,6 +295,7 @@ class DamaskLoading(Config):
 
 class LoadStep(dict):
     def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
+        """An auxilary class, which helps to parse loadsteps to a dictionary"""
         super(LoadStep, self).__init__(self)
         self.update({'boundary_conditions': {'mechanical': {}},
                      'discretization': discretization})
