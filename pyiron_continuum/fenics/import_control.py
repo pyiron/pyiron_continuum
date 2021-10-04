@@ -19,33 +19,16 @@ __email__ = "huber@mpie.de"
 __status__ = "development"
 __date__ = "Oct 4, 2021"
 
-try:
+with ImportAlarm(
+        'Fenics functionality requires the `fenics` and `mshr` modules (and their dependencies) specified as extra '
+        'requirements. Please install these and try again.'
+) as fenics_alarm:
     import fenics as FEN
     import mshr
-
-    from dolfin.common.plotting import (
-        _has_matplotlib,
-        _all_plottable_types,
-        _plot_x3dom,
-        _matplotlib_plottable_types,
-        mplot_mesh,
-        mplot_dirichletbc,
-        mplot_expression,
-        mplot_function,
-        mplot_meshfunction,
-        _meshfunction_types
-    )
     import dolfin.common.plotting as dcp
     import dolfin.cpp as cpp
     import ufl
     import sympy
-
-    fenics_alarm = ImportAlarm()
-except ImportAlarm:
-    fenics_alarm = ImportAlarm(
-        'Fenics functionality requires the `fenics` and `mshr` modules (and their dependencies) specified as extra '
-        'requirements. Please install these and try again.'
-    )
 
 
 class FenicsModules:
