@@ -37,7 +37,12 @@ class TestRectMesh(PyironTestCase):
         self.assertTrue(np.all(mesh.divisions == [n, 2*n]),
                         msg='Expected divisions to be preserved.')
 
-        RectMesh([1, 1, 1, 1], 1)
+        bounds = np.array([1, 2, 3, 4])
+        self.assertAlmostEqual(
+            bounds.prod(),
+            RectMesh(bounds=bounds).volume,
+            msg="Four dimensions should be ok, and hyper-volume should be a product of side lengths"
+        )
 
         self.assertRaises(ValueError, RectMesh, [[0, 1, 2]], 1)  # Bounds can't exceed shape (n, 2)
         self.assertRaises(ValueError, RectMesh, [[1, 1+1e-12]])  # Bounds must enclose a space noticeably bigger than 0

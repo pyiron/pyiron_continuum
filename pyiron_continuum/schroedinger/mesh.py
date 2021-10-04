@@ -136,6 +136,10 @@ class RectMesh(HasStorage):
     def lengths(self) -> Union[float, np.ndarray]:
         return self._simplify_1d(self.bounds.ptp(axis=-1))
 
+    @property
+    def volume(self):
+        return self.lengths.prod()
+
     def _build_mesh(self) -> None:
         linspaces = []
         steps = []
