@@ -5,19 +5,24 @@
 """
 A job class for performing finite element simulations using the [FEniCS](https://fenicsproject.org) code.
 """
+from pyiron_base import ImportAlarm
+with ImportAlarm(
+        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
+        'requirements. Please install it and try again.'
+) as fenics_alarm:
+    import fenics as FEN
+    import mshr
+    from dolfin.cpp.mesh import Mesh
+    from ufl import nabla_div as ufl_nabla_div
 
-import fenics as FEN
-import mshr
 import sympy
 from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from dolfin.cpp.mesh import Mesh
 from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
-from ufl import nabla_div as ufl_nabla_div
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
@@ -309,7 +314,7 @@ class Fenics(GenericJob):
         self.to_hdf()
         self.status.finished = True
 
-    @copy_docstring(FEN.project)
+#    @copy_docstring(FEN.project)
     def project_function(self, v, **kwargs):
         """
         Project v onto the job's element, V.
@@ -323,7 +328,7 @@ class Fenics(GenericJob):
         """
         return FEN.project(v, V=self.V, **kwargs)
 
-    @copy_docstring(FEN.interpolate)
+#    @copy_docstring(FEN.interpolate)
     def interpolate_function(self, v):
         """
         Interpolate v on the job's element, V.
@@ -359,53 +364,53 @@ class Fenics(GenericJob):
     def sympy(self):
         return sympy
 
-    @copy_docstring(FEN.Constant)
+#    @copy_docstring(FEN.Constant)
     def Constant(self, value):
         return FEN.Constant(value)
 
-    @copy_docstring(FEN.Expression)
+#    @copy_docstring(FEN.Expression)
     def Expression(self, *args, **kwargs):
         return FEN.Expression(*args, **kwargs)
 
-    @copy_docstring(FEN.Identity)
+#   @copy_docstring(FEN.Identity)
     def Identity(self, dim):
         return FEN.Identity(dim)
 
     @property
-    @copy_docstring(FEN.dx)
+#    @copy_docstring(FEN.dx)
     def dx(self):
         return FEN.dx
 
     @property
-    @copy_docstring(FEN.ds)
+#    @copy_docstring(FEN.ds)
     def ds(self):
         return FEN.ds
 
-    @copy_docstring(FEN.grad)
+#    @copy_docstring(FEN.grad)
     def grad(self, arg):
         return FEN.grad(arg)
 
-    @copy_docstring(FEN.nabla_grad)
+ #   @copy_docstring(FEN.nabla_grad)
     def nabla_grad(self, arg):
         return FEN.nabla_grad(arg)
 
-    @copy_docstring(ufl_nabla_div)
+ #   @copy_docstring(ufl_nabla_div)
     def nabla_div(self, f):
         return ufl_nabla_div(f)
 
-    @copy_docstring(FEN.inner)
+#  @copy_docstring(FEN.inner)
     def inner(self, a, b):
         return FEN.inner(a, b)
 
-    @copy_docstring(FEN.dot)
+#    @copy_docstring(FEN.dot)
     def dot(self, arg1, arg2):
         return FEN.dot(arg1, arg2)
 
-    @copy_docstring(FEN.tr)
+#    @copy_docstring(FEN.tr)
     def tr(self, A):
         return FEN.tr(A)
 
-    @copy_docstring(FEN.sqrt)
+#    @copy_docstring(FEN.sqrt)
     def sqrt(self, f):
         return FEN.sqrt(f)
 
