@@ -37,26 +37,32 @@ class FenicsModules:
         pass
 
     @property
+    @fenics_alarm
     def FEN(self):
         return FEN
 
     @property
+    @fenics_alarm
     def mshr(self):
         return mshr
 
     @property
+    @fenics_alarm
     def sympy(self):
         return sympy
 
     @property
+    @fenics_alarm
     def ufl(self):
         return ufl
 
     @property
+    @fenics_alarm
     def cpp(self):
         return cpp
 
     @property
+    @fenics_alarm
     def dcp(self):
         return dcp
 
