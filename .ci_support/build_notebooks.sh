@@ -5,8 +5,10 @@ done;
 # execute notebooks
 i=0;
 cd notebooks
-for notebook in $(ls ./fenic_*.ipynb); do
-    papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k "python3" || i=$((i+1));
+for notebook in $(ls ./*.ipynb); do
+    if [ notebook != damask_tutorial.ipynb]; then
+      papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k "python3" || i=$((i+1));
+    fi
 done;
 
 # push error to next level
