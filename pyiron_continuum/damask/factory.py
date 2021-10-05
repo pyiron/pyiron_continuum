@@ -191,10 +191,7 @@ class Create:
              elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
                                         C_12= 60.41e9, C_44=28.34e9)
         """
-        _elast = {}
-        for key, val in kwargs.items():
-            _elast[key] = val
-        return _elast
+        return kwargs
 
     @staticmethod
     def plasticity(**kwargs):
@@ -209,10 +206,7 @@ class Create:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
-        _plast = {}
-        for key, val in kwargs.items():
-            _plast[key] = val
-        return _plast
+        return kwargs
 
     @staticmethod
     def rotation(method, *args):
