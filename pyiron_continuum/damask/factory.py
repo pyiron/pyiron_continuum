@@ -47,11 +47,22 @@ class MaterialFactory:
 class GridFactory:
     def __init__(self):
         """a refactory for damask Grid class"""
-        self.origin = Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
+        self._origin = None
 
     @staticmethod
     def read(file_path):
         return Grid.load(fname=file_path)
+
+    @property
+    def origin(self):
+        if self._origin is None:
+            return Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
+        else:
+            self._origin
+
+    @origin.setter
+    def origin(self, value):
+        self._origin = value
 
     @staticmethod
     def via_voronoi_tessellation(grid_dim, num_grains, box_size):
@@ -69,21 +80,21 @@ class DamaskLoading(dict):
         super(DamaskLoading, self).__init__(self)
 
     def __new__(cls, solver, load_steps):
-        ret_dict = {}
-        ret_dict["solver"] = solver
+        loading_dict = dict()
+        loading_dict["solver"] = solver
         if isinstance(load_steps, list):
-            ret_dict["loadstep"] = [
+            loading_dict["loadstep"] = [
                 LoadStep(mech_bc_dict=load_step['mech_bc_dict'],
                          discretization=load_step['discretization'],
                          additional_parameters_dict=load_step["additional"])
                 for load_step in load_steps]
         else:
-            ret_dict["loadstep"] = [
+            loading_dict["loadstep"] = [
                 LoadStep(mech_bc_dict=load_steps['mech_bc_dict'],
                          discretization=load_steps['discretization'],
                          additional_parameters_dict=load_steps["additional"])
             ]
-        return Config(solver=ret_dict["solver"], loadstep=ret_dict["loadstep"])
+        return Config(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
 
 class LoadStep(dict):
     def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
