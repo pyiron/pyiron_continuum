@@ -216,13 +216,14 @@ class RectMesh(HasStorage):
             res += (np.roll(val, 1, axis=ax) + np.roll(val, -1, axis=ax) - 2 * val) / ds ** 2
         return res
 
-    def grad(self, fnc: Union[Callable, np.ndarray], order: int = 1) -> np.array:
+    def grad(self, fnc: Union[Callable, np.ndarray], order: int = 2) -> np.array:
         """
         Gradient operator applied to a given function or scalar field.
 
         Args:
             fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field, or the
                 scalar field.
+            order (int): The order of approximation, 1 uses two points, 2 uses four points. (Default is 2.)
 
         Returns:
             (numpy.ndarray): The vector field gradient of the function at each point on the grid.
