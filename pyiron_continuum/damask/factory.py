@@ -9,7 +9,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Grid, Result, Config, ConfigMaterial, seeds
+    from damask import Grid, Config, ConfigMaterial, seeds
 import numpy as np
 
 __author__ = "Muhammad Hassani"
@@ -63,24 +63,27 @@ class GridFactory:
         return Grid.from_Voronoi_tessellation(grid_dim, box_size, seed)
 
 
-class DamaskLoading(Config):
-    def __init__(self, load_steps, solver):
+class DamaskLoading(dict):
+    def __init__(self,  load_steps, solver):
         """a refactory for damask Loading class, which is a damask.Config object"""
         super(DamaskLoading, self).__init__(self)
-        self["solver"] = solver
+
+    def __new__(cls, solver, load_steps):
+        ret_dict = {}
+        ret_dict["solver"] = solver
         if isinstance(load_steps, list):
-            self["loadstep"] = [
+            ret_dict["loadstep"] = [
                 LoadStep(mech_bc_dict=load_step['mech_bc_dict'],
                          discretization=load_step['discretization'],
                          additional_parameters_dict=load_step["additional"])
                 for load_step in load_steps]
         else:
-            self["loadstep"] = [
+            ret_dict["loadstep"] = [
                 LoadStep(mech_bc_dict=load_steps['mech_bc_dict'],
                          discretization=load_steps['discretization'],
                          additional_parameters_dict=load_steps["additional"])
             ]
-
+        return Config(solver=ret_dict["solver"], loadstep=ret_dict["loadstep"])
 
 class LoadStep(dict):
     def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
