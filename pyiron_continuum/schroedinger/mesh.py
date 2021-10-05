@@ -14,7 +14,10 @@ BoundsList = List[Union[float, int, List[Union[float, int]]]]
 
 class RectMesh(HasStorage):
     """
-    A helper class for building rectangular meshgrids in n-dimensions
+    A helper class for building rectangular meshgrids in n-dimensions.
+    Assumes periodic boundary conditions.
+    Mesh corresponds to numpy meshgrid with `indexing='ij'` *not* the default `'xy'` indexing. This gives consistency
+    in behaviour for meshes in >2 dimensions.
 
     Example 1-D)
 
@@ -27,13 +30,11 @@ class RectMesh(HasStorage):
     Example 2-D)
     >>> mesh = RectMesh(bounds=[[0, 1], [2, 5]], divisions=[2, 3])
     >>> mesh.mesh
-    array([[[0. , 0.5],
-            [0. , 0.5],
-            [0. , 0.5]],
+    array([[[0. , 0. , 0. ],
+            [0.5, 0.5, 0.5]],
     <BLANKLINE>
-           [[2. , 2. ],
-            [3. , 3. ],
-            [4. , 4. ]]])
+           [[2. , 3. , 4. ],
+            [2. , 3. , 4. ]]])
     >>> mesh.steps
     array([0.5, 1. ])
 
@@ -148,7 +149,7 @@ class RectMesh(HasStorage):
             linspaces.append(space)
             steps.append(step)
 
-        mesh = np.meshgrid(*linspaces)
+        mesh = np.meshgrid(*linspaces, indexing='ij')
         self.storage.steps = np.array(steps)
         self.storage.mesh = np.array(mesh)
 
@@ -192,13 +193,14 @@ class RectMesh(HasStorage):
 
     def laplacian(self, fnc: Union[Callable, np.ndarray]) -> np.array:
         """
-        Discrete Laplacian operator applied to a given function assuming periodic boundary conditions.
+        Discrete Laplacian operator applied to a given function or scalar field.
 
         Args:
-            fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value or the function already evaluated.
+            fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field, or the
+                scalar field
 
         Returns:
-            (numpy.ndarray): The Laplacian of the function at each point on the grid.
+            (numpy.ndarray): The scalar field Laplacian of the function at each point on the grid.
         """
         if callable(fnc):
             val = fnc(self)

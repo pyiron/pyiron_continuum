@@ -65,12 +65,12 @@ class TestRectMesh(PyironTestCase):
                 mesh.mesh,
                 [
                     [
-                        [0, L / 2],
-                        [0, L / 2],
+                        [0, 0],
+                        [L / 2, L / 2],
                     ],
                     [
-                        [0, 0],
-                        [L, L],
+                        [0, L],
+                        [0, L],
                     ]
                 ]
             )
