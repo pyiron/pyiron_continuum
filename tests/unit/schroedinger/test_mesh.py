@@ -108,6 +108,33 @@ class TestRectMesh(PyironTestCase):
                 convergence.append(np.linalg.norm(analytic - numeric))
             self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
 
+    def test_grad(self):
+        L = np.pi
+        omega = 2 * np.pi / L
+        mesh = RectMesh([L, L, L], [100, 200, 300])
+
+        def fnc2d(mesh):
+            x, y, z = mesh.mesh
+            return np.sin(x * omega) * np.sin(y * omega) * np.sin(z * omega)
+
+        def dfnc2d(mesh):
+            x, y, z = mesh.mesh
+            return np.array([
+                omega * np.cos(x * omega) * np.sin(y * omega) * np.sin(z * omega),
+                omega * np.sin(x * omega) * np.cos(y * omega) * np.sin(z * omega),
+                omega * np.sin(x * omega) * np.sin(y * omega) * np.cos(z * omega)
+            ])
+
+        grad1 = mesh.grad(fnc2d, order=1)  # Can take function
+        err1 = np.linalg.norm(grad1 - dfnc2d(mesh)) / len(mesh)
+        grad2 = mesh.grad(fnc2d(mesh), order=2)  # Or a numpy array directly
+        err2 = np.linalg.norm(grad2 - dfnc2d(mesh)) / len(mesh)
+        self.assertLess(err1, 0.001, msg="Should a pretty good approximation")
+        self.assertAlmostEquals(0, err2, msg="Should be a very good approximation")
+        self.assertLess(err2, err1, msg="Second order approximation should be better")
+
+        self.assertRaises(TypeError, mesh.grad, np.random.rand(1, 2, 3))  # Values aren't a nice scalar field on mesh!
+
     def test_length(self):
         mesh = RectMesh([[0, 1], [1, 3]], 2)
         self.assertAlmostEqual(1, mesh.lengths[0], msg='Real-space length in x-direction should be 1')

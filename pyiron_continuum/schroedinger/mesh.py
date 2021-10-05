@@ -215,3 +215,33 @@ class RectMesh(HasStorage):
         for ax, ds in enumerate(self.steps):
             res += (np.roll(val, 1, axis=ax) + np.roll(val, -1, axis=ax) - 2 * val) / ds ** 2
         return res
+
+    def grad(self, fnc: Union[Callable, np.ndarray], order: int = 1) -> np.array:
+        """
+        Gradient operator applied to a given function or scalar field.
+
+        Args:
+            fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field, or the
+                scalar field.
+
+        Returns:
+            (numpy.ndarray): The vector field gradient of the function at each point on the grid.
+        """
+        if callable(fnc):
+            val = fnc(self)
+        elif np.all(fnc.shape == self.shape[1:]):
+            val = fnc
+        else:
+            raise TypeError('Argument for gradient not recognized')
+        res = np.zeros(self.shape)
+        for ax, ds in enumerate(self.steps):
+            if order == 1:
+                res[ax] = (np.roll(val, -1, axis=ax) - np.roll(val, 1, axis=ax)) / (2 * ds)
+            elif order == 2:
+                res[ax] = (
+                            -np.roll(val, -2, axis=ax) + 8 * np.roll(val, -1, axis=ax)
+                            - 8 * np.roll(val, 1, axis=ax) + np.roll(val, 2, axis=ax)
+                          ) / (12 * ds)
+            else:
+                raise ValueError(f'Order must be 1 or 2 but got {order}.')
+        return res
