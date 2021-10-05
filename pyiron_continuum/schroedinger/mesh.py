@@ -12,6 +12,40 @@ from typing import Union, List, Callable, Any
 BoundsList = List[Union[float, int, List[Union[float, int]]]]
 
 
+def callable_to_array(method):
+    """If the first argument of the method is callable, replaces it with the callable evaluated on self."""
+    def wrapper(self, fnc, **kwargs):
+        if callable(fnc):
+            return method(self, fnc(self), **kwargs)
+        else:
+            return method(self, fnc, **kwargs)
+    return wrapper
+
+
+def takes_scalar_field(method):
+    """Makes sure the first argument has the right shape to be a scalar field on the mesh."""
+    def wrapper(self, scalar_field, **kwargs):
+        scalar_field = np.array(scalar_field)
+        if np.all(scalar_field.shape == self.divisions):
+            return method(self, scalar_field, **kwargs)
+        else:
+            raise TypeError(f'Argument for {method.__name__} not recognized: should be a scalar field, or function '
+                            f'taking the mesh and returning a scalar field.')
+    return wrapper
+
+
+def takes_vector_field(method):
+    """Makes sure the first argument has the right shape to be a vector field on the mesh."""
+    def wrapper(self, vector_field, **kwargs):
+        vector_field = np.array(vector_field)
+        if np.all(vector_field.shape == self.shape):
+            return method(self, vector_field, **kwargs)
+        else:
+            raise TypeError(f'Argument for {method.__name__} not recognized: should be a vector field, or function '
+                            f'taking the mesh and returning a vector field.')
+    return wrapper
+
+
 class RectMesh(HasStorage):
     """
     A helper class for building rectangular meshgrids in n-dimensions.
@@ -194,7 +228,9 @@ class RectMesh(HasStorage):
     def _is_int(val: Any) -> bool:
         return np.issubdtype(type(val), np.integer)
 
-    def laplacian(self, fnc: Union[Callable, np.ndarray]) -> np.array:
+    @callable_to_array
+    @takes_scalar_field
+    def laplacian(self, scalar_field: Union[Callable, np.ndarray]) -> np.array:
         """
         Discrete Laplacian operator applied to a given function or scalar field.
 
@@ -205,43 +241,33 @@ class RectMesh(HasStorage):
         Returns:
             (numpy.ndarray): The scalar field Laplacian of the function at each point on the grid.
         """
-        if callable(fnc):
-            val = fnc(self)
-        elif np.all(fnc.shape == self.shape[1:]):
-            val = fnc
-        else:
-            raise TypeError('Argument for laplacian not recognized')
-        res = np.zeros(val.shape)
+        res = np.zeros(self.divisions)
         for ax, ds in enumerate(self.steps):
-            res += (np.roll(val, 1, axis=ax) + np.roll(val, -1, axis=ax) - 2 * val) / ds ** 2
+            res += (np.roll(scalar_field, 1, axis=ax) + np.roll(scalar_field, -1, axis=ax) - 2 * scalar_field) / ds ** 2
         return res
 
-    def grad(self, fnc: Union[Callable, np.ndarray], order: int = 2) -> np.array:
+    @callable_to_array
+    @takes_scalar_field
+    def grad(self, scalar_field: Union[Callable, np.ndarray], order: int = 2) -> np.array:
         """
         Gradient operator applied to a given function or scalar field.
 
         Args:
-            fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field, or the
-                scalar field.
+            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
+                or the scalar field as an array.
             order (int): The order of approximation, 1 uses two points, 2 uses four points. (Default is 2.)
 
         Returns:
             (numpy.ndarray): The vector field gradient of the function at each point on the grid.
         """
-        if callable(fnc):
-            val = fnc(self)
-        elif np.all(fnc.shape == self.shape[1:]):
-            val = fnc
-        else:
-            raise TypeError('Argument for gradient not recognized')
         res = np.zeros(self.shape)
         for ax, ds in enumerate(self.steps):
             if order == 1:
-                res[ax] = (np.roll(val, -1, axis=ax) - np.roll(val, 1, axis=ax)) / (2 * ds)
+                res[ax] = (np.roll(scalar_field, -1, axis=ax) - np.roll(scalar_field, 1, axis=ax)) / (2 * ds)
             elif order == 2:
                 res[ax] = (
-                            -np.roll(val, -2, axis=ax) + 8 * np.roll(val, -1, axis=ax)
-                            - 8 * np.roll(val, 1, axis=ax) + np.roll(val, 2, axis=ax)
+                            -np.roll(scalar_field, -2, axis=ax) + 8 * np.roll(scalar_field, -1, axis=ax)
+                            - 8 * np.roll(scalar_field, 1, axis=ax) + np.roll(scalar_field, 2, axis=ax)
                           ) / (12 * ds)
             else:
                 raise ValueError(f'Order must be 1 or 2 but got {order}.')

@@ -3,14 +3,66 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from pyiron_base._tests import PyironTestCase
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.schroedinger.mesh import RectMesh, callable_to_array, takes_scalar_field, takes_vector_field
 import numpy as np
 import pyiron_continuum.schroedinger.mesh as mesh_mod
 
 
+class TestDecorators(PyironTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.mesh = RectMesh([1, 2, 3], [30, 20, 10])
+
+    @staticmethod
+    def give_vector(mesh):
+        return np.ones(mesh.shape)
+
+    @staticmethod
+    def give_scalar(mesh):
+        return np.ones(mesh.divisions)
+
+    def test_callable_to_array(self):
+        scalar_field = self.give_scalar(self.mesh)
+
+        @callable_to_array
+        def method(mesh, callable_or_array, some_kwarg=1):
+            return callable_or_array + some_kwarg
+
+        self.assertTrue(np.allclose(scalar_field + 1, method(self.mesh, self.give_scalar)), msg="Accept functions")
+        self.assertTrue(np.allclose(scalar_field + 1, method(self.mesh, scalar_field)), msg="Accept arrays")
+        self.assertTrue(np.allclose(scalar_field + 2, method(self.mesh, self.give_scalar, some_kwarg=2)),
+                        msg="Pass kwargs")
+
+    def test_takes_scalar_field(self):
+        scalar_field = self.give_scalar(self.mesh)
+
+        @takes_scalar_field
+        def method(mesh, scalar_field, some_kwarg=1):
+            return some_kwarg
+
+        self.assertEqual(1, method(self.mesh, scalar_field), msg="Accept arrays")
+        self.assertEqual(2, method(self.mesh, scalar_field, some_kwarg=2), msg="Pass kwargs")
+        self.assertEqual(1, method(self.mesh, scalar_field.tolist()), msg="Should work with listlike stuff too")
+        self.assertRaises(TypeError, method, self.mesh, np.ones(2))  # Reject the wrong shape
+        self.assertRaises(TypeError, method, self.mesh, "not even numeric")  # Duh
+
+    def test_takes_vector_field(self):
+        vector_field = self.give_vector(self.mesh)
+
+        @takes_vector_field
+        def method(mesh, vector_field, some_kwarg=1):
+            return some_kwarg
+
+        self.assertEqual(1, method(self.mesh, vector_field), msg="Accept arrays")
+        self.assertEqual(2, method(self.mesh, vector_field, some_kwarg=2), msg="Pass kwargs")
+        self.assertEqual(1, method(self.mesh, vector_field.tolist()), msg="Should work with listlike stuff too")
+        self.assertRaises(TypeError, method, self.mesh, np.ones(2))  # Reject the wrong shape
+        self.assertRaises(TypeError, method, self.mesh, "not even numeric")  # Duh
+
+
 class TestRectMesh(PyironTestCase):
-    def setUp(self) -> None:
-        super().setUp()
 
     @property
     def docstring_module(self):
