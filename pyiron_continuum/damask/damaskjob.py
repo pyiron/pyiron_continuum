@@ -10,7 +10,6 @@ with ImportAlarm(
         'requirements. Please install it and try again.'
 ) as damask_alarm:
     from damask import Result
-import numpy as np
 import os
 
 

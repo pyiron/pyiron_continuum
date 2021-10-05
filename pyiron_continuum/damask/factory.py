@@ -1,8 +1,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
-"""
-Refactory of the damask classes and methods to a pyironized manner
-"""
+"""Refactory of the damask classes and methods to a pyironized manner"""
 
 from pyiron_base import ImportAlarm
 with ImportAlarm(
@@ -25,7 +23,7 @@ __date__ = "Oct 04, 2021"
 
 class MaterialFactory:
     def __init__(self):
-        """a refactory for damask ConfigMaterial class"""
+        """a refactory for damask ConfigMaterial class."""
         pass
 
     @staticmethod
@@ -46,7 +44,7 @@ class MaterialFactory:
 
 class GridFactory:
     def __init__(self):
-        """a refactory for damask Grid class"""
+        """a refactory for damask._grid.Grid class."""
         self._origin = None
 
     @staticmethod
@@ -58,7 +56,7 @@ class GridFactory:
         if self._origin is None:
             return Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
         else:
-            self._origin
+            return self._origin
 
     @origin.setter
     def origin(self, value):
@@ -75,8 +73,8 @@ class GridFactory:
 
 
 class DamaskLoading(dict):
-    def __init__(self,  load_steps, solver):
-        """a refactory for damask Loading class, which is a damask.Config object"""
+    def __init__(self, solver, load_steps):
+        """a refactory for damask Loading class, which is a damask._config.Config object."""
         super(DamaskLoading, self).__init__(self)
 
     def __new__(cls, solver, load_steps):
@@ -98,7 +96,7 @@ class DamaskLoading(dict):
 
 class LoadStep(dict):
     def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
-        """An auxilary class, which helps to parse loadsteps to a dictionary"""
+        """An auxilary class, which helps to parse loadsteps to a dictionary."""
         super(LoadStep, self).__init__(self)
         self.update({'boundary_conditions': {'mechanical': {}},
                      'discretization': discretization})
@@ -116,9 +114,7 @@ class LoadStep(dict):
 
 class Create:
     def __init__(self):
-        """
-        The create refactory for the damask job
-        """
+        """The create refactory for the damask job."""
         self._grid = GridFactory()
 
     @property
@@ -132,7 +128,7 @@ class Create:
     @staticmethod
     def loading(solver, load_steps):
         """
-        Creates the required damask loading
+        Creates the required damask loading.
         Args:
             solver(dict): a dictionary desrcribing the solver: e.g, {'mechanical': 'spectral_basic'}
             load_steps(list/single dict): a list of dict or single dict, which describes the loading conditions
@@ -147,7 +143,7 @@ class Create:
     @staticmethod
     def material(rotation, elements, phase, homogenization):
         """
-        creates the damask material
+        creates a damask material.
         Args:
             rotation(damask.Rotation): damask rotation object
             elements(str): elements describing the phase
@@ -159,7 +155,7 @@ class Create:
     @staticmethod
     def homogenization(method, parameters):
         """
-        returns damask homogenization as a dictionary
+        returns damask homogenization as a dictionary.
         Args:
             method(str): homogenization method
             parameters(dict): the required parameters
@@ -171,7 +167,7 @@ class Create:
     @staticmethod
     def phase(composition, lattice, output_list, elasticity, plasticity):
         """
-        returns a dictionary describing the phases for damask
+        returns a dictionary describing the phases for damask.
         Args:
             composition(str)
             lattice(dict)
@@ -200,7 +196,7 @@ class Create:
     @staticmethod
     def elasticity(**kwargs):
         """
-        returns a dictionary of elasticity parameters for damask input file
+        returns a dictionary of elasticity parameters for damask input file.
         Examples:
              elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
                                         C_12= 60.41e9, C_44=28.34e9)
@@ -210,7 +206,7 @@ class Create:
     @staticmethod
     def plasticity(**kwargs):
         """
-        returns a dictionary of plasticity parameters for damask input file
+        returns a dictionary of plasticity parameters for damask input file.
         Examples:
             plasticity = plasticity(N_sl=[12], a_sl=2.25,
                                     atol_xi=1.0, dot_gamma_0_sl=0.001,
@@ -225,7 +221,7 @@ class Create:
     @staticmethod
     def rotation(method, *args):
         """
-        returns a damask.Rotation object by a given method
+        returns a damask.Rotation object by a given method.
         Args:
             method(damask.Rotation.*): a method of damask.Rotation class which based on the
                             given arguments creates the Rotation object

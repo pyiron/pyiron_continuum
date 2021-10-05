@@ -5,10 +5,9 @@
 A toolkit for managing extensions to the project from atomistics.
 """
 
-from pyiron_base import Toolkit, Project, JobFactoryCore, ImportAlarm
+from pyiron_base import Toolkit, Project, JobFactoryCore
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
-from pyiron_continuum.damask.damaskjob import DAMASK as DAMASKJob # Looks like Damask needs an import alarm
 from pyiron_continuum.project import DAMASKCreator
 from pyiron_continuum.schroedinger.schroedinger import TISE
 from pyiron_continuum.schroedinger.mesh import RectMesh
@@ -49,6 +48,7 @@ class Potential:
 
 class DAMASK:
     def __init__(self):
+        """Initializer of damask python objects."""
         self._creator = DAMASKCreator()
 
     @property
@@ -132,7 +132,6 @@ class DAMASK:
              elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
                                         C_12= 60.41e9, C_44=28.34e9)
         """
-
         return DAMASKCreator.elasticity(**kwargs)
 
     @staticmethod
