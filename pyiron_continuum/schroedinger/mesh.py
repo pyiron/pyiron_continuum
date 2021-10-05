@@ -141,6 +141,9 @@ class RectMesh(HasStorage):
     def volume(self):
         return self.lengths.prod()
 
+    def __len__(self):
+        return self.divisions.prod()
+
     def _build_mesh(self) -> None:
         linspaces = []
         steps = []
