@@ -49,7 +49,7 @@ def takes_vector_field(method):
 class RectMesh(HasStorage):
     """
     A helper class for building rectangular meshgrids in n-dimensions.
-    Assumes periodic boundary conditions.
+    **Assumes periodic boundary conditions.**
     Mesh corresponds to numpy meshgrid with `indexing='ij'` *not* the default `'xy'` indexing. This gives consistency
     in behaviour for meshes in >2 dimensions.
 
@@ -228,6 +228,8 @@ class RectMesh(HasStorage):
     def _is_int(val: Any) -> bool:
         return np.issubdtype(type(val), np.integer)
 
+    # OPERATIONS:
+
     @callable_to_array
     @takes_scalar_field
     def laplacian(self, scalar_field: Union[Callable, np.ndarray]) -> np.array:
@@ -235,11 +237,11 @@ class RectMesh(HasStorage):
         Discrete Laplacian operator applied to a given function or scalar field.
 
         Args:
-            fnc (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field, or the
-                scalar field
+            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
+                or the scalar field as an array.
 
         Returns:
-            (numpy.ndarray): The scalar field Laplacian of the function at each point on the grid.
+            (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
         """
         res = np.zeros(self.divisions)
         for ax, ds in enumerate(self.steps):
@@ -248,41 +250,72 @@ class RectMesh(HasStorage):
 
     @callable_to_array
     @takes_scalar_field
-    def grad(self, scalar_field: Union[Callable, np.ndarray], order: int = 2) -> np.array:
+    def grad(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
         """
-        Gradient operator applied to a given function or scalar field.
+        Gradient of a scalar field.
 
         Args:
             scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
                 or the scalar field as an array.
-            order (int): The order of approximation, 1 uses two points, 2 uses four points. (Default is 2.)
+            accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
+                (Default is 2, O(h^2) accuracy.)
 
         Returns:
-            (numpy.ndarray): The vector field gradient of the function at each point on the grid.
+            (numpy.ndarray): The vector field gradient of the scalar input at each point on the mesh in each dimension.
         """
-        return self.derivative(scalar_field, order=1, accuracy=order)
+        return self.derivative(scalar_field, order=1, accuracy=accuracy)
 
     @callable_to_array
     @takes_vector_field
-    def div(self, vector_field: Union[Callable, np.ndarray], order: int = 2) -> np.array:
+    def div(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+        """
+        Divergence of a vector field.
+
+        Args:
+            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
+                or the scalar field as an array.
+            accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
+                (Default is 2, O(h^2) accuracy.)
+
+        Returns:
+            (numpy.ndarray): The scalar field divergence of the vector input at each point on the mesh.
+        """
         res = np.zeros(self.divisions)
         for ax in np.arange(self.dim):
-            res += self.grad(vector_field[ax], order=order)[ax]
+            res += self.grad(vector_field[ax], accuracy=accuracy)[ax]
         return res
 
     @callable_to_array
     @takes_vector_field
-    def curl(self, vector_field: Union[Callable, np.ndarray], order: int = 2) -> np.array:
+    def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+        """
+        Curl of a vector field.
+
+        Note: Only works for 3d vector fields!
+
+        Args:
+            vector_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a vector field,
+                or the vector field as an array.
+            accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
+                (Default is 2, O(h^2) accuracy.)
+
+        Returns:
+            (numpy.ndarray): The vector field curl of the vector input at each point on the mesh in all three
+                dimensions.
+
+        Raises:
+            (NotImplementedError): If the vector field provided is not three dimensional.
+        """
         if self.dim != 3:
             raise NotImplementedError("I'm no mathematician, so curl is only coded for the traditional 3d space.")
-        grads = np.array([self.grad(vf, order=order) for vf in vector_field])
+        grads = np.array([self.grad(vf, accuracy=accuracy) for vf in vector_field])
         pos = np.array([grads[(2 + i) % self.dim][(1 + i) % self.dim] for i in range(self.dim)])
         neg = np.array([grads[(1 + i) % self.dim][(2 + i) % self.dim] for i in range(self.dim)])
         return pos - neg
 
     @callable_to_array
     @takes_scalar_field
-    def derivative(self, scalar_field: Union[Callable, np.ndarray], order=1, accuracy=2):
+    def derivative(self, scalar_field: Union[Callable, np.ndarray], order: int = 1, accuracy: int = 2):
         """
         Numeric differential for a uniform grid using the central difference method.
 
@@ -293,7 +326,8 @@ class RectMesh(HasStorage):
             accuracy (int): The accuracy of the method in O(grid spacing). (Default is 2, O(h^2) accuracy).
 
         Returns:
-            (numpy.ndarray): The vector field derivative of the function at each point on the grid in each dimension.
+            (numpy.ndarray): The vector field derivative of the scalar input at each point on the grid in each
+                dimension.
 
         Raises:
             (KeyError): If the requested order or accuracy cannot be found.
