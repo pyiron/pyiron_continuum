@@ -44,7 +44,7 @@ class MaterialFactory:
 
 class GridFactory:
     def __init__(self):
-        """a refactory for damask._grid.Grid class."""
+        """a factory for damask._grid.Grid class."""
         self._origin = None
 
     @staticmethod
