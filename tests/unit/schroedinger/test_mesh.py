@@ -157,6 +157,26 @@ class TestRectMesh(PyironTestCase):
         self.assertAlmostEqual(1, mesh.lengths[0], msg='Real-space length in x-direction should be 1')
         self.assertAlmostEqual(2, mesh.lengths[1], msg='Real-space length in y-direction should be 3-1=2')
 
+    def test_derivative(self):
+        L = np.pi
+        omega = 2 * np.pi / L
+        mesh = RectMesh(L, 100)
+        x = mesh.mesh[0]
+
+        def solution(order):
+            """derivatives of sin(omega * x)"""
+            fnc = np.cos(omega * x) if order % 2 == 1 else np.sin(omega * x)
+            sign = -1 if order % 4 in [2, 3] else 1
+            return sign * omega**order * fnc
+
+        for order, accuracies in mesh.central_difference_table.items():
+            errors = [
+                np.linalg.norm(solution(order) - mesh.derivative(self.scalar_sines, order=order, accuracy=ac))
+                for ac in accuracies.keys()
+            ]
+            print(order, errors, np.diff(errors))
+            self.assertTrue(np.all(np.diff(errors) < 0), msg="Increasing accuracy should give decreasing error.")
+
     def test_grad(self):
         L = np.pi
         omega = 2 * np.pi / L
