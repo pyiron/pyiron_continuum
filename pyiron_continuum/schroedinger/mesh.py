@@ -341,10 +341,7 @@ class RectMesh(HasStorage):
         Returns:
             (numpy.ndarray): The scalar field divergence of the vector input at each point on the mesh.
         """
-        res = np.zeros(self.divisions)
-        for ax in np.arange(self.dim):
-            res += self.grad(vector_field[ax], accuracy=accuracy)[ax]
-        return res
+        return np.sum([self.grad(vector_field[ax], accuracy=accuracy)[ax] for ax in np.arange(self.dim)], axis=0)
 
     @callable_to_array
     @takes_scalar_field
