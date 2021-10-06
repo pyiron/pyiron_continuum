@@ -23,7 +23,7 @@ __date__ = "Oct 04, 2021"
 
 class MaterialFactory:
     def __init__(self):
-        """a factory for damask ConfigMaterial class."""
+        """A factory for damask ConfigMaterial class."""
         pass
 
     @staticmethod
@@ -44,7 +44,7 @@ class MaterialFactory:
 
 class GridFactory:
     def __init__(self):
-        """a factory for damask._grid.Grid class."""
+        """A factory for damask._grid.Grid class."""
         self._origin = None
 
     @staticmethod
@@ -53,6 +53,11 @@ class GridFactory:
 
     @property
     def origin(self):
+        """
+        Returns damask._grid.Grid, it can be used to call damask original methods.
+        For example:
+        origin.from_Voronoi_tessellation(...)
+        """
         if self._origin is None:
             return Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
         else:
@@ -74,7 +79,7 @@ class GridFactory:
 
 class DamaskLoading(dict):
     def __init__(self, solver, load_steps):
-        """a factory for damask Loading class, which is a damask._config.Config object."""
+        """A factory for damask Loading class, which is a damask._config.Config object."""
         super(DamaskLoading, self).__init__(self)
 
     def __new__(cls, solver, load_steps):
@@ -143,7 +148,7 @@ class Create:
     @staticmethod
     def material(rotation, elements, phase, homogenization):
         """
-        creates a damask material.
+        Creates a damask material.
         Args:
             rotation(damask.Rotation): damask rotation object
             elements(str): elements describing the phase
@@ -155,7 +160,7 @@ class Create:
     @staticmethod
     def homogenization(method, parameters):
         """
-        returns damask homogenization as a dictionary.
+        Returns damask homogenization as a dictionary.
         Args:
             method(str): homogenization method
             parameters(dict): the required parameters
@@ -167,7 +172,7 @@ class Create:
     @staticmethod
     def phase(composition, lattice, output_list, elasticity, plasticity):
         """
-        returns a dictionary describing the phases for damask.
+        Returns a dictionary describing the phases for damask.
         Args:
             composition(str)
             lattice(dict)
@@ -196,7 +201,7 @@ class Create:
     @staticmethod
     def elasticity(**kwargs):
         """
-        returns a dictionary of elasticity parameters for damask input file.
+        Returns a dictionary of elasticity parameters for damask input file.
         Examples:
              elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
                                         C_12= 60.41e9, C_44=28.34e9)
@@ -206,7 +211,7 @@ class Create:
     @staticmethod
     def plasticity(**kwargs):
         """
-        returns a dictionary of plasticity parameters for damask input file.
+        Returns a dictionary of plasticity parameters for damask input file.
         Examples:
             plasticity = plasticity(N_sl=[12], a_sl=2.25,
                                     atol_xi=1.0, dot_gamma_0_sl=0.001,
@@ -221,7 +226,7 @@ class Create:
     @staticmethod
     def rotation(method, *args):
         """
-        returns a damask.Rotation object by a given method.
+        Returns a damask.Rotation object by a given method.
         Args:
             method(damask.Rotation.*): a method of damask.Rotation class which based on the
                             given arguments creates the Rotation object
