@@ -12,7 +12,7 @@ dependencies:
   - matplotlib
   - numpy
   - pyiron
-  - pyiron-data >=0.0.16
+  - pyiron-data >=0.0.17
   - pyvista
   - scipy
   - seaborn
