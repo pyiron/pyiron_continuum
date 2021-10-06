@@ -311,7 +311,7 @@ class RectMesh(HasStorage):
 
     @callable_to_array
     @takes_scalar_field
-    def grad(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+    def grad(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
         """
         Gradient of a scalar field.
 
@@ -319,7 +319,7 @@ class RectMesh(HasStorage):
             scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
                 or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 2, O(h^2) accuracy.)
+                (Default is 4, O(h^4) accuracy.)
 
         Returns:
             (numpy.ndarray): The vector field gradient of the scalar input at each point on the mesh in each dimension.
@@ -328,7 +328,7 @@ class RectMesh(HasStorage):
 
     @callable_to_array
     @takes_vector_field
-    def div(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+    def div(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
         """
         Divergence of a vector field.
 
@@ -336,7 +336,7 @@ class RectMesh(HasStorage):
             scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
                 or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 2, O(h^2) accuracy.)
+                (Default is 4, O(h^4) accuracy.)
 
         Returns:
             (numpy.ndarray): The scalar field divergence of the vector input at each point on the mesh.
@@ -348,7 +348,7 @@ class RectMesh(HasStorage):
 
     @callable_to_array
     @takes_scalar_field
-    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
         """
         Discrete Laplacian operator applied to a given function or scalar field.
 
@@ -356,7 +356,7 @@ class RectMesh(HasStorage):
             scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
                 or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 2, O(h^2) accuracy.)
+                (Default is 4, O(h^4) accuracy.)
 
         Returns:
             (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
@@ -365,7 +365,7 @@ class RectMesh(HasStorage):
 
     @callable_to_array
     @takes_vector_field
-    def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+    def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
         """
         Curl of a vector field.
 
@@ -375,7 +375,7 @@ class RectMesh(HasStorage):
             vector_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a vector field,
                 or the vector field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 2, O(h^2) accuracy.)
+                (Default is 4, O(h^4) accuracy.)
 
         Returns:
             (numpy.ndarray): The vector field curl of the vector input at each point on the mesh in all three

@@ -229,7 +229,6 @@ class TestRectMesh(PyironTestCase):
             omega * np.sin(omega * z) * (np.sin(omega * y) * np.cos(omega * x) - np.sin(omega * x) * np.cos(omega * y))
         ])
 
-        print(np.linalg.norm(solution - mesh.curl(self.vector_sines)))
         self.assertTrue(np.allclose(solution, mesh.curl(self.vector_sines)), msg="Should work with callable")
         self.assertTrue(np.allclose(solution, mesh.curl(self.vector_sines(mesh))), msg="Should work with array")
 
