@@ -97,6 +97,9 @@ class RectMesh(HasStorage):
         takes the mesh itself as an argument and returns a numpy array of the correct dimension, where 'correct' is
         refering to scalar field (mesh divisions) or vector field (mesh shape).
 
+    Warning: Operations over the actual mesh points are all nicely vectorized, but this is by no means highly optimized
+        for numeric efficiency! If you want to do some really heavy lifting, this is probably the wrong tool.
+
     TODO: Include aperiodic boundary conditions, e.g. padding. Probably by modifying the decorators.
     """
 
