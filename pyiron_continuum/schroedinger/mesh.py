@@ -232,21 +232,20 @@ class RectMesh(HasStorage):
 
     @callable_to_array
     @takes_scalar_field
-    def laplacian(self, scalar_field: Union[Callable, np.ndarray]) -> np.array:
+    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
         """
         Discrete Laplacian operator applied to a given function or scalar field.
 
         Args:
             scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
                 or the scalar field as an array.
+            accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
+                (Default is 2, O(h^2) accuracy.)
 
         Returns:
             (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
         """
-        res = np.zeros(self.divisions)
-        for ax, ds in enumerate(self.steps):
-            res += (np.roll(scalar_field, 1, axis=ax) + np.roll(scalar_field, -1, axis=ax) - 2 * scalar_field) / ds ** 2
-        return res
+        return self.div(self.grad(scalar_field, accuracy=accuracy), accuracy=accuracy)
 
     @callable_to_array
     @takes_scalar_field
