@@ -242,52 +242,25 @@ class RectMesh(HasStorage):
     def _is_int(val: Any) -> bool:
         return np.issubdtype(type(val), np.integer)
 
-    @property
-    def central_difference_table(self):
+    @staticmethod
+    def _get_central_difference_coefficients(m, n):
         """
-        Coefficients for numeric differentials sorted by order of differential and accuracy of method:
-        - order of differential
-            - accuracy of method
-                - roll: coefficient
+        Coefficients for central finite difference numeric differentiation.
 
-        Cf. [Wikipedia](https://en.wikipedia.org/wiki/Finite_difference_coefficient)
+        Args:
+            m (int): Order of differential
+            n (int): Accuracy of method
 
-        TODO: Fill out the rest of the values
+        Returns:
+            (numpy.ndarray): Coefficients for numeric differentials sorted by order of differential and accuracy of
+                method.
         """
-        return {
-            1: {
-                2: {1: -1/2, -1: 1/2},
-                4: {2: 1/12, 1: -2/3, -1: 2/3, -2: -1/12},
-                6: {3: -1/60, 2: 3/20, 1: -3/4, -1: 3/4, -2: -3/20, -3: 1/60},
-                # 8: {},
-            },
-            2: {
-                2: {1: 1, 0: -2, -1: 1},
-                4: {2: -1/12, 1: 4/3, 0: -5/2, -1: 4/3, -2: -1/12},
-                # 6: {},
-                # 8: {},
-            },
-            3: {
-                2: {2: -1/2, 1: 1, -1: -1, -2: 1/2},
-                4: {3: 1/8, 2: -1, 1: 13/8, -1: -13/8, -2: 1, -3: -1/8},
-                # 6: {},
-            },
-            # 4: {
-            #     2: {},
-            #     4: {},
-            #     6: {},
-            # },
-            # 5: {
-            #     2: {},
-            #     4: {},
-            #     6: {},
-            # },
-            # 6: {
-            #     2: {},
-            #     4: {},
-            #     6: {},
-            # },
-        }
+        if n % 2 != 0:
+            raise ValueError('`n` must be an even number')
+        p = int(0.5 * (m + 1)) - 1 + int(0.5 * n)
+        b = np.zeros(2 * p + 1)
+        b[m] = np.prod(np.arange(m) + 1)
+        return np.linalg.solve(np.arange(-p, p + 1) ** np.arange(0, 2 * p + 1)[:, None], b)
 
     # OPERATIONS:
 
@@ -310,16 +283,16 @@ class RectMesh(HasStorage):
         Raises:
             (KeyError): If the requested order or accuracy cannot be found.
         """
-        try:
-            coefficients = self.central_difference_table[order][accuracy]
-        except KeyError:
-            raise KeyError(f'The requested order {order} and accuracy {accuracy} could not be found. Please look at '
-                           f'the `central_difference_table` attribute to see all available choices.')
+        coefficients = self._get_central_difference_coefficients(order, accuracy)
+        max_roll = (len(coefficients) - 1) / 2
+        rolls = np.flip(np.arange(-max_roll, max_roll + 1, dtype=int))
 
         res = np.zeros(self.shape)
         for ax, h in enumerate(self.steps):
-            for n, c in coefficients.items():
-                res[ax] += c * np.roll(scalar_field, n, axis=ax)
+            for n, c in enumerate(coefficients):
+                if np.isclose(c, 0):
+                    continue
+                res[ax] += c * np.roll(scalar_field, rolls[n], axis=ax)
             res[ax] /= h ** order
         return res
 

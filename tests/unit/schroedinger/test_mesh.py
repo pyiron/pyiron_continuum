@@ -169,13 +169,14 @@ class TestRectMesh(PyironTestCase):
             sign = -1 if order % 4 in [2, 3] else 1
             return sign * omega**order * fnc
 
-        for order, accuracies in mesh.central_difference_table.items():
+        for order in [1, 2, 3, 4]:
             errors = [
-                np.linalg.norm(solution(order) - mesh.derivative(self.scalar_sines, order=order, accuracy=ac))
-                for ac in accuracies.keys()
+                np.linalg.norm(solution(order) - mesh.derivative(self.scalar_sines, order=order, accuracy=accuracy))
+                for accuracy in [2, 4, 6]
             ]
-            print(order, errors, np.diff(errors))
             self.assertTrue(np.all(np.diff(errors) < 0), msg="Increasing accuracy should give decreasing error.")
+
+        self.assertRaises(ValueError, mesh.derivative, mesh.mesh[0], order=1, accuracy=3)  # No odd accuracies
 
     def test_grad(self):
         L = np.pi
