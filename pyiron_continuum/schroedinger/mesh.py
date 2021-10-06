@@ -341,7 +341,7 @@ class RectMesh(HasStorage):
         Returns:
             (numpy.ndarray): The scalar field divergence of the vector input at each point on the mesh.
         """
-        return np.sum([self.grad(vector_field[ax], accuracy=accuracy)[ax] for ax in np.arange(self.dim)], axis=0)
+        return np.sum([self.derivative(vector_field[ax], accuracy=accuracy)[ax] for ax in np.arange(self.dim)], axis=0)
 
     @callable_to_array
     @takes_scalar_field
@@ -358,7 +358,7 @@ class RectMesh(HasStorage):
         Returns:
             (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
         """
-        return self.div(self.grad(scalar_field, accuracy=accuracy), accuracy=accuracy)
+        return self.div(self.derivative(scalar_field, accuracy=accuracy), accuracy=accuracy)
 
     @callable_to_array
     @takes_vector_field
@@ -383,7 +383,7 @@ class RectMesh(HasStorage):
         """
         if self.dim != 3:
             raise NotImplementedError("I'm no mathematician, so curl is only coded for the traditional 3d space.")
-        grads = np.array([self.grad(vf, accuracy=accuracy) for vf in vector_field])
+        grads = np.array([self.derivative(vf, accuracy=accuracy) for vf in vector_field])
         pos = np.array([grads[(2 + i) % self.dim][(1 + i) % self.dim] for i in range(self.dim)])
         neg = np.array([grads[(1 + i) % self.dim][(2 + i) % self.dim] for i in range(self.dim)])
         return pos - neg
