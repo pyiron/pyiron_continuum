@@ -79,7 +79,7 @@ class TestRectMesh(PyironTestCase):
         return mesh_mod
 
     def test_input(self):
-        L = 2*np.pi
+        L = np.pi
         n = 2
         mesh = RectMesh(L, n)
         self.assertTrue(np.allclose(mesh.bounds, [[0, L]]),
@@ -94,9 +94,9 @@ class TestRectMesh(PyironTestCase):
                         msg='Expected divisions to be extended to match bounds.')
 
         mesh = RectMesh([[0, L], [L / 2, L]], [n, 2 * n])
-        self.assertTrue(np.allclose(mesh.bounds, [[0, L], [L/2, L]]),
+        self.assertTrue(np.allclose(mesh.bounds, [[0, L], [L / 2, L]]),
                         msg='Expected float to be converted to (1,2) array.')
-        self.assertTrue(np.all(mesh.divisions == [n, 2*n]),
+        self.assertTrue(np.all(mesh.divisions == [n, 2 * n]),
                         msg='Expected divisions to be preserved.')
 
         bounds = np.array([1, 2, 3, 4])
@@ -107,19 +107,19 @@ class TestRectMesh(PyironTestCase):
         )
 
         self.assertRaises(ValueError, RectMesh, [[0, 1, 2]], 1)  # Bounds can't exceed shape (n, 2)
-        self.assertRaises(ValueError, RectMesh, [[1, 1+1e-12]])  # Bounds must enclose a space noticeably bigger than 0
+        self.assertRaises(ValueError, RectMesh, [[1, 1 + 1e-12]])  # Bounds must enclose a space noticeably > 0
         self.assertRaises(ValueError, RectMesh, 1, [1, 1])  # Divisions must be a single value or match bounds
         self.assertRaises(TypeError, RectMesh, 1, np.pi)  # Only int-like divisions
-        self.assertRaises(TypeError, RectMesh, 1, [[1]])  # Or lists of ints, nothing else like lists of lists
+        self.assertRaises(TypeError, RectMesh, 1, [[1]])  # Or lists of ints, but nothing else like lists of lists
 
     def test_construction(self):
-        L = 2 * np.pi
+        L = np.pi
         n = 2
         mesh = RectMesh(L, n)
-        self.assertTrue(np.allclose(mesh.mesh, [0, L/2]), msg='1D should get simplified')
-        self.assertAlmostEqual(mesh.steps, L/2, msg='1D should get simplified')
+        self.assertTrue(np.allclose(mesh.mesh, [0, L / 2]), msg='1D should get simplified')
+        self.assertAlmostEqual(mesh.steps, L / 2, msg='1D should get simplified')
         mesh.simplify_1d = False
-        self.assertTrue(np.allclose(mesh.steps, [L/2]), msg='1D should stay list-like')
+        self.assertTrue(np.allclose(mesh.steps, [L / 2]), msg='1D should stay list-like')
 
         mesh = RectMesh([L, 2 * L], n)
         self.assertTrue(
@@ -143,7 +143,7 @@ class TestRectMesh(PyironTestCase):
             RectMesh([[1, 1+1E-12]])  # Mesh needs finite length
 
     def test_update(self):
-        L = 2 * np.pi
+        L = np.pi
         n = 2
         mesh = RectMesh([L, L], n)
         init_mesh = np.array(mesh.mesh)
@@ -157,16 +157,19 @@ class TestRectMesh(PyironTestCase):
         Check that the numeric laplacian matches an analytic reference better for denser meshes, even when mesh spacings
         differ across dimensions.
         """
-        def fnc(mesh):
-            """Product of sines. Analytic Laplacian is negative product of sines multiplied by number of dimensions."""
-            return np.prod([np.sin(m) for m in mesh.mesh], axis=0)
+
+        def solution(mesh):
+            """
+            Analytic Laplacian for product of sines is negative product of sines multiplied by number of dimensions.
+            """
+            return -self.scalar_sines(mesh) * mesh.dim
 
         for dims in [1, 2, 3]:
             convergence = []
             for divs in [10, 50]:
                 mesh = RectMesh(dims * [2 * np.pi], [divs + d for d in range(dims)])
-                analytic = -dims * fnc(mesh)
-                numeric = mesh.laplacian(fnc)
+                analytic = solution(mesh)
+                numeric = mesh.laplacian(self.scalar_sines)
                 convergence.append(np.linalg.norm(analytic - numeric))
             self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
 
@@ -175,22 +178,17 @@ class TestRectMesh(PyironTestCase):
         omega = 2 * np.pi / L
         mesh = RectMesh([L, L, L], [100, 200, 300])
 
-        def fnc2d(mesh):
-            x, y, z = mesh.mesh
-            return np.sin(x * omega) * np.sin(y * omega) * np.sin(z * omega)
+        x, y, z = mesh.mesh
+        solution = np.array([
+            omega * np.cos(x * omega) * np.sin(y * omega) * np.sin(z * omega),
+            omega * np.sin(x * omega) * np.cos(y * omega) * np.sin(z * omega),
+            omega * np.sin(x * omega) * np.sin(y * omega) * np.cos(z * omega)
+        ])
 
-        def dfnc2d(mesh):
-            x, y, z = mesh.mesh
-            return np.array([
-                omega * np.cos(x * omega) * np.sin(y * omega) * np.sin(z * omega),
-                omega * np.sin(x * omega) * np.cos(y * omega) * np.sin(z * omega),
-                omega * np.sin(x * omega) * np.sin(y * omega) * np.cos(z * omega)
-            ])
-
-        grad1 = mesh.grad(fnc2d, order=1)  # Can take function
-        err1 = np.linalg.norm(grad1 - dfnc2d(mesh)) / len(mesh)
-        grad2 = mesh.grad(fnc2d(mesh), order=2)  # Or a numpy array directly
-        err2 = np.linalg.norm(grad2 - dfnc2d(mesh)) / len(mesh)
+        grad1 = mesh.grad(self.scalar_sines, order=1)  # Can take function
+        err1 = np.linalg.norm(grad1 - solution) / len(mesh)
+        grad2 = mesh.grad(self.scalar_sines(mesh), order=2)  # Or a numpy array directly
+        err2 = np.linalg.norm(grad2 - solution) / len(mesh)
         self.assertLess(err1, 0.001, msg="Should a pretty good approximation")
         self.assertAlmostEquals(0, err2, msg="Should be a very good approximation")
         self.assertLess(err2, err1, msg="Second order approximation should be better")
@@ -202,25 +200,17 @@ class TestRectMesh(PyironTestCase):
         omega = 2 * np.pi / L
         mesh = RectMesh([L, L, L, L], 50)  # Unlike curl, div is not restricted to 3d
 
-        def sinusoidal(mesh):
-            x, y, z, w = mesh.mesh
-            return np.array([
-                np.sin(omega * x) * np.sin(omega * y),
-                np.sin(omega * y) * np.sin(omega * z),
-                np.sin(omega * z) * np.sin(omega * w),
-                np.sin(omega * w) * np.sin(omega * x)
-            ])
+        sinx, siny, sinz, sinw = np.sin(omega * mesh.mesh)
+        cosx, cosy, cosz, cosw = np.cos(omega * mesh.mesh)
+        solution = omega * np.array([
+            cosx * siny * sinz * sinw
+            + sinx * cosy * sinz * sinw
+            + sinx * siny * cosz * sinw
+            + sinx * siny * sinz * cosw
+        ])
 
-        x, y, z, w = mesh.mesh
-        manual_div = omega * (
-                np.cos(omega * x) * np.sin(omega * y)
-                + np.cos(omega * y) * np.sin(omega * z)
-                + np.cos(omega * z) * np.sin(omega * w)
-                + np.cos(omega * w) * np.sin(omega * x)
-        )
-
-        self.assertTrue(np.allclose(manual_div, mesh.div(sinusoidal)), msg="Differentiating sines is not hard")
-        self.assertTrue(np.allclose(manual_div, mesh.div(sinusoidal(mesh))), msg="Should work with arrays too")
+        self.assertTrue(np.allclose(solution, mesh.div(self.vector_sines)), msg="Differentiating sines is not hard")
+        self.assertTrue(np.allclose(solution, mesh.div(self.vector_sines(mesh))), msg="Should work with arrays too")
 
     def test_curl(self):
         L = 1
