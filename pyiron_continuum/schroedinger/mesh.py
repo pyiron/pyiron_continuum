@@ -77,16 +77,27 @@ class RectMesh(HasStorage):
 
     Attributes:
         bounds (numpy.ndarray): The start and end point for each dimension.
-        divisions (numpy.ndarray): How many sampling points in each dimension.
+        divisions (numpy.ndarray): How many sampling points in each dimension, i.e. the shape of a scalar field.
+        dim (int): The dimensionality of the field.
+        shape (tuple): The shape of the mesh, i.e. the shape of a vector field.
         mesh (numpy.ndarray): The spatial sampling points.
         steps (numpy.ndarray/float): The step size in each dimension.
         lengths (numpy.ndarray/float): How large the domain is in each dimension.
+        volume (float): The product of the lengths in all dimensions.
         simplify_1d (bool): Whether to reduce dimension whenever the first dimension is redundant, e.g. [[1,2]]->[1,2].
 
     Methods:
-        laplacian: Given a callable that takes the mesh as its argument, or a numpy array with the same shape as the
-            mesh's real-space dimensions (i.e. `self.shape[1:]`, since the first mesh dimension maps over the dimensions
-            themselves) returns the discrete Laplace operator on this mesh applied to that funcation/data.
+        derivative: Calculate the nth order derivative of a scalar field to get a vector field.
+        grad: Calculate the first derivative of a scalar field to get a vector field.
+        div: Calculate the divergence of a vector field to get a scalar field.
+        laplacian: Calculate the Laplacian of a scalar field to get a scalar field.
+        curl: Calculate the curl of a vector field to get a vector field. (Only for 3d!)
+
+    Note: All the mathematical operations can take either a numpy array of the correct dimension *or* a callable that
+        takes the mesh itself as an argument and returns a numpy array of the correct dimension, where 'correct' is
+        refering to scalar field (mesh divisions) or vector field (mesh shape).
+
+    TODO: Include aperiodic boundary conditions, e.g. padding. Probably by modifying the decorators.
     """
 
     def __init__(
@@ -284,8 +295,8 @@ class RectMesh(HasStorage):
         Numeric differential for a uniform grid using the central difference method.
 
         Args:
-            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
-                or the scalar field as an array.
+            scalar_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a scalar
+                field, or the scalar field as an array.
             order (int): The derivative to take. (Default is 1, take first derivative.)
             accuracy (int): The accuracy of the method in O(grid spacing). (Default is 2, O(h^2) accuracy).
 
@@ -316,8 +327,8 @@ class RectMesh(HasStorage):
         Gradient of a scalar field.
 
         Args:
-            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
-                or the scalar field as an array.
+            scalar_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a scalar
+                field, or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
                 (Default is 4, O(h^4) accuracy.)
 
@@ -333,8 +344,8 @@ class RectMesh(HasStorage):
         Divergence of a vector field.
 
         Args:
-            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
-                or the scalar field as an array.
+            vector_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a vector
+                field, or the vector field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
                 (Default is 4, O(h^4) accuracy.)
 
@@ -350,8 +361,8 @@ class RectMesh(HasStorage):
         Discrete Laplacian operator applied to a given function or scalar field.
 
         Args:
-            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
-                or the scalar field as an array.
+            scalar_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a scalar
+                field, or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
                 (Default is 4, O(h^4) accuracy.)
 
@@ -369,8 +380,8 @@ class RectMesh(HasStorage):
         Note: Only works for 3d vector fields!
 
         Args:
-            vector_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a vector field,
-                or the vector field as an array.
+            vector_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a 3d vector
+                field, or the 3d vector field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
                 (Default is 4, O(h^4) accuracy.)
 
