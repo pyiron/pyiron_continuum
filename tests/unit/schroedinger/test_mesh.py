@@ -152,26 +152,10 @@ class TestRectMesh(PyironTestCase):
         mesh.divisions = 2 * n
         self.assertEqual(2 * n, len(mesh.mesh[0]), msg='Should have doubled sampling density')
 
-    def test_laplacian(self):
-        """
-        Check that the numeric laplacian matches an analytic reference better for denser meshes, even when mesh spacings
-        differ across dimensions.
-        """
-
-        def solution(mesh):
-            """
-            Analytic Laplacian for product of sines is negative product of sines multiplied by number of dimensions.
-            """
-            return -self.scalar_sines(mesh) * mesh.dim
-
-        for dims in [1, 2, 3]:
-            convergence = []
-            for divs in [10, 50]:
-                mesh = RectMesh(dims * [2 * np.pi], [divs + d for d in range(dims)])
-                analytic = solution(mesh)
-                numeric = mesh.laplacian(self.scalar_sines)
-                convergence.append(np.linalg.norm(analytic - numeric))
-            self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
+    def test_length(self):
+        mesh = RectMesh([[0, 1], [1, 3]], 2)
+        self.assertAlmostEqual(1, mesh.lengths[0], msg='Real-space length in x-direction should be 1')
+        self.assertAlmostEqual(2, mesh.lengths[1], msg='Real-space length in y-direction should be 3-1=2')
 
     def test_grad(self):
         L = np.pi
@@ -185,9 +169,9 @@ class TestRectMesh(PyironTestCase):
             omega * np.sin(x * omega) * np.sin(y * omega) * np.cos(z * omega)
         ])
 
-        grad1 = mesh.grad(self.scalar_sines, order=2)  # Can take function
+        grad1 = mesh.grad(self.scalar_sines, accuracy=2)  # Can take function
         err1 = np.linalg.norm(grad1 - solution) / len(mesh)
-        grad2 = mesh.grad(self.scalar_sines(mesh), order=4)  # Or a numpy array directly
+        grad2 = mesh.grad(self.scalar_sines(mesh), accuracy=4)  # Or a numpy array directly
         err2 = np.linalg.norm(grad2 - solution) / len(mesh)
         self.assertLess(err1, 0.001, msg="Should a pretty good approximation")
         self.assertAlmostEquals(0, err2, msg="Should be a very good approximation")
@@ -212,6 +196,27 @@ class TestRectMesh(PyironTestCase):
         self.assertTrue(np.allclose(solution, mesh.div(self.vector_sines)), msg="Differentiating sines is not hard")
         self.assertTrue(np.allclose(solution, mesh.div(self.vector_sines(mesh))), msg="Should work with arrays too")
 
+    def test_laplacian(self):
+        """
+        Check that the numeric laplacian matches an analytic reference better for denser meshes, even when mesh spacings
+        differ across dimensions.
+        """
+
+        def solution(mesh):
+            """
+            Analytic Laplacian for product of sines is negative product of sines multiplied by number of dimensions.
+            """
+            return -self.scalar_sines(mesh) * mesh.dim
+
+        for dims in [1, 2, 3]:
+            convergence = []
+            for divs in [10, 50]:
+                mesh = RectMesh(dims * [2 * np.pi], [divs + d for d in range(dims)])
+                analytic = solution(mesh)
+                numeric = mesh.laplacian(self.scalar_sines)
+                convergence.append(np.linalg.norm(analytic - numeric))
+            self.assertLess(convergence[1], convergence[0], msg='Expected a better solution with a denser mesh.')
+
     def test_curl(self):
         L = 1
         omega = 2 * np.pi / L
@@ -224,13 +229,9 @@ class TestRectMesh(PyironTestCase):
             omega * np.sin(omega * z) * (np.sin(omega * y) * np.cos(omega * x) - np.sin(omega * x) * np.cos(omega * y))
         ])
 
+        print(np.linalg.norm(solution - mesh.curl(self.vector_sines)))
         self.assertTrue(np.allclose(solution, mesh.curl(self.vector_sines)), msg="Should work with callable")
         self.assertTrue(np.allclose(solution, mesh.curl(self.vector_sines(mesh))), msg="Should work with array")
 
         mesh2 = RectMesh([1, 1], 2)
         self.assertRaises(NotImplementedError, mesh2.curl, mesh2.mesh)  # Should not work for dimensions other than 3
-
-    def test_length(self):
-        mesh = RectMesh([[0, 1], [1, 3]], 2)
-        self.assertAlmostEqual(1, mesh.lengths[0], msg='Real-space length in x-direction should be 1')
-        self.assertAlmostEqual(2, mesh.lengths[1], msg='Real-space length in y-direction should be 3-1=2')

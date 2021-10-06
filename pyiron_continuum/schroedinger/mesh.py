@@ -228,24 +228,86 @@ class RectMesh(HasStorage):
     def _is_int(val: Any) -> bool:
         return np.issubdtype(type(val), np.integer)
 
+    @property
+    def central_difference_table(self):
+        """
+        Coefficients for numeric differentials sorted by order of differential and accuracy of method:
+        - order of differential
+            - accuracy of method
+                - roll: coefficient
+
+        Cf. [Wikipedia](https://en.wikipedia.org/wiki/Finite_difference_coefficient)
+
+        TODO: Fill out the rest of the values
+        """
+        return {
+            1: {
+                2: {1: -1 / 2, -1: 1 / 2},
+                4: {2: 1 / 12, 1: -2 / 3, -1: 2 / 3, -2: -1 / 12},
+                # 6: {},
+                # 8: {},
+            },
+            2: {
+                2: {1: 1, 0: -2, -1: 1},
+                # 4: {},
+                # 6: {},
+                # 8: {},
+            },
+            #     3: {
+            #         2: {},
+            #         4: {},
+            #         6: {},
+            #     },
+            #     4: {
+            #         2: {},
+            #         4: {},
+            #         6: {},
+            #     },
+            #     5: {
+            #         2: {},
+            #         4: {},
+            #         6: {},
+            #     },
+            #     6: {
+            #         2: {},
+            #         4: {},
+            #         6: {},
+            #     },
+        }
+
     # OPERATIONS:
 
     @callable_to_array
     @takes_scalar_field
-    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+    def derivative(self, scalar_field: Union[Callable, np.ndarray], order: int = 1, accuracy: int = 2):
         """
-        Discrete Laplacian operator applied to a given function or scalar field.
+        Numeric differential for a uniform grid using the central difference method.
 
         Args:
             scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
                 or the scalar field as an array.
-            accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 2, O(h^2) accuracy.)
+            order (int): The derivative to take. (Default is 1, take first derivative.)
+            accuracy (int): The accuracy of the method in O(grid spacing). (Default is 2, O(h^2) accuracy).
 
         Returns:
-            (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
+            (numpy.ndarray): The vector field derivative of the scalar input at each point on the grid in each
+                dimension.
+
+        Raises:
+            (KeyError): If the requested order or accuracy cannot be found.
         """
-        return self.div(self.grad(scalar_field, accuracy=accuracy), accuracy=accuracy)
+        try:
+            coefficients = self.central_difference_table[order][accuracy]
+        except KeyError:
+            raise KeyError(f'The requested order {order} and accuracy {accuracy} could not be found. Please look at '
+                           f'the `central_difference_table` attribute to see all available choices.')
+
+        res = np.zeros(self.shape)
+        for ax, h in enumerate(self.steps):
+            for n, c in coefficients.items():
+                res[ax] += c * np.roll(scalar_field, n, axis=ax)
+            res[ax] /= h ** order
+        return res
 
     @callable_to_array
     @takes_scalar_field
@@ -285,6 +347,23 @@ class RectMesh(HasStorage):
         return res
 
     @callable_to_array
+    @takes_scalar_field
+    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
+        """
+        Discrete Laplacian operator applied to a given function or scalar field.
+
+        Args:
+            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
+                or the scalar field as an array.
+            accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
+                (Default is 2, O(h^2) accuracy.)
+
+        Returns:
+            (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
+        """
+        return self.div(self.grad(scalar_field, accuracy=accuracy), accuracy=accuracy)
+
+    @callable_to_array
     @takes_vector_field
     def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 2) -> np.array:
         """
@@ -311,83 +390,3 @@ class RectMesh(HasStorage):
         pos = np.array([grads[(2 + i) % self.dim][(1 + i) % self.dim] for i in range(self.dim)])
         neg = np.array([grads[(1 + i) % self.dim][(2 + i) % self.dim] for i in range(self.dim)])
         return pos - neg
-
-    @callable_to_array
-    @takes_scalar_field
-    def derivative(self, scalar_field: Union[Callable, np.ndarray], order: int = 1, accuracy: int = 2):
-        """
-        Numeric differential for a uniform grid using the central difference method.
-
-        Args:
-            scalar_field (function/numpy.ndarray): A function taking the `mesh.mesh` value and returning a scalar field,
-                or the scalar field as an array.
-            order (int): The derivative to take. (Default is 1, take first derivative.)
-            accuracy (int): The accuracy of the method in O(grid spacing). (Default is 2, O(h^2) accuracy).
-
-        Returns:
-            (numpy.ndarray): The vector field derivative of the scalar input at each point on the grid in each
-                dimension.
-
-        Raises:
-            (KeyError): If the requested order or accuracy cannot be found.
-        """
-        try:
-            coefficients = self.central_difference_table[order][accuracy]
-        except KeyError:
-            raise KeyError(f'The requested order {order} and accuracy {accuracy} could not be found. Please look at '
-                           f'the `central_difference_table` attribute to see all available choices.')
-
-        res = np.zeros(self.shape)
-        for ax, h in enumerate(self.steps):
-            for n, c in coefficients.items():
-                res[ax] += c * np.roll(scalar_field, n, axis=ax)
-            res[ax] /= h**order
-        return res
-
-
-    @property
-    def central_difference_table(self):
-        """
-        Coefficients for numeric differentials sorted by order of differential and accuracy of method:
-        - order of differential
-            - accuracy of method
-                - roll: coefficient
-
-        Cf. [Wikipedia](https://en.wikipedia.org/wiki/Finite_difference_coefficient)
-
-        TODO: Fill out the rest of the values
-        """
-        return {
-            1: {
-                2: {1: -1/2, -1: 1/2},
-                4: {2: 1/12, 1: -2/3, -1: 2/3, -2: -1/12},
-                # 6: {},
-                # 8: {},
-            },
-            2: {
-                2: {1: 1, 0: -2, -1: 1},
-                # 4: {},
-                # 6: {},
-                # 8: {},
-            },
-        #     3: {
-        #         2: {},
-        #         4: {},
-        #         6: {},
-        #     },
-        #     4: {
-        #         2: {},
-        #         4: {},
-        #         6: {},
-        #     },
-        #     5: {
-        #         2: {},
-        #         4: {},
-        #         6: {},
-        #     },
-        #     6: {
-        #         2: {},
-        #         4: {},
-        #         6: {},
-        #     },
-        }
