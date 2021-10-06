@@ -185,9 +185,9 @@ class TestRectMesh(PyironTestCase):
             omega * np.sin(x * omega) * np.sin(y * omega) * np.cos(z * omega)
         ])
 
-        grad1 = mesh.grad(self.scalar_sines, order=1)  # Can take function
+        grad1 = mesh.grad(self.scalar_sines, order=2)  # Can take function
         err1 = np.linalg.norm(grad1 - solution) / len(mesh)
-        grad2 = mesh.grad(self.scalar_sines(mesh), order=2)  # Or a numpy array directly
+        grad2 = mesh.grad(self.scalar_sines(mesh), order=4)  # Or a numpy array directly
         err2 = np.linalg.norm(grad2 - solution) / len(mesh)
         self.assertLess(err1, 0.001, msg="Should a pretty good approximation")
         self.assertAlmostEquals(0, err2, msg="Should be a very good approximation")
