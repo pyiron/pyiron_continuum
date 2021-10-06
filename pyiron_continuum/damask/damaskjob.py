@@ -39,7 +39,7 @@ class DAMASK(TemplateJob):
         self._loading = None
         self._grid = None
         self._results = None
-        self.executable = "mpiexec -n 1 DAMASK_grid -l loading.yaml -g damask.vti"
+        self._executable_activate()
 
     @property
     def material(self):
