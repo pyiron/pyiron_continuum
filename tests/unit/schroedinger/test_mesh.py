@@ -64,6 +64,16 @@ class TestDecorators(PyironTestCase):
 
 class TestRectMesh(PyironTestCase):
 
+    @staticmethod
+    def scalar_sines(mesh):
+        L = mesh.lengths
+        omega = (2 * np.pi / L).reshape(len(L), *[1] * mesh.dim)
+        return np.prod(np.sin(omega * mesh.mesh), axis=0)
+
+    def vector_sines(self, mesh):
+        scalar = self.scalar_sines(mesh)
+        return np.array(mesh.dim * [scalar])
+
     @property
     def docstring_module(self):
         return mesh_mod
@@ -186,6 +196,49 @@ class TestRectMesh(PyironTestCase):
         self.assertLess(err2, err1, msg="Second order approximation should be better")
 
         self.assertRaises(TypeError, mesh.grad, np.random.rand(1, 2, 3))  # Values aren't a nice scalar field on mesh!
+
+    def test_div(self):
+        L = np.pi
+        omega = 2 * np.pi / L
+        mesh = RectMesh([L, L, L, L], 50)  # Unlike curl, div is not restricted to 3d
+
+        def sinusoidal(mesh):
+            x, y, z, w = mesh.mesh
+            return np.array([
+                np.sin(omega * x) * np.sin(omega * y),
+                np.sin(omega * y) * np.sin(omega * z),
+                np.sin(omega * z) * np.sin(omega * w),
+                np.sin(omega * w) * np.sin(omega * x)
+            ])
+
+        x, y, z, w = mesh.mesh
+        manual_div = omega * (
+                np.cos(omega * x) * np.sin(omega * y)
+                + np.cos(omega * y) * np.sin(omega * z)
+                + np.cos(omega * z) * np.sin(omega * w)
+                + np.cos(omega * w) * np.sin(omega * x)
+        )
+
+        self.assertTrue(np.allclose(manual_div, mesh.div(sinusoidal)), msg="Differentiating sines is not hard")
+        self.assertTrue(np.allclose(manual_div, mesh.div(sinusoidal(mesh))), msg="Should work with arrays too")
+
+    def test_curl(self):
+        L = 1
+        omega = 2 * np.pi / L
+        mesh = RectMesh([L, L, L], 100)
+
+        x, y, z = mesh.mesh
+        solution = np.array([
+            omega * np.sin(omega * x) * (np.sin(omega * z) * np.cos(omega * y) - np.sin(omega * y) * np.cos(omega * z)),
+            omega * np.sin(omega * y) * (np.sin(omega * x) * np.cos(omega * z) - np.sin(omega * z) * np.cos(omega * x)),
+            omega * np.sin(omega * z) * (np.sin(omega * y) * np.cos(omega * x) - np.sin(omega * x) * np.cos(omega * y))
+        ])
+
+        self.assertTrue(np.allclose(solution, mesh.curl(self.vector_sines)), msg="Should work with callable")
+        self.assertTrue(np.allclose(solution, mesh.curl(self.vector_sines(mesh))), msg="Should work with array")
+
+        mesh2 = RectMesh([1, 1], 2)
+        self.assertRaises(NotImplementedError, mesh2.curl, mesh2.mesh)  # Should not work for dimensions other than 3
 
     def test_length(self):
         mesh = RectMesh([[0, 1], [1, 3]], 2)

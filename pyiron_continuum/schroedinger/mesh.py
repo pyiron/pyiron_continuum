@@ -272,3 +272,21 @@ class RectMesh(HasStorage):
             else:
                 raise ValueError(f'Order must be 1 or 2 but got {order}.')
         return res
+
+    @callable_to_array
+    @takes_vector_field
+    def div(self, vector_field: Union[Callable, np.ndarray], order: int = 2) -> np.array:
+        res = np.zeros(self.divisions)
+        for ax in np.arange(self.dim):
+            res += self.grad(vector_field[ax], order=order)[ax]
+        return res
+
+    @callable_to_array
+    @takes_vector_field
+    def curl(self, vector_field: Union[Callable, np.ndarray], order: int = 2) -> np.array:
+        if self.dim != 3:
+            raise NotImplementedError("I'm no mathematician, so curl is only coded for the traditional 3d space.")
+        grads = np.array([self.grad(vf, order=order) for vf in vector_field])
+        pos = np.array([grads[(2 + i) % self.dim][(1 + i) % self.dim] for i in range(self.dim)])
+        neg = np.array([grads[(1 + i) % self.dim][(2 + i) % self.dim] for i in range(self.dim)])
+        return pos - neg
