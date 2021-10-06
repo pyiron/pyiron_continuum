@@ -1,6 +1,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
-"""Refactory of the damask classes and methods to a pyironized manner"""
+"""Factory of the damask classes and methods to a pyironized manner"""
 
 from pyiron_base import ImportAlarm
 with ImportAlarm(
@@ -23,7 +23,7 @@ __date__ = "Oct 04, 2021"
 
 class MaterialFactory:
     def __init__(self):
-        """a refactory for damask ConfigMaterial class."""
+        """a factory for damask ConfigMaterial class."""
         pass
 
     @staticmethod
@@ -74,7 +74,7 @@ class GridFactory:
 
 class DamaskLoading(dict):
     def __init__(self, solver, load_steps):
-        """a refactory for damask Loading class, which is a damask._config.Config object."""
+        """a factory for damask Loading class, which is a damask._config.Config object."""
         super(DamaskLoading, self).__init__(self)
 
     def __new__(cls, solver, load_steps):
@@ -114,7 +114,7 @@ class LoadStep(dict):
 
 class Create:
     def __init__(self):
-        """The create refactory for the damask job."""
+        """The create factory for the damask job."""
         self._grid = GridFactory()
 
     @property
