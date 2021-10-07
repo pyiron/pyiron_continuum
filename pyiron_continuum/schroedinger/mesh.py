@@ -263,6 +263,10 @@ class RectMesh(HasStorage):
         return np.linalg.solve(np.arange(-p, p + 1) ** np.arange(0, 2 * p + 1)[:, None], b)
 
     # OPERATIONS:
+    @callable_to_array
+    @takes_scalar_field
+    def _numpy_gradient(self, scalar_field: Union[Callable, np.ndarray], axis=None, edge_order=1):
+        return np.gradient(scalar_field, *self.steps, axis=axis, edge_order=edge_order)
 
     @callable_to_array
     @takes_scalar_field
