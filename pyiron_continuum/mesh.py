@@ -349,7 +349,7 @@ class RectMesh(HasStorage):
         Returns:
             (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
         """
-        return self.div(self.derivative(scalar_field, accuracy=accuracy), accuracy=accuracy)
+        return self.derivative(scalar_field, order=2, accuracy=accuracy).sum(axis=0)
 
     @callable_to_array
     @takes_vector_field
