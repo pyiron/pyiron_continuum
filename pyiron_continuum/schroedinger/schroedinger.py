@@ -191,16 +191,16 @@ class TISE(PythonTemplateJob):
 
     def _flat_hamiltonian(self, psi_1d: np.ndarray) -> np.ndarray:
         """Matrix-vector product for `LinearOperator` to use."""
-        return self._hamiltonian(psi_1d.reshape(self.mesh.shape[1:])).flatten()
+        return self._hamiltonian(psi_1d.reshape(self.mesh.divisions)).flatten()
 
     def run_static(self):
         self.status.running = True
-        n_mat = np.prod(self.mesh.shape[1:])
+        n_mat = np.prod(self.mesh.divisions)
         flat_ham = LinearOperator((n_mat, n_mat), self._flat_hamiltonian)
 
         eigenvalues, eigenvectors = eigsh(flat_ham, which='SA', k=self.input.n_states)
         self.output.energy = eigenvalues
-        self.output.psi = np.array([np.reshape(v, self.mesh.shape[1:]) for v in eigenvectors.T])
+        self.output.psi = np.array([np.reshape(v, self.mesh.divisions) for v in eigenvectors.T])
         self.status.finished = True
         self.to_hdf()
 
