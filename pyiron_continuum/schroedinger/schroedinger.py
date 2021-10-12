@@ -8,7 +8,7 @@ A job class for solving the time-independent Schroedinger equation on a discrete
 
 from pyiron_base import PythonTemplateJob, DataContainer, ImportAlarm
 import numpy as np
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.mesh import RectMesh
 from scipy.sparse.linalg import eigsh, LinearOperator
 from abc import ABC, abstractmethod
 from scipy.constants import physical_constants

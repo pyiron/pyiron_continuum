@@ -1,7 +1,7 @@
 
 from pyiron_base import HasStorage
 from abc import ABC, abstractmethod
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.mesh import RectMesh
 from typing import Type
 import numpy as np
 

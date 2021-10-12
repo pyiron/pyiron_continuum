@@ -10,7 +10,7 @@ from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
 # from pyiron_continuum.damask.damaskjob import DAMASK  # Looks like Damask needs an import alarm
 from pyiron_continuum.schroedinger.schroedinger import TISE
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Sinusoidal, SquareWell
 
 __author__ = "Liam Huber"

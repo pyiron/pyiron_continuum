@@ -3,9 +3,9 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from pyiron_base._tests import PyironTestCase
-from pyiron_continuum.schroedinger.mesh import RectMesh, callable_to_array, takes_scalar_field, takes_vector_field
+from pyiron_continuum.mesh import RectMesh, callable_to_array, takes_scalar_field, takes_vector_field
 import numpy as np
-import pyiron_continuum.schroedinger.mesh as mesh_mod
+import pyiron_continuum.mesh as mesh_mod
 
 
 class TestDecorators(PyironTestCase):

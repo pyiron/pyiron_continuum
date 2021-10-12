@@ -4,7 +4,7 @@
 
 from pyiron_base._tests import PyironTestCase
 from pyiron_continuum.schroedinger.potentials import SquareWell, Sinusoidal
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.mesh import RectMesh
 import numpy as np
 
 
