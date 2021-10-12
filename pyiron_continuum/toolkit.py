@@ -48,12 +48,14 @@ class Potential:
 
 class Schroedinger:
     @property
-    def RectMesh(self):
-        return RectMesh
-
-    @property
     def potential(self):
         return Potential()
+
+
+class Mesh:
+    @property
+    def RectMesh(self):
+        return RectMesh
 
 
 class ContinuumTools(Toolkit):
@@ -61,6 +63,7 @@ class ContinuumTools(Toolkit):
         super().__init__(project)
         self._job = JobFactory(project)
         self._schroedinger = Schroedinger()
+        self._mesh = Mesh()
 
     @property
     def job(self) -> JobFactory:
@@ -69,4 +72,8 @@ class ContinuumTools(Toolkit):
     @property
     def schroedinger(self):
         return self._schroedinger
+
+    @property
+    def mesh(self):
+        return self._mesh
 
