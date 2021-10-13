@@ -119,7 +119,7 @@ class RectMesh(HasStorage):
             self,
             bounds: Union[float, int, BoundsList, np.ndarray] = 1,
             divisions: Union[int, List[int], np.ndarray] = 1,
-            accuracy: int = 2,
+            accuracy: int = 4,
             simplify_1d: bool = False
     ):
         """
