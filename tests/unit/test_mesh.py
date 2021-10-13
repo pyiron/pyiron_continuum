@@ -3,7 +3,13 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from pyiron_base._tests import PyironTestCase
-from pyiron_continuum.mesh import RectMesh, callable_to_array, takes_scalar_field, takes_vector_field
+from pyiron_continuum.mesh import (
+    RectMesh,
+    callable_to_array,
+    takes_scalar_field,
+    takes_vector_field,
+    has_default_accuracy
+)
 import numpy as np
 import pyiron_continuum.mesh as mesh_mod
 
@@ -60,6 +66,26 @@ class TestDecorators(PyironTestCase):
         self.assertEqual(1, method(self.mesh, vector_field.tolist()), msg="Should work with listlike stuff too")
         self.assertRaises(TypeError, method, self.mesh, np.ones(2))  # Reject the wrong shape
         self.assertRaises(TypeError, method, self.mesh, "not even numeric")  # Duh
+
+    def test_has_default_accuracy(self):
+        some_field = self.give_vector(self.mesh)
+
+        @has_default_accuracy
+        def method(mesh, field, accuracy=None, some_kwarg=1):
+            return accuracy + some_kwarg
+
+        mesh = RectMesh(1, 1, accuracy=2)
+
+        self.assertEqual(3, method(mesh, some_field), 'Use mesh accuracy')
+        self.assertEqual(0, method(mesh, some_field, accuracy=4, some_kwarg=-4), 'Use passed accuracy')
+        self.assertRaises(ValueError, method, mesh, some_field, accuracy=1)  # Even accuracy only
+        self.assertRaises(ValueError, method, mesh, some_field, accuracy=0)  # Positive accuracy only
+
+        @has_default_accuracy
+        def method(mesh, field, accuracy_not_a_kwarg=42):
+            return None
+
+        self.assertRaises(TypeError, method, mesh, some_field)  # Methods need to define accuracy
 
 
 class TestRectMesh(PyironTestCase):

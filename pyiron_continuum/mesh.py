@@ -22,6 +22,16 @@ def callable_to_array(method):
     return wrapper
 
 
+def has_default_accuracy(method):
+    """Replaces the `accuracy` argument with the instance attribute of the same name if `accuracy` is None."""
+    def wrapper(self, fnc, accuracy=None, **kwargs):
+        accuracy = self.accuracy if accuracy is None else accuracy
+        if accuracy % 2 != 0 or accuracy < 2:
+            raise ValueError(f'Expected an even, positive accuracy but got {accuracy}')
+        return method(self, fnc, accuracy=accuracy, **kwargs)
+    return wrapper
+
+
 def takes_scalar_field(method):
     """Makes sure the first argument has the right shape to be a scalar field on the mesh."""
     def wrapper(self, scalar_field, **kwargs):
@@ -84,6 +94,8 @@ class RectMesh(HasStorage):
         steps (numpy.ndarray/float): The step size in each dimension.
         lengths (numpy.ndarray/float): How large the domain is in each dimension.
         volume (float): The product of the lengths in all dimensions.
+        accuracy (int): An even value given the number of stencil points to use in each dimension for calculating
+            derivatives. (Default is 4.)
         simplify_1d (bool): Whether to reduce dimension whenever the first dimension is redundant, e.g. [[1,2]]->[1,2].
 
     Methods:
@@ -107,6 +119,7 @@ class RectMesh(HasStorage):
             self,
             bounds: Union[float, int, BoundsList, np.ndarray] = 1,
             divisions: Union[int, List[int], np.ndarray] = 1,
+            accuracy: int = 2,
             simplify_1d: bool = False
     ):
         """
@@ -120,6 +133,8 @@ class RectMesh(HasStorage):
             divisions (int/list/numpy.ndarray): How many grid divisions to use in each dimension. An integer will be
                 mapped up to give that number of divisions on all dimensions provided in `bounds`, otherwise the
                 dimensionality between the two arguments must agree.
+            accuracy (int): An even value given the number of stencil points to use in each dimension for calculating
+                derivatives. (Default is 4.)
             simplify_1d (bool): Whether to simplify the output for 1D meshes so they have shape (n,) instead of (1, n).
                 (Default is False.)
         """
@@ -127,6 +142,7 @@ class RectMesh(HasStorage):
         bounds, divisions = self._clean_input(bounds, divisions)
         self.storage.bounds = bounds
         self.storage.divisions = divisions
+        self.storage.accuracy = accuracy
         self.storage.simplify_1d = simplify_1d
         self._build_mesh()
 
@@ -149,6 +165,16 @@ class RectMesh(HasStorage):
         _, new_divisions = self._clean_input(self.bounds, new_divisions)
         self.storage.divisions = new_divisions
         self._build_mesh()
+
+    @property
+    def accuracy(self) -> int:
+        return self.storage.accuracy
+
+    @accuracy.setter
+    def accuracy(self, n: int):
+        if n % 2 != 0:
+            raise ValueError(f'Expected an even integer but got {2}')
+        self.storage.accuracy = int(n)
 
     @property
     def simplify_1d(self) -> bool:
@@ -269,8 +295,9 @@ class RectMesh(HasStorage):
         return np.gradient(scalar_field, *self.steps, axis=axis, edge_order=edge_order)
 
     @callable_to_array
+    @has_default_accuracy
     @takes_scalar_field
-    def derivative(self, scalar_field: Union[Callable, np.ndarray], order: int = 1, accuracy: int = 2):
+    def derivative(self, scalar_field: Union[Callable, np.ndarray], order: int = 1, accuracy: int = None):
         """
         Numeric differential for a uniform grid using the central difference method.
 
@@ -301,8 +328,9 @@ class RectMesh(HasStorage):
         return res
 
     @callable_to_array
+    @has_default_accuracy
     @takes_scalar_field
-    def grad(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
+    def grad(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
         """
         Gradient of a scalar field.
 
@@ -318,8 +346,9 @@ class RectMesh(HasStorage):
         return self.derivative(scalar_field, order=1, accuracy=accuracy)
 
     @callable_to_array
+    @has_default_accuracy
     @takes_vector_field
-    def div(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
+    def div(self, vector_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
         """
         Divergence of a vector field.
 
@@ -335,8 +364,9 @@ class RectMesh(HasStorage):
         return np.sum([self.derivative(vector_field[ax], accuracy=accuracy)[ax] for ax in np.arange(self.dim)], axis=0)
 
     @callable_to_array
+    @has_default_accuracy
     @takes_scalar_field
-    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
+    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
         """
         Discrete Laplacian operator applied to a given function or scalar field.
 
@@ -352,8 +382,9 @@ class RectMesh(HasStorage):
         return self.derivative(scalar_field, order=2, accuracy=accuracy).sum(axis=0)
 
     @callable_to_array
+    @has_default_accuracy
     @takes_vector_field
-    def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = 4) -> np.array:
+    def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
         """
         Curl of a vector field.
 
