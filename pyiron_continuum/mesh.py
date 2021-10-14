@@ -309,7 +309,7 @@ class RectMesh(HasStorage):
 
         Returns:
             (numpy.ndarray): The vector field derivative of the scalar input at each point on the grid in each
-                dimension.
+                dimension. E.g. for a scalar field with shape `(nx, ny, nz)`, returns shape `(3, nx, ny, nz)`.
 
         Raises:
             (KeyError): If the requested order or accuracy cannot be found.
@@ -342,6 +342,7 @@ class RectMesh(HasStorage):
 
         Returns:
             (numpy.ndarray): The vector field gradient of the scalar input at each point on the mesh in each dimension.
+                E.g. for a scalar field with shape `(nx, ny, nz)`, returns shape `(3, nx, ny, nz)`.
         """
         return self.derivative(scalar_field, order=1, accuracy=accuracy)
 
@@ -398,7 +399,7 @@ class RectMesh(HasStorage):
 
         Returns:
             (numpy.ndarray): The vector field curl of the vector input at each point on the mesh in all three
-                dimensions.
+                dimensions. I.e. for a vector field with shape `(3, nx, ny, nz)`, returns shape `(3, nx, ny, nz)`.
 
         Raises:
             (NotImplementedError): If the vector field provided is not three dimensional.
