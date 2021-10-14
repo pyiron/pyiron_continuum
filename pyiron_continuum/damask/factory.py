@@ -21,6 +21,9 @@ __email__ = "hassani@mpie.de"
 __status__ = "development"
 __date__ = "Oct 04, 2021"
 
+#TODO: reimplement export_vtk() here. Currently, damask dumps vtk files in the cwd
+
+
 class MaterialFactory:
     def __init__(self):
         """A factory for damask ConfigMaterial class."""
