@@ -281,8 +281,8 @@ class RectMesh(HasStorage):
         Coefficients for central finite difference numeric differentiation.
 
         Args:
-            m (int): Order of differential
-            n (int): Accuracy of method
+            m (int): Order of differential.
+            n (int): Accuracy of method, i.e. precision as a power of grid spacing.
 
         Returns:
             (numpy.ndarray): Coefficients for numeric differentials sorted by order of differential and accuracy of
@@ -312,7 +312,8 @@ class RectMesh(HasStorage):
             scalar_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a scalar
                 field, or the scalar field as an array.
             order (int): The derivative to take. (Default is 1, take first derivative.)
-            accuracy (int): The accuracy of the method in O(grid spacing). (Default is 2, O(h^2) accuracy).
+            accuracy (int): The accuracy of the method in O(grid spacing). (Default is None, which falls back on the
+                class attribute of the same name.)
 
         Returns:
             (numpy.ndarray): The vector field derivative of the scalar input at each point on the grid in each
@@ -345,7 +346,7 @@ class RectMesh(HasStorage):
             scalar_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a scalar
                 field, or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 4, O(h^4) accuracy.)
+                (Default is None, which falls back on the class attribute of the same name.)
 
         Returns:
             (numpy.ndarray): The vector field gradient of the scalar input at each point on the mesh in each dimension.
@@ -364,7 +365,7 @@ class RectMesh(HasStorage):
             vector_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a vector
                 field, or the vector field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 4, O(h^4) accuracy.)
+                (Default is None, which falls back on the class attribute of the same name.)
 
         Returns:
             (numpy.ndarray): The scalar field divergence of the vector input at each point on the mesh.
@@ -382,7 +383,7 @@ class RectMesh(HasStorage):
             scalar_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a scalar
                 field, or the scalar field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 4, O(h^4) accuracy.)
+                (Default is None, which falls back on the class attribute of the same name.)
 
         Returns:
             (numpy.ndarray): The scalar field Laplacian of the scalar input at each point on the mesh.
@@ -402,7 +403,7 @@ class RectMesh(HasStorage):
             vector_field (function/numpy.ndarray): A function taking this `RectMesh` object and returning a 3d vector
                 field, or the 3d vector field as an array.
             accuracy (int): The order of approximation in grid spacing. See `central_difference_table` for all choices.
-                (Default is 4, O(h^4) accuracy.)
+                (Default is None, which falls back on the class attribute of the same name.)
 
         Returns:
             (numpy.ndarray): The vector field curl of the vector input at each point on the mesh in all three
