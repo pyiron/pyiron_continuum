@@ -168,6 +168,10 @@ class RectMesh(HasStorage):
 
     @property
     def accuracy(self) -> int:
+        """
+        The number of points to use in the stencil for central difference methods. Corresponds to O(h^accuracy)
+        precision in the derivative operator, where h is the mesh spacing.
+        """
         return self.storage.accuracy
 
     @accuracy.setter
@@ -205,14 +209,17 @@ class RectMesh(HasStorage):
 
     @property
     def dim(self) -> int:
+        """Dimension of the box, i.e. the zeroth entry of the shape."""
         return self.shape[0]
 
     @property
     def lengths(self) -> Union[float, np.ndarray]:
+        """Edge lengths for each side of the box."""
         return self._simplify_1d(self.bounds.ptp(axis=-1))
 
     @property
     def volume(self):
+        """Volume encompassed by all the dimensions, i.e. product of the lengths."""
         return self.lengths.prod()
 
     def __len__(self):
