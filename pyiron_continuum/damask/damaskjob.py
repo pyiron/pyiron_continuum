@@ -1,136 +1,168 @@
-from pyiron_base import GenericJob, DataContainer
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+"""
+DAMASK job, which runs a damask simulation, and create the necessary inputs
+"""
+
+from pyiron_base import TemplateJob, ImportAlarm
+with ImportAlarm(
+        'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
+        'requirements. Please install it and try again.'
+) as damask_alarm:
+    from damask import Result
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-from damask import Grid
-from damask import Result
-from damask import seeds
-import pyvista as pv
-import h5py
-import os
 
-class DAMASK(GenericJob):
+
+__author__ = "Muhammad Hassani"
+__copyright__ = (
+    "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
+__version__ = "1.0"
+__maintainer__ = "Muhammad Hassani"
+__email__ = "hassani@mpie.de"
+__status__ = "development"
+__date__ = "Oct 04, 2021"
+
+
+class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
+        """
+        The damask job
+        Args:
+            project(pyiron.project): a pyiron project
+            job_name(str): the name of the job
+        """
         super(DAMASK, self).__init__(project, job_name)
-        self.input = DataContainer()
-        self.output = DataContainer()
-        self._material = None 
+        self._damask_hdf = os.path.join(self.working_directory, "damask_loading.hdf5")
+        self._material = None
         self._loading = None
-        self._geometry = None
-        self._damask_results = None
-        self.input.create_group('geometry')
-        self.input.create_group('material')
-        self.input.create_group('loading')
-        self.output.create_group('stress')
-        self.output.create_group('strain')
+        self._grid = None
+        self._results = None
         self._executable_activate()
-        
+
     @property
     def material(self):
         return self._material
-    
+
     @material.setter
-    def material(self, path=None):
-        self._material = self.input.material.read(path)
-        
+    def material(self, value):
+        self._material = value
+
+    @property
+    def grid(self):
+        return self._grid
+
+    @grid.setter
+    def grid(self, value):
+        self._grid = value
+
     @property
     def loading(self):
         return self._loading
-    
-    @loading.setter
-    def loading(self, path=None):
-        self._loading = self.input.loading.read(path)
-    
-    def loading_write(self):
-        self.input.loading.write('tensionX.yaml')
-        
-    def material_write(self):
-        self.input.material.write('material.yaml')
-    
-    def geometry_write(self):
-        seed = seeds.from_random(self.input.geometry['size'], self.input.geometry['grains'])
-        new_geom = Grid.from_Voronoi_tessellation(self.input.geometry['grid'], self.input.geometry['size'], seed)
-        new_geom.save(os.path.join(self.working_directory, "damask"))
-    
-    def write_input(self):
-        os.chdir(self.working_directory)
-        self.loading_write()
-        self.geometry_write()
-        self.material_write()
-             
-    def collect_output(self):
-        self.load_results()
-        self.stress()
-        self.strain()
-    
-    def load_results(self, file_name="damask_tensionX.hdf5"):
-        """
-        Open ‘damask_tensionX.hdf5’,add the Mises equivalent of the Cauchy stress, and export it to VTK (file).
-        """
-        if self._damask_results is None:
-            self._file_name = os.path.join(self.working_directory, file_name)
-            self._damask_results = Result(self._file_name)
-            self._damask_results.add_stress_Cauchy()
-            self._damask_results.add_strain()
-            self._damask_results.add_equivalent_Mises('sigma')
-            self._damask_results.add_equivalent_Mises('epsilon_V^0.0(F)')
-            self._damask_results.add_calculation('avg_sigma',"np.average(#sigma_vM#)")
-            self._damask_results.add_calculation('avg_epsilon',"np.average(#epsilon_V^0.0(F)_vM#)")
-            self._damask_results.save_VTK(['sigma','epsilon_V^0.0(F)','sigma_vM','epsilon_V^0.0(F)_vM'])
-        return self._damask_results
-    
-    def stress(self):
-        """
-        return the stress as a numpy array
-        Parameters
-        ----------
-        job_file : str
-          Name of the job_file
-        """
-        self.load_results()
-        if self._damask_results is not None:
-            stress_path = self._damask_results.get_dataset_location('avg_sigma')
-            stress = np.zeros(len(stress_path))
-            hdf = h5py.File(self._damask_results.fname)
-            for count,path in enumerate(stress_path):
-                stress[count] = np.array(hdf[path])
-            self.output.stress = np.array(stress)/1E6
 
-    def strain(self):
+    @loading.setter
+    def loading(self, value):
+        self._loading = value
+
+    def _write_material(self):
+        file_path = os.path.join(self.working_directory, "material.yaml")
+        self._material.save(fname=file_path)
+        self.input.material = self._material
+
+    def _write_loading(self):
+        file_path = os.path.join(self.working_directory, "loading.yaml")
+        self._loading.save(file_path)
+        self.input.loading = self._loading
+
+    def _write_geometry(self):
+        file_path = os.path.join(self.working_directory, "damask")
+        self._grid.save(file_path)
+        self.input.geometry = self._grid
+
+    def write_input(self):
+        self._write_loading()
+        self._write_geometry()
+        self._write_material()
+
+    def collect_output(self):
+        self._load_results()
+        self.output.damask = self._results
+
+    def _load_results(self, file_name="damask_loading.hdf5"):
         """
-        return the strain as a numpy array
-        Parameters
-        ----------
-        job_file : str
-          Name of the job_file
+            loads the results from damask hdf file
+            Args:
+                file_name(str): path to the hdf file
         """
-        self.load_results()
-        if self._damask_results is not None:
-            stress_path = self._damask_results.get_dataset_location('avg_sigma')
-            strain = np.zeros(len(stress_path))
-            hdf = h5py.File(self._damask_results.fname)
-            for count,path in enumerate(stress_path):
-                strain[count] = np.array(hdf[path.split('avg_sigma')[0]+ 'avg_epsilon'])
-            self.output.strain = strain
-    
-    def plot_stress_strain(self, ax=None):
+        if self._results is None:
+            if file_name != "damask_loading.hdf5":
+                self._damask_hdf = os.path.join(self.working_directory, file_name)
+
+        self._results = Result(self._damask_hdf)
+        self._results.add_stress_Cauchy()
+        self._results.add_strain()
+        self._results.add_equivalent_Mises('sigma')
+        self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
+        self._results.add_calculation(name='avg_sigma', formula="np.average(#sigma#, axis=0)",
+                                      unit='Pa',description='average stress')
+        self._results.add_calculation(name='avg_strain', formula="np.average(#epsilon_V^0.0(F)#, axis=0)",
+                                      unit='', description='average strain')
+        self._results.add_calculation(name='avg_sigma_vM', formula="np.average(#sigma_vM#)",
+                                      unit='Pa',description='average stress VM')
+        self._results.add_calculation(name='avg_strain_vM', formula="np.average(#epsilon_V^0.0(F)_vM#)",
+                                      unit='', description='average strain vM')
+        self.output.stress = np.array([val for val in self._results.get('avg_sigma').values()])
+        self.output.strain = np.array([val for val in self._results.get('avg_strain').values()])
+        self.output.stress_von_Mises = np.array([val for val
+                                                 in self._results.get('avg_sigma_vM').values()])
+        self.output.strain_von_Mises = np.array([val for val
+                                                 in self._results.get('avg_strain_vM').values()])
+
+    @staticmethod
+    def list_solvers():
+        """
+        lists the solvers for a damask job
+        """
+        return [{'mechanical': 'spectral_basic'},
+                {'mechanical': 'spectral_polarization'},
+                {'mechanical': 'FEM'}]
+
+    def plot_stress_strain(self, component=None, von_mises=False):
         """
         Plot the stress strain curve from the job file
         Parameters
         ----------
-        ax (matplotlib axis /None): axis to plot on (created if None)
+        direction(str): 'xx, xy, xz, yx, yy, yz, zx, zy, zz
         """
-        if ax is None:
-            fig, ax = plt.subplots()
-        ax.plot(self.output.strain, self.output.stress, linestyle='-', linewidth='2.5')
-        ax.grid(True)
-        ax.set_xlabel(r'$\varepsilon_{VM} $', fontsize=18)
-        ax.set_ylabel(r'$\sigma_{VM}$ (MPa)', fontsize=18)
+        fig, ax = plt.subplots()
+        if component is not None:
+            if von_mises is True:
+                raise ValueError("It is not allowed that component is specified and von_mises is also True ")
+            if len(component) != 2:
+                ValueError("The length of direction must be 2, like 'xx', 'xy', ... ")
+            if component[0] != 'x' or component[0] != 'y' or component[0] != 'z':
+                ValueError("The direction should be from x, y, and z")
+            if component[1] != 'x' or component[1] != 'y' or component[1] != 'z':
+                ValueError("The direction should be from x, y, and z")
+            _component_dict={'x': 0, 'y': 1, 'z': 2}
+            _zero_axis = int(_component_dict[component[0]])
+            _first_axis = int(_component_dict[component[1]])
+            ax.plot(self.output.strain[:, _zero_axis, _first_axis],
+                    self.output.stress[:, _zero_axis, _first_axis],
+                    linestyle='-', linewidth='2.5')
+            ax.grid(True)
+            ax.set_xlabel(rf'$\varepsilon_{component[0]}$' + rf'$_{component[1]}$', fontsize=18)
+            ax.set_ylabel(rf'$\sigma_{component[0]}$' + rf'$_{component[1]}$' + '(Pa)', fontsize=18)
+        elif von_mises is True:
+            ax.plot(self.output.strain_von_Mises, self.output.stress_von_Mises,
+                    linestyle='-', linewidth='2.5')
+            ax.grid(True)
+            ax.set_xlabel(r'$\varepsilon_{vM}$', fontsize=18)
+            ax.set_ylabel(r'$\sigma_{vM}$ (Pa)', fontsize=18)
+        else:
+            raise ValueError("either direction should be passed in "
+                             "or vonMises should be set to True")
         return fig, ax
-    
-    def load_mesh(self, inc=20):
-        """
-        Return the mesh for particular increment
-        """
-        mesh = pv.read(os.path.join(self.working_directory, self._file_name.split('.')[0] + f'_inc0{inc}.vtr'))
-        return mesh
-    
