@@ -255,7 +255,7 @@ class _Plot1D(_PlotCore):
 
 class _Plot2D(_PlotCore):
     def _plot(self, ax, data, **kwargs):
-        img = ax.contourf(data, **kwargs)
+        img = ax.contourf(data.T, **kwargs)
         return img
 
 
