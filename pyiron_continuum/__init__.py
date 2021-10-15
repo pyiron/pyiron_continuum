@@ -4,7 +4,7 @@ __all__ = []
 
 from pyiron_base import JOB_CLASS_DICT
 from pyiron_continuum.project import Project
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Potential
 
 from pyiron_base import Project as ProjectBase

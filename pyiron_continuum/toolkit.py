@@ -10,7 +10,7 @@ from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
 from pyiron_continuum.project import DAMASKCreator
 from pyiron_continuum.schroedinger.schroedinger import TISE
-from pyiron_continuum.schroedinger.mesh import RectMesh
+from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Sinusoidal, SquareWell
 
 __author__ = "Liam Huber"
@@ -161,12 +161,14 @@ class DAMASK:
 
 class Schroedinger:
     @property
-    def RectMesh(self):
-        return RectMesh
-
-    @property
     def potential(self):
         return Potential()
+
+
+class Mesh:
+    @property
+    def RectMesh(self):
+        return RectMesh
 
 
 class ContinuumTools(Toolkit):
@@ -175,6 +177,7 @@ class ContinuumTools(Toolkit):
         self._job = JobFactory(project)
         self._schroedinger = Schroedinger()
         self._damask = DAMASK()
+        self._mesh = Mesh()
 
     @property
     def job(self) -> JobFactory:
@@ -183,6 +186,10 @@ class ContinuumTools(Toolkit):
     @property
     def schroedinger(self):
         return self._schroedinger
+
+    @property
+    def mesh(self):
+        return self._mesh
 
     @property
     def damask(self):
