@@ -9,20 +9,25 @@ copy and modify the functionality
 """
 
 import os
-from dolfin.common.plotting import (
-    _has_matplotlib,
-    _all_plottable_types,
-    _plot_x3dom,
-    _matplotlib_plottable_types,
-    mplot_mesh,
-    mplot_dirichletbc,
-    mplot_expression,
-    mplot_function,
-    mplot_meshfunction,
-    _meshfunction_types
-)
-import dolfin.cpp as cpp
-import ufl
+from pyiron_base import ImportAlarm
+with ImportAlarm(
+        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
+        'requirements. Please install it and try again.'
+) as fenics_alarm:
+    from dolfin.common.plotting import (
+        _has_matplotlib,
+        _all_plottable_types,
+        _plot_x3dom,
+        _matplotlib_plottable_types,
+        mplot_mesh,
+        mplot_dirichletbc,
+        mplot_expression,
+        mplot_function,
+        mplot_meshfunction,
+        _meshfunction_types
+    )
+    import dolfin.cpp as cpp
+    import ufl
 
 __author__ = "Liam Huber"
 __copyright__ = (
