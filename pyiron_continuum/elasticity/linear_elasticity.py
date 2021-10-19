@@ -119,8 +119,8 @@ class LinearElasticity:
         """
         Args:
 
-            elastic_tensor ((3,3,3,3)- or (6,6)-array): Elastic tensor (in C_ijkl notation or
-                Voigt notation).
+            elastic_tensor ((3,3,3,3)-, (6,6)- or (3,)-array): Elastic tensor (in C_ijkl notation,
+                Voigt notation or a 3-component array containing [C_11, C_12, C_44]).
 
         """
         self.elastic_tensor = elastic_tensor
@@ -181,8 +181,10 @@ class LinearElasticity:
     def elastic_tensor(self, C):
         if C is not None:
             C = np.asarray(C)
-            if C.shape != (6, 6) and C.shape != (3, 3, 3, 3):
-                raise ValueError('Elastic tensor must be a (6,6) or (3,3,3,3) array')
+            if C.shape != (6, 6) and C.shape != (3, 3, 3, 3) and C.shape != (6,):
+                raise ValueError('Elastic tensor must be a (6,6), (3,3,3,3) or (3,)  array')
+            if C.shape == (3,):
+                C = tools.coeff_to_voigt(C)
             if C.shape == (6, 6):
                 C = tools.C_from_voigt(C)
         self._elastic_tensor = C
