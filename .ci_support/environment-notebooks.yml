@@ -5,13 +5,17 @@ dependencies:
   - coveralls
   - coverage
   - codacy-coverage
-  - matplotlib
+  - damask-mesh
+  - damask-grid
+  - damask =3.0.0a4
+  - fenics =2019.1.0
   - k3d
-  - fenics =2019.1.0=*_21
-  - mshr =2019.1.0=*_4
+  - matplotlib
+  - mshr =2019.1.0
   - numpy
   - pyiron
   - pyiron-data >=0.0.17
+  - python-damask
   - pyvista
   - scipy
   - seaborn
