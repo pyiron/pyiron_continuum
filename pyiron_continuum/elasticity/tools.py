@@ -58,3 +58,10 @@ def C_to_voigt(C_in):
                 for l in range(k+1):
                     C[index_from_voigt(i, j), index_from_voigt(k, l)] = C_in[i, j, k, l]
     return C
+
+def coeff_to_voigt(C_in):
+    C = np.zeros((6, 6))
+    C[:3, :3] = C_in[1]
+    C[:3, :3] += np.eye(3)*(C_in[0]-C_in[1])
+    C[3:, 3:] = C_in[2]*np.eye(3)
+    return C
