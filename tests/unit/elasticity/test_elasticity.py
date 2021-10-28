@@ -77,6 +77,11 @@ class TestElasticity(unittest.TestCase):
         self.assertAlmostEqual(force[1], 0)
         self.assertAlmostEqual(force[2], 0)
 
+    def test_elastic_tensor_input(self):
+        C = create_random_C()
+        medium = LinearElasticity([C[0,0,0,0], C[0,0,1,1], C[0,1,0,1]])
+        self.assertTrue(np.allclose(C, medium.elastic_tensor))
+
 
 if __name__ == "__main__":
     unittest.main()
