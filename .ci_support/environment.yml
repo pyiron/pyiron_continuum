@@ -6,6 +6,6 @@ dependencies:
 - codacy-coverage
 - matplotlib =3.4.3
 - numpy =1.21.3
-- pyiron_base =0.3.8
+- pyiron_base =0.3.9
 - scipy =1.7.1
 - sympy =1.9
