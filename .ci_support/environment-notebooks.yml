@@ -19,5 +19,6 @@ dependencies:
   - pyvista
   - scipy
   - seaborn
+  - superlu_dist=6.2.0=*_4
   - scikit-image
   - papermill
