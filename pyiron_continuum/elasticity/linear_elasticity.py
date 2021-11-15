@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron_base import Settings
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic, Green
 from pyiron_continuum.elasticity.eschelby import Eschelby
 from pyiron_continuum.elasticity import tools
@@ -16,8 +15,6 @@ __maintainer__ = "Sam Waseda"
 __email__ = "waseda@mpie.de"
 __status__ = "development"
 __date__ = "Aug 21, 2021"
-
-s = Settings()
 
 
 def value_or_none(func):
