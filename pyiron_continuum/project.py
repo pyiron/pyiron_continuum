@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 # import warnings
-from pyiron_base import Settings, JobTypeChoice, Project as ProjectCore
+from pyiron_base import JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory, ImportAlarm
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
 with ImportAlarm(
@@ -30,8 +30,6 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
-
-s = Settings()
 
 
 class Damask(PyironFactory):
