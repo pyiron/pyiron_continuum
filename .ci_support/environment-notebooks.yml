@@ -8,7 +8,7 @@ dependencies:
   - damask-mesh
   - damask-grid
   - damask
-  # - fenics =2019.1.0
+  - fenics =2019.1.0
   # - k3d
   - matplotlib
   # - mshr =2019.1.0
