@@ -106,20 +106,27 @@ class DAMASK(TemplateJob):
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self._results.add_calculation(name='avg_sigma', formula="np.average(#sigma#, axis=0)",
-                                      unit='Pa',description='average stress')
-        self._results.add_calculation(name='avg_strain', formula="np.average(#epsilon_V^0.0(F)#, axis=0)",
-                                      unit='', description='average strain')
-        self._results.add_calculation(name='avg_sigma_vM', formula="np.average(#sigma_vM#)",
-                                      unit='Pa',description='average stress VM')
-        self._results.add_calculation(name='avg_strain_vM', formula="np.average(#epsilon_V^0.0(F)_vM#)",
-                                      unit='', description='average strain vM')
-        self.output.stress = np.array([val for val in self._results.get('avg_sigma').values()])
-        self.output.strain = np.array([val for val in self._results.get('avg_strain').values()])
-        self.output.stress_von_Mises = np.array([val for val
-                                                 in self._results.get('avg_sigma_vM').values()])
-        self.output.strain_von_Mises = np.array([val for val
-                                                 in self._results.get('avg_strain_vM').values()])
+        self.output.stress = self.average_spatio_temporal_tensors('sigma')
+        self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
+        self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
+        self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+
+    def temporal_spatial_shape(self, name):
+        property_dict = self._results.get(name)
+        shape_list = [len(property_dict)]
+        for shape in property_dict[list(property_dict.keys())[0]].shape:
+            shape_list.append(shape)
+        return tuple(shape_list)
+
+    def average_spatio_temporal_tensors(self, name):
+        _shape = self.temporal_spatial_shape(name)
+        temporal_spatial_array = np.empty(_shape)
+        property_dict = self._results.get(name)
+        i = 0
+        for key in property_dict.keys():
+            temporal_spatial_array[i] = property_dict[key]
+            i = i + 1
+        return  np.average(temporal_spatial_array, axis=1)
 
     @staticmethod
     def list_solvers():
@@ -166,3 +173,4 @@ class DAMASK(TemplateJob):
             raise ValueError("either direction should be passed in "
                              "or vonMises should be set to True")
         return fig, ax
+
