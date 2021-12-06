@@ -126,7 +126,7 @@ class DAMASK(TemplateJob):
         for key in property_dict.keys():
             temporal_spatial_array[i] = property_dict[key]
             i = i + 1
-        return  np.average(temporal_spatial_array, axis=0)
+        return  np.average(temporal_spatial_array, axis=1)
 
     @staticmethod
     def list_solvers():
@@ -159,7 +159,7 @@ class DAMASK(TemplateJob):
             _first_axis = int(_component_dict[component[1]])
             ax.plot(self.output.strain[:, _zero_axis, _first_axis],
                     self.output.stress[:, _zero_axis, _first_axis],
-                    linestyle=None, linewidth='2.5')
+                    linestyle='-', linewidth='2.5')
             ax.grid(True)
             ax.set_xlabel(rf'$\varepsilon_{component[0]}$' + rf'$_{component[1]}$', fontsize=18)
             ax.set_ylabel(rf'$\sigma_{component[0]}$' + rf'$_{component[1]}$' + '(Pa)', fontsize=18)
