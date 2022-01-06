@@ -13,6 +13,8 @@ with ImportAlarm(
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
+    from fenics import near, SubDomain
+
 from pyiron_base import PyironFactory
 
 __author__ = "Liam Huber"
@@ -73,11 +75,13 @@ class UnitMeshFactory(PyironFactory):
 
 
 class RegularMeshFactory(PyironFactory):
-    def rectangle(self, p1, p2, nx, ny):
-        return FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny)
+    @staticmethod
+    def rectangle(p1, p2, nx, ny, **kwargs):
+        return FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
 #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
 
-    def box(self, p1, p2, nx, ny, nz):
+    @staticmethod
+    def box(p1, p2, nx, ny, nz):
         return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
  #   box.__doc__ = FEN.BoxMesh.__doc__
 
@@ -101,3 +105,24 @@ class BoundaryConditionFactory(PyironFactory):
         """
         bc_fnc = bc_fnc or self._default_bc_fnc
         return FEN.DirichletBC(self._job.V, expression, bc_fnc)
+
+
+class FenicsSubDomain(FEN.SubDomain):
+    def __init__(self, conditions, tol=1E-14):
+        super(FenicsSubDomain, self).__init__()
+        self._conditions = conditions
+
+    def _evalConditions(self, x):
+        if eval(self._conditions):
+            return True
+        else:
+            return False
+
+    def inside(self, x, onboundary):
+        if onboundary:
+            return self._evalConditions(x)
+
+class SubDomainFactory(PyironFactory):
+    @staticmethod
+    def inside(conditions):
+        return FenicsSubDomain(conditions)
