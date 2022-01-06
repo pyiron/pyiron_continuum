@@ -15,12 +15,21 @@ with ImportAlarm(
     from dolfin.cpp.mesh import Mesh
     from ufl import nabla_div as ufl_nabla_div
 
+with ImportAlarm(
+    'if precice coupling with fenics is intended the following packages are required:'
+    '- precice'
+    '- pyprecice'
+    '- fenicsprecice '
+) as precice_alarm:
+    import fenicsprecice as adapter
+
+
 import sympy
 from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory
+from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory, SubDomainFactory
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
 
@@ -127,11 +136,10 @@ class Fenics(GenericJob):
         self._python_only_job = True
         self.create = Creator(self)
         self._plot = Plot(self)
-
         self.input = DataContainer(table_name='input')
         self.input.mesh_resolution = 2
         self.input.element_type = 'P'
-        self.input.element_order = 1
+        self.input.element_order = 2
         self.input.n_steps = 1
         self.input.n_print = 1
         self.input.dt = 1
@@ -150,13 +158,17 @@ class Fenics(GenericJob):
         # TODO: Make a class to force these to be Expressions and to update them?
         self.assigned_u = None
         self.V_class = FEN.FunctionSpace
-
+        self.V_g_class = FEN.VectorFunctionSpace
+        self._flux = None
+        self.flux_required = False
         self._mesh = None  # the discretization mesh
         self._V = None  # finite element volume space
+        self._V_g = None # finite element vector function space
         self._u = None  # u is the unkown function
         self._v = None  # the test function
         self._solution = None
         self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
+        self.precice_coupling = False
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
@@ -186,6 +198,14 @@ class Fenics(GenericJob):
             self._mesh = mshr.generate_mesh(self.domain, self.input.mesh_resolution)
 
         self._V = self.V_class(self.mesh, self.input.element_type, self.input.element_order)
+        if self.input.element_oder > 1:
+            self._V_g = self.V_g_class(self.mesh, self.input.element_type, self.input.element_order-1)
+        else:
+            self._V_g = self.V_g_class(self.mesh, self.input.element_type, self.input.element_order)
+        if self.flux_required:
+            self._flux = FEN.Function(self._V_g)
+            self._flux.rename("Flux", "")
+
         # TODO: Allow changing what type of function space is used (VectorFunctionSpace, MultiMeshFunctionSpace...)
         # TODO: Allow having multiple sets of spaces and test/trial functions
         self._u = FEN.TrialFunction(self.V)
@@ -210,6 +230,12 @@ class Fenics(GenericJob):
         if self._V is None:
             self.refresh()
         return self._V
+
+    @property
+    def V_g(self):
+        if self._V_g is None:
+            self.refresh()
+        return self._V_g
 
     @property
     def u(self):
@@ -329,17 +355,21 @@ class Fenics(GenericJob):
         return FEN.project(v, V=self.V, **kwargs)
 
 #    @copy_docstring(FEN.interpolate)
-    def interpolate_function(self, v):
+    def interpolate_function(self, v, function_space=None):
         """
         Interpolate v on the job's element, V.
 
         Args:
             v (?): The function to interpolate.
+            function_space: if the default functionSpace job.V is not
+            meant to be used, you can provide your own
 
         Returns:
             (?): Interpolated function.
         """
-        return FEN.interpolate(v, V=self.V)
+        if function_space is None:
+            function_space = self.V
+        return FEN.interpolate(v, function_space)
 
     def to_hdf(self, hdf=None, group_name=None):
         super().to_hdf(hdf=hdf, group_name=group_name)
@@ -414,12 +444,27 @@ class Fenics(GenericJob):
     def sqrt(self, f):
         return FEN.sqrt(f)
 
+    @property
+    def flux(self):
+        if self._flux is None:
+            if not self.flux_required:
+                self.flux_required = True
+            self._refresh()
+        return self._flux
+
+    def cal_flux(self):
+        w = FEN.TrialFunction(self.V_g)
+        v = FEN.TestFunction(self.V_g)
+        a = FEN.inner(w, v) * FEN.dx
+        L = FEN.inner(FEN.grad(self.u), v) * FEN.dx
+        FEN.solve(a == L, self._flux)
 
 class Creator:
-    def __init__(self, job):
+    def __init__(self, job, conditions=None):
         self._job = job
         self._domain = DomainFactory()
         self._bc = BoundaryConditionFactory(job)
+        self._subdomain = SubDomainFactory()
 
     @property
     def domain(self):
@@ -428,3 +473,8 @@ class Creator:
     @property
     def bc(self):
         return self._bc
+
+    @property
+    def subdomain(self):
+        return self._subdomain
+
