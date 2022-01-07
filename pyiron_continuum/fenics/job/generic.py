@@ -21,7 +21,7 @@ with ImportAlarm(
     '- pyprecice'
     '- fenicsprecice '
 ) as precice_alarm:
-    import fenicsprecice as adapter
+    import fenicsprecice
 
 
 import sympy
@@ -29,9 +29,13 @@ from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory, SubDomainFactory
+from pyiron_continuum.fenics.factory import ( DomainFactory,
+    BoundaryConditionFactory,
+    SubDomainFactory,
+    PreciceAdapter)
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
+import os
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
@@ -169,6 +173,8 @@ class Fenics(GenericJob):
         self._solution = None
         self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
         self.precice_coupling = False
+        self._adapter = None
+        self._non_default_function_space = False
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
@@ -191,6 +197,17 @@ class Fenics(GenericJob):
     def plot(self):
         return self._plot
 
+    @property
+    def adapter(self):
+        return self._adapter
+
+    @adapter.setter
+    def adapter(self, _adapter):
+        if isinstance(_adapter, fenicsprecice.Adapter):
+            self._adapter = _adapter
+        else:
+            raise TypeError(f"expecting fenicsprecice adapter, instead got a f{type(_adapter)}")
+
     def generate_mesh(self):
         if isinstance(self.domain, Mesh):
             self._mesh = self.domain  # Intent: Allow the domain to return a unit mesh
@@ -198,7 +215,7 @@ class Fenics(GenericJob):
             self._mesh = mshr.generate_mesh(self.domain, self.input.mesh_resolution)
 
         self._V = self.V_class(self.mesh, self.input.element_type, self.input.element_order)
-        if self.input.element_oder > 1:
+        if self.input.element_order > 1:
             self._V_g = self.V_g_class(self.mesh, self.input.element_type, self.input.element_order-1)
         else:
             self._V_g = self.V_g_class(self.mesh, self.input.element_type, self.input.element_order)
@@ -227,9 +244,18 @@ class Fenics(GenericJob):
 
     @property
     def V(self):
-        if self._V is None:
+        if self._V is None and not self._non_default_function_space:
             self.refresh()
         return self._V
+
+    @V.setter
+    def V(self, function_space):
+        if isinstance(function_space, FEN.FunctionSpace):
+            self._non_default_function_space = True
+            self._V = function_space
+        else:
+            raise TypeError("fenics FunctionSpace is expected,"
+                            " but received a type(function_space)")
 
     @property
     def V_g(self):
@@ -460,7 +486,7 @@ class Fenics(GenericJob):
         FEN.solve(a == L, self._flux)
 
 class Creator:
-    def __init__(self, job, conditions=None):
+    def __init__(self, job):
         self._job = job
         self._domain = DomainFactory()
         self._bc = BoundaryConditionFactory(job)
@@ -477,4 +503,9 @@ class Creator:
     @property
     def subdomain(self):
         return self._subdomain
+
+    def adapter(self, config_file):
+       file_path = config_file
+           #os.path.abspath(config_file)
+       return PreciceAdapter(self._job, config_file=file_path)
 
