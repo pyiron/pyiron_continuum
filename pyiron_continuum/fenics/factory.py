@@ -13,7 +13,11 @@ with ImportAlarm(
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
-    from fenics import near, SubDomain
+    from fenics import near
+
+with ImportAlarm("precice-fenics workflows require:"
+                 "- fenicsprecice") as precice_alarm:
+    import fenicsprecice
 
 from pyiron_base import PyironFactory
 
@@ -126,3 +130,18 @@ class SubDomainFactory(PyironFactory):
     @staticmethod
     def inside(conditions):
         return FenicsSubDomain(conditions)
+
+class PreciceAdapter(fenicsprecice.Adapter):
+     def __init__(self, job, config_file):
+         self._job = job
+         super(PreciceAdapter, self).__init__(adapter_config_filename=config_file)
+         self._coupling_bc = None
+         self._write_object = None
+         self._function_space= self._job.V
+
+
+     def initialize(self, coupling_boundary, write_object, function_space=None):
+         if function_space is None:
+             function_space= self._function_space
+         return super().initialize(coupling_boundary, function_space, write_object)
+
