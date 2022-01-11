@@ -14,6 +14,7 @@ with ImportAlarm(
     import fenics as FEN
     import mshr
     from fenics import near
+    import dolfin
 
 with ImportAlarm("precice-fenics workflows require:"
                  "- fenicsprecice") as precice_alarm:
@@ -123,25 +124,185 @@ class FenicsSubDomain(FEN.SubDomain):
             return False
 
     def inside(self, x, onboundary):
-        if onboundary:
+        if onboundary and self._conditions:
             return self._evalConditions(x)
+        else:
+            False
 
-class SubDomainFactory(PyironFactory):
-    @staticmethod
-    def inside(conditions):
-        return FenicsSubDomain(conditions)
+class PreciceConf(PyironFactory):
+    def __init__(self, job, config_file, coupling_boundary, write_object, function_space=None):
+        self._job = job
+        self._config_file = config_file
+        self._coupling_boundary = coupling_boundary
+        self._write_object = write_object
+        if function_space is None:
+            self._function_space = self._job.V
+        else:
+            self._function_space = function_space
+
+        self._dt = None
+        self._coupling_expression = None
+        self._update_boundary_func = None
+        self._coupled_data_func = None
+        self._adapter = None
+        self._instantiated = False
+
+    def instantiate_adapter(self):
+        self._adapter = fenicsprecice.Adapter(adapter_config_filename=self._config_file)
+        self._instantiated = True
+
+    def initialize(self):
+        if self._check_config():
+            self._dt = self._adapter.initialize(self._coupling_boundary, self._function_space, self._write_object)
+        else:
+            raise NotSetCorrectlyError("The precice adapter is not configured correctly"
+                                       "Please check if you have set coupling boundary,"
+                                       " write_object, or function_space")
+
+    @property
+    def adapter(self):
+        return self._adapter
+
+    @property
+    def coupling_boundary(self):
+        return self._coupling_boundary
+
+    @coupling_boundary.setter
+    def coupling_boundary(self, subdomain):
+        if isinstance(subdomain, FEN.SubDomain) or isinstance(subdomain, FenicsSubDomain):
+            self._coupling_boundary = subdomain
+        else:
+            raise TypeError(f"expected fenics.SubDomain or FenicsSubDomain, but received {type(subdomain)}")
+
+    @property
+    def write_object(self):
+        return self._write_object
+
+    @write_object.setter
+    def write_object(self, write_obj):
+        if isinstance(write_obj, dolfin.function.function.Function):
+            self._write_object = write_obj
+        else:
+            raise TypeError(f"expected fenics.Expression, but received {type(write_obj)}")
+
+    @property
+    def update_boundary_func(self):
+        return self._update_boundary_func
+
+    @update_boundary_func.setter
+    def update_boundary_func(self, update_func):
+        if callable(update_func):
+            self._update_boundary_func = update_func
+        else:
+            raise TypeError(f'expected a function but received a {type(update_func)}')
+
+    def update_coupling_boundary(self):
+        self._coupling_expression = self._adapter.create_coupling_expression()
+        self.update_boundary_func(self._coupling_expression, self._coupling_boundary)
+
+    @property
+    def coupling_expression(self):
+        return self._coupling_expression
+
+    @property
+    def coupling_data(self):
+        return self._coupling
+
+    @coupling_data.setter
+    def coupled_data_func(self, func):
+        if callable(func):
+            self._coupled_data_func = func
+
 
 class PreciceAdapter(fenicsprecice.Adapter):
-     def __init__(self, job, config_file):
-         self._job = job
-         super(PreciceAdapter, self).__init__(adapter_config_filename=config_file)
-         self._coupling_bc = None
-         self._write_object = None
-         self._function_space= self._job.V
+    def __init__(self, job, config_file):
+        self._job = job
+        super(PreciceAdapter, self).__init__(adapter_config_filename=config_file)
+        self._coupling_bc = None
+        self._write_object = None
+        self._function_space= self._job.V
+        self._dt = None
+        self._coupling_boundary = None
+        self._write_object = None
+        self._coupling_expression = None
+        self._update_boundary_func = None
+        self._coupled_data_func = None
+        self._configured = False
 
+    def initialize(self):
+        if self._check_config():
+            self._dt = super().initialize(self._coupling_boundary, self._function_space, self._write_object)
+        else:
+            raise NotSetCorrectlyError("The precice adapter is not configured correctly"
+                                       "Please check if you have set coupling boundary,"
+                                       " write_object, or function_space")
 
-     def initialize(self, coupling_boundary, write_object, function_space=None):
-         if function_space is None:
-             function_space= self._function_space
-         return super().initialize(coupling_boundary, function_space, write_object)
+    def config(self, coupling_boundary, write_object, function_space=None):
+        if self._configured is False:
+            self._coupling_boundary = coupling_boundary
+            self._write_object = write_object
+            if not function_space is None:
+                self._function_space = function_space
+            self._configured = True
+    @property
+    def coupling_boundary(self):
+        return self._coupling_boundary
 
+    @coupling_boundary.setter
+    def coupling_boundary(self, subdomain):
+        if isinstance(subdomain, FEN.SubDomain) or isinstance(subdomain, FenicsSubDomain):
+            self._coupling_boundary = subdomain
+        else:
+            raise TypeError(f"expected fenics.SubDomain or FenicsSubDomain, but received {type(subdomain)}")
+
+    @property
+    def write_object(self):
+        return self._write_object
+
+    @write_object.setter
+    def write_object(self, object):
+        if isinstance(object, dolfin.function.function.Function):
+            self._write_object = object
+        else:
+            raise TypeError(f"expected fenics.Expression, but received {type(object)}")
+
+    def _check_config(self):
+        if self._coupling_boundary is None or self._write_object is None or self._update_boundary_func is None:
+            return False
+        return True
+
+    @property
+    def update_boundary_func(self):
+        return self._update_boundary_func
+
+    @update_boundary_func.setter
+    def update_boundary_func(self, update_func):
+        if callable(update_func):
+            self._update_boundary_func = update_func
+        else:
+            raise TypeError(f'expected a function but received a {type(update_func)}')
+
+    def update_coupling_boundary(self):
+        self._coupling_expression = self.create_coupling_expression()
+        self.update_boundary_func(self._coupling_expression, self._coupling_boundary)
+
+    @property
+    def coupling_boundary_type(self):
+        return self._coupling_boundary_type
+
+    @property
+    def coupling_expression(self):
+        return self._coupling_expression
+
+    @property
+    def coupling_data(self):
+        return self._coupling
+
+    @coupling_data.setter
+    def coupled_data_func(self, func):
+        if callable(func):
+            self._coupled_data_func = func
+
+class NotSetCorrectlyError(Exception):
+    "raised when the object is not configured correctly!"
+    pass
