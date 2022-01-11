@@ -12,8 +12,10 @@ with ImportAlarm(
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
+    import dolfin
     from dolfin.cpp.mesh import Mesh
     from ufl import nabla_div as ufl_nabla_div
+
 
 with ImportAlarm(
     'if precice coupling with fenics is intended the following packages are required:'
@@ -31,8 +33,9 @@ import warnings
 import numpy as np
 from pyiron_continuum.fenics.factory import ( DomainFactory,
     BoundaryConditionFactory,
-    SubDomainFactory,
-    PreciceAdapter)
+    PreciceAdapter,
+    FenicsSubDomain,
+    PreciceConf)
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
 import os
@@ -156,6 +159,7 @@ class Fenics(GenericJob):
         # TODO: Figure out how to get these attributes into input/otherwise serializable
         self.domain = None  # the domain
         self.BC = None  # the boundary condition
+        self.BCs = [] # list of boundary conditions
         self._lhs = None  # the left hand side of the equation; FEniCS function
         self._rhs = None  # the right hand side of the equation; FEniCS function
         self.time_dependent_expressions = []  # Any expressions used with a `t` attribute to evolve
@@ -175,6 +179,9 @@ class Fenics(GenericJob):
         self.precice_coupling = False
         self._adapter = None
         self._non_default_function_space = False
+        self._F = None
+        self._interpolated_functions = []
+        self._u_n = None # interpolated function of the initial conition
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
@@ -303,8 +310,25 @@ class Fenics(GenericJob):
 
     @F.setter
     def F(self, new_equation):
+        self._F = new_equation
         self.LHS = FEN.lhs(new_equation)
         self.RHS = FEN.rhs(new_equation)
+
+    def _update_F(self):
+        self.LHS = FEN.lhs(self._F)
+        self.RHS = FEN.rhs(self._F)
+
+    @property
+    def u_n(self):
+        return self._u_n
+
+    @u_n.setter
+    def u_n(self, interpolated_func):
+        if type(interpolated_func) is dolfin.function.function.Function:
+            self._u_n = interpolated_func
+        else:
+            raise TypeError(f"expected an interpolated fenics function, but received f{type(interpolated_func)}")
+
 
     def _write_vtk(self):
         """
@@ -332,18 +356,65 @@ class Fenics(GenericJob):
         """
         self.status.running = True
         self._u = self.solution
-        for step in np.arange(self.input.n_steps):
-            for expr in self.time_dependent_expressions:
-                expr.t += self.input.dt
-            FEN.solve(self.LHS == self.RHS, self.u, self.BC, solver_parameters=self.input.solver_parameters)
-            if step % self.input.n_print == 0 or step == self.input.n_print - 1:
-                self._append_to_output()
-            try:
-                self.assigned_u.assign(self.solution)
-            except AttributeError:
-                pass
-        self.status.collect = True
-        self.run()
+
+        if not self.BC is None and self.BC not in self.BCs:
+            self.BCs.append(self.BC)
+
+        if self._adapter is None:
+            for step in np.arange(self.input.n_steps):
+                for expr in self.time_dependent_expressions:
+                    expr.t += self.input.dt
+                FEN.solve(self.LHS == self.RHS, self.u, self.BCs, solver_parameters=self.input.solver_parameters)
+                if step % self.input.n_print == 0 or step == self.input.n_print - 1:
+                    self._append_to_output()
+                try:
+                    self.assigned_u.assign(self.solution)
+                except AttributeError:
+                    pass
+            self.status.collect = True
+            self.run()
+        else:
+            if isinstance(self._adapter, PreciceAdapter):
+                dt = FEN.Constant(0)
+                _precice_dt = self._adapter.initialize()
+                dt.assign(np.min([self.input.dt, _precice_dt]))
+                self._adapter.update_coupling_boundary()
+                t = 0
+                n = 0
+                while self._adapter.is_coupling_ongoing():
+                    # write checkpoint
+                    if self._adapter.is_action_required(self._adapter.action_write_iteration_checkpoint()):
+                        self._adapter.store_checkpoint(self.u, t, n)
+
+                    read_data = self._adapter.read_data()
+                    self._adapter.update_coupling_expression(self._adapter.coupling_expression, read_data)
+                    dt.assign(np.min([self.input.dt, _precice_dt]))
+                    FEN.solve(self.LHS == self.RHS, self.u, self.BCs)
+                    if self.flux_required:
+                        self.cal_flux()
+                    self._adapter.write_data(self._adapter.coupled_data_func())
+                    _precice_dt = self._adapter.advance(dt(0))
+                    if self._adapter.is_action_required(self._adapter.action_read_iteration_checkpoint()):
+                        u_cp, t_cp, n_cp = self._adapter.retrieve_checkpoint()
+                        self._u_n.assign(u_cp)
+                        t = t_cp
+                        n = n_cp
+                    else:  # update solution
+                        self._u_n.assign(self.solution)
+                        t += float(dt)
+                        n += 1
+
+                    if self._adapter.is_time_window_complete():
+                        #todo: save the outputs
+                        pass
+                    for expr in self.time_dependent_expressions:
+                        expr.t += dt
+                self._adapter.finalize()
+            else:
+                raise TypeError(f'the adapter is expected to be of type pyiron.continuum.fenics.factory.PreciceAdapter,'
+                                f'but it received {type(self._adapter)} ')
+
+
 
     def _append_to_output(self):
         """Evaluate the result at nodes and store in the output as a numpy array."""
@@ -395,7 +466,8 @@ class Fenics(GenericJob):
         """
         if function_space is None:
             function_space = self.V
-        return FEN.interpolate(v, function_space)
+        self._interpolated_functions.append(FEN.interpolate(v, function_space))
+        return self._interpolated_functions[-1]
 
     def to_hdf(self, hdf=None, group_name=None):
         super().to_hdf(hdf=hdf, group_name=group_name)
@@ -475,7 +547,7 @@ class Fenics(GenericJob):
         if self._flux is None:
             if not self.flux_required:
                 self.flux_required = True
-            self._refresh()
+            self.refresh()
         return self._flux
 
     def cal_flux(self):
@@ -485,12 +557,15 @@ class Fenics(GenericJob):
         L = FEN.inner(FEN.grad(self.u), v) * FEN.dx
         FEN.solve(a == L, self._flux)
 
+    @staticmethod
+    def near(x, x_component, boundary_value, tol):
+        FEN.near(x[x_component], boundary_value, tol)
+
 class Creator:
     def __init__(self, job):
         self._job = job
         self._domain = DomainFactory()
         self._bc = BoundaryConditionFactory(job)
-        self._subdomain = SubDomainFactory()
 
     @property
     def domain(self):
@@ -500,12 +575,13 @@ class Creator:
     def bc(self):
         return self._bc
 
-    @property
-    def subdomain(self):
-        return self._subdomain
+    @staticmethod
+    def subdomain(conditions, tol=1E-14):
+        return FenicsSubDomain(conditions, tol)
 
     def adapter(self, config_file):
-       file_path = config_file
-           #os.path.abspath(config_file)
-       return PreciceAdapter(self._job, config_file=file_path)
+        return PreciceAdapter(self._job, config_file=config_file)
+
+    def adapter_config(self, config_file, coupling_boundary, write_object, function_space=None ):
+        return PreciceConf(self._job, config_file, coupling_boundary, write_object, function_space)
 
