@@ -33,7 +33,6 @@ import warnings
 import numpy as np
 from pyiron_continuum.fenics.factory import ( DomainFactory,
     BoundaryConditionFactory,
-    PreciceAdapter,
     FenicsSubDomain,
     PreciceConf)
 from pyiron_continuum.fenics.plot import Plot
@@ -150,6 +149,7 @@ class Fenics(GenericJob):
         self.input.n_steps = 1
         self.input.n_print = 1
         self.input.dt = 1
+        self._dt = FEN.Constant(0)
         self.input.solver_parameters = {}
         # TODO?: Make input sub-classes to catch invalid input?
 
@@ -168,7 +168,6 @@ class Fenics(GenericJob):
         self.V_class = FEN.FunctionSpace
         self.V_g_class = FEN.VectorFunctionSpace
         self._flux = None
-        self.flux_required = False
         self._mesh = None  # the discretization mesh
         self._V = None  # finite element volume space
         self._V_g = None # finite element vector function space
@@ -178,6 +177,7 @@ class Fenics(GenericJob):
         self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
         self.precice_coupling = False
         self._adapter = None
+        self._adapter_conf = None
         self._non_default_function_space = False
         self._F = None
         self._interpolated_functions = []
@@ -208,12 +208,17 @@ class Fenics(GenericJob):
     def adapter(self):
         return self._adapter
 
-    @adapter.setter
-    def adapter(self, _adapter):
-        if isinstance(_adapter, fenicsprecice.Adapter):
-            self._adapter = _adapter
+    @property
+    def adapter_conf(self):
+        return self._adapter_conf
+
+    @adapter_conf.setter
+    def adapter_conf(self, _conf):
+        if isinstance(_conf, PreciceConf):
+            self._adapter_conf = _conf
         else:
-            raise TypeError(f"expecting fenicsprecice adapter, instead got a f{type(_adapter)}")
+            raise TypeError("expected pyiron_continuum.fenics.factory.PreciceConf, "
+                            f"but received {type(_conf)}")
 
     def generate_mesh(self):
         if isinstance(self.domain, Mesh):
@@ -226,15 +231,13 @@ class Fenics(GenericJob):
             self._V_g = self.V_g_class(self.mesh, self.input.element_type, self.input.element_order-1)
         else:
             self._V_g = self.V_g_class(self.mesh, self.input.element_type, self.input.element_order)
-        if self.flux_required:
-            self._flux = FEN.Function(self._V_g)
-            self._flux.rename("Flux", "")
 
         # TODO: Allow changing what type of function space is used (VectorFunctionSpace, MultiMeshFunctionSpace...)
         # TODO: Allow having multiple sets of spaces and test/trial functions
         self._u = FEN.TrialFunction(self.V)
         self._v = FEN.TestFunction(self.V)
         self._solution = FEN.Function(self.V)
+        self._flux = FEN.Function(self.V_g)
 
         if any([v is not None for v in [self.BC, self.LHS, self.RHS]]):
             warnings.warn("The mesh is being generated, but at least one of the boundary conditions or equation sides"
@@ -314,9 +317,6 @@ class Fenics(GenericJob):
         self.LHS = FEN.lhs(new_equation)
         self.RHS = FEN.rhs(new_equation)
 
-    def _update_F(self):
-        self.LHS = FEN.lhs(self._F)
-        self.RHS = FEN.rhs(self._F)
 
     @property
     def u_n(self):
@@ -328,6 +328,20 @@ class Fenics(GenericJob):
             self._u_n = interpolated_func
         else:
             raise TypeError(f"expected an interpolated fenics function, but received f{type(interpolated_func)}")
+
+
+    @property
+    def dt(self):
+        return self._dt
+
+    @dt.setter
+    def dt(self, time_step):
+        if isinstance(time_step, float):
+            self._dt = FEN.Constant(time_step)
+        elif isinstance(time_step, FEN.Constant):
+            self._dt = time_step
+        else:
+            raise TypeError("time_step should be a float, or of type fenics.Constant!")
 
 
     def _write_vtk(self):
@@ -346,7 +360,7 @@ class Fenics(GenericJob):
             raise ValueError("The linear form (LHS) is not defined")
         if self.V is None:
             raise ValueError("The volume is not defined; no V defined")
-        if self.BC is None:
+        if self.BC is None and len(self.BCs) == 0:
             raise ValueError("The boundary condition(s) (BC) is not defined")
 
     def run_static(self):
@@ -357,10 +371,10 @@ class Fenics(GenericJob):
         self.status.running = True
         self._u = self.solution
 
-        if not self.BC is None and self.BC not in self.BCs:
+        if self.BC is not None and self.BC not in self.BCs:
             self.BCs.append(self.BC)
 
-        if self._adapter is None:
+        if self._adapter_conf is None:
             for step in np.arange(self.input.n_steps):
                 for expr in self.time_dependent_expressions:
                     expr.t += self.input.dt
@@ -374,26 +388,28 @@ class Fenics(GenericJob):
             self.status.collect = True
             self.run()
         else:
-            if isinstance(self._adapter, PreciceAdapter):
-                dt = FEN.Constant(0)
-                _precice_dt = self._adapter.initialize()
-                dt.assign(np.min([self.input.dt, _precice_dt]))
-                self._adapter.update_coupling_boundary()
+            if isinstance(self._adapter_conf, PreciceConf):
+                self.dt = FEN.Constant(0)
+                self._adapter = self._adapter_conf.instantiate_adapter()
+                _precice_dt = self._adapter.initialize(self._adapter_conf.coupling_boundary,
+                                                       self._adapter_conf.function_space,
+                                                       self._adapter_conf.write_object)
+                self.dt.assign(np.min([self.input.dt, _precice_dt]))
+                self._adapter_conf.update_coupling_boundary(self._adapter)
                 t = 0
                 n = 0
                 while self._adapter.is_coupling_ongoing():
                     # write checkpoint
                     if self._adapter.is_action_required(self._adapter.action_write_iteration_checkpoint()):
-                        self._adapter.store_checkpoint(self.u, t, n)
+                        self._adapter.store_checkpoint(self._u_n, t, n)
 
                     read_data = self._adapter.read_data()
-                    self._adapter.update_coupling_expression(self._adapter.coupling_expression, read_data)
-                    dt.assign(np.min([self.input.dt, _precice_dt]))
+                    self._adapter.update_coupling_expression(self._adapter_conf.coupling_expression, read_data)
+
+                    self.dt.assign(np.min([self.input.dt, _precice_dt]))
                     FEN.solve(self.LHS == self.RHS, self.u, self.BCs)
-                    if self.flux_required:
-                        self.cal_flux()
-                    self._adapter.write_data(self._adapter.coupled_data_func())
-                    _precice_dt = self._adapter.advance(dt(0))
+                    self._adapter.write_data(self._adapter_conf.coupling_data)
+                    _precice_dt = self._adapter.advance(self.dt(0))
                     if self._adapter.is_action_required(self._adapter.action_read_iteration_checkpoint()):
                         u_cp, t_cp, n_cp = self._adapter.retrieve_checkpoint()
                         self._u_n.assign(u_cp)
@@ -401,20 +417,22 @@ class Fenics(GenericJob):
                         n = n_cp
                     else:  # update solution
                         self._u_n.assign(self.solution)
-                        t += float(dt)
+                        t += float(self.dt)
                         n += 1
 
                     if self._adapter.is_time_window_complete():
                         #todo: save the outputs
-                        pass
+                        print(f'{self.job_name}: done with the timestep: {n}')
+                        if n % self.input.n_print == 0 or n == self.input.n_print - 1:
+                            self._append_to_output()
+
                     for expr in self.time_dependent_expressions:
-                        expr.t += dt
+                        expr.t += self.dt
+
                 self._adapter.finalize()
             else:
-                raise TypeError(f'the adapter is expected to be of type pyiron.continuum.fenics.factory.PreciceAdapter,'
+                raise TypeError(f'the adapter is expected to be of type fenicsprecice.Adapter,'
                                 f'but it received {type(self._adapter)} ')
-
-
 
     def _append_to_output(self):
         """Evaluate the result at nodes and store in the output as a numpy array."""
@@ -545,8 +563,6 @@ class Fenics(GenericJob):
     @property
     def flux(self):
         if self._flux is None:
-            if not self.flux_required:
-                self.flux_required = True
             self.refresh()
         return self._flux
 
@@ -554,12 +570,9 @@ class Fenics(GenericJob):
         w = FEN.TrialFunction(self.V_g)
         v = FEN.TestFunction(self.V_g)
         a = FEN.inner(w, v) * FEN.dx
-        L = FEN.inner(FEN.grad(self.u), v) * FEN.dx
-        FEN.solve(a == L, self._flux)
+        L = FEN.inner(FEN.grad(self.solution), v) * FEN.dx
+        FEN.solve(a == L, self.flux)
 
-    @staticmethod
-    def near(x, x_component, boundary_value, tol):
-        FEN.near(x[x_component], boundary_value, tol)
 
 class Creator:
     def __init__(self, job):
@@ -579,9 +592,6 @@ class Creator:
     def subdomain(conditions, tol=1E-14):
         return FenicsSubDomain(conditions, tol)
 
-    def adapter(self, config_file):
-        return PreciceAdapter(self._job, config_file=config_file)
-
-    def adapter_config(self, config_file, coupling_boundary, write_object, function_space=None ):
+    def adapter_conf(self, config_file, coupling_boundary, write_object, function_space=None):
         return PreciceConf(self._job, config_file, coupling_boundary, write_object, function_space)
 
