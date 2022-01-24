@@ -129,6 +129,7 @@ class FenicsSubDomain(FEN.SubDomain):
         else:
             False
 
+
 class PreciceConf(PyironFactory):
     def __init__(self, job, config_file, coupling_boundary, write_object, function_space=None):
         self._job = job
@@ -139,29 +140,17 @@ class PreciceConf(PyironFactory):
             self._function_space = self._job.V
         else:
             self._function_space = function_space
-
         self._dt = None
         self._coupling_expression = None
         self._update_boundary_func = None
-        self._coupled_data_func = None
+        self._coupling_data_func = None
         self._adapter = None
         self._instantiated = False
 
     def instantiate_adapter(self):
-        self._adapter = fenicsprecice.Adapter(adapter_config_filename=self._config_file)
         self._instantiated = True
+        return fenicsprecice.Adapter(adapter_config_filename=self._config_file)
 
-    def initialize(self):
-        if self._check_config():
-            self._dt = self._adapter.initialize(self._coupling_boundary, self._function_space, self._write_object)
-        else:
-            raise NotSetCorrectlyError("The precice adapter is not configured correctly"
-                                       "Please check if you have set coupling boundary,"
-                                       " write_object, or function_space")
-
-    @property
-    def adapter(self):
-        return self._adapter
 
     @property
     def coupling_boundary(self):
@@ -186,90 +175,37 @@ class PreciceConf(PyironFactory):
             raise TypeError(f"expected fenics.Expression, but received {type(write_obj)}")
 
     @property
-    def update_boundary_func(self):
-        return self._update_boundary_func
+    def function_space(self):
+        return self._function_space
 
-    @update_boundary_func.setter
-    def update_boundary_func(self, update_func):
-        if callable(update_func):
-            self._update_boundary_func = update_func
+    @function_space.setter
+    def function_space(self, _function):
+        if isinstance(_function, dolfin.function.function.Function):
+            self._function_space = _function
         else:
-            raise TypeError(f'expected a function but received a {type(update_func)}')
-
-    def update_coupling_boundary(self):
-        self._coupling_expression = self._adapter.create_coupling_expression()
-        self.update_boundary_func(self._coupling_expression, self._coupling_boundary)
+            raise TypeError(f"expected fenics.function.function.Function, but received {type(_function)}")
 
     @property
-    def coupling_expression(self):
-        return self._coupling_expression
+    def function_space(self):
+        return self._function_space
 
-    @property
-    def coupling_data(self):
-        return self._coupling
-
-    @coupling_data.setter
-    def coupled_data_func(self, func):
-        if callable(func):
-            self._coupled_data_func = func
-
-
-class PreciceAdapter(fenicsprecice.Adapter):
-    def __init__(self, job, config_file):
-        self._job = job
-        super(PreciceAdapter, self).__init__(adapter_config_filename=config_file)
-        self._coupling_bc = None
-        self._write_object = None
-        self._function_space= self._job.V
-        self._dt = None
-        self._coupling_boundary = None
-        self._write_object = None
-        self._coupling_expression = None
-        self._update_boundary_func = None
-        self._coupled_data_func = None
-        self._configured = False
-
-    def initialize(self):
-        if self._check_config():
-            self._dt = super().initialize(self._coupling_boundary, self._function_space, self._write_object)
+    @function_space.setter
+    def function_space(self, _function):
+        if isinstance(_function, dolfin.function.function.Function):
+            self._function_space = _function
         else:
-            raise NotSetCorrectlyError("The precice adapter is not configured correctly"
-                                       "Please check if you have set coupling boundary,"
-                                       " write_object, or function_space")
+            raise TypeError(f"expected fenics.function.function.Function, but received {type(_function)}")
 
-    def config(self, coupling_boundary, write_object, function_space=None):
-        if self._configured is False:
-            self._coupling_boundary = coupling_boundary
-            self._write_object = write_object
-            if not function_space is None:
-                self._function_space = function_space
-            self._configured = True
     @property
     def coupling_boundary(self):
         return self._coupling_boundary
 
     @coupling_boundary.setter
-    def coupling_boundary(self, subdomain):
-        if isinstance(subdomain, FEN.SubDomain) or isinstance(subdomain, FenicsSubDomain):
-            self._coupling_boundary = subdomain
+    def coupling_boundary(self, _boundary):
+        if isinstance(_boundary, FEN.SubDomain):
+            self._coupling_boundary = _boundary
         else:
-            raise TypeError(f"expected fenics.SubDomain or FenicsSubDomain, but received {type(subdomain)}")
-
-    @property
-    def write_object(self):
-        return self._write_object
-
-    @write_object.setter
-    def write_object(self, object):
-        if isinstance(object, dolfin.function.function.Function):
-            self._write_object = object
-        else:
-            raise TypeError(f"expected fenics.Expression, but received {type(object)}")
-
-    def _check_config(self):
-        if self._coupling_boundary is None or self._write_object is None or self._update_boundary_func is None:
-            return False
-        return True
+            raise TypeError(f"expected fenics.SubDomain, but received {type(_boundary)}")
 
     @property
     def update_boundary_func(self):
@@ -282,26 +218,34 @@ class PreciceAdapter(fenicsprecice.Adapter):
         else:
             raise TypeError(f'expected a function but received a {type(update_func)}')
 
-    def update_coupling_boundary(self):
-        self._coupling_expression = self.create_coupling_expression()
-        self.update_boundary_func(self._coupling_expression, self._coupling_boundary)
-
-    @property
-    def coupling_boundary_type(self):
-        return self._coupling_boundary_type
+    def update_coupling_boundary(self, _adapter):
+        self._coupling_expression = _adapter.create_coupling_expression()
+        self.update_boundary_func( self._coupling_expression, self._coupling_boundary, job=self._job)
 
     @property
     def coupling_expression(self):
-        return self._coupling_expression
+        if self._coupling_boundary is not None:
+            return self._coupling_expression
+        else:
+            raise NotSetCorrectlyError("The adapter_conf is not set correctly!"
+                                       "No coupling_expression was instantiated in first place!")
 
     @property
     def coupling_data(self):
-        return self._coupling
+        if self._coupling_data_func is None:
+            raise NotSetCorrectlyError("The adaptor configuration not correctly set!\n"
+                                       "No coupling_data_function is set!")
+        return self._coupling_data_func(self, self._job)
 
-    @coupling_data.setter
-    def coupled_data_func(self, func):
+    @property
+    def coupling_data_func(self):
+        return self._coupling_data_func
+
+    @coupling_data_func.setter
+    def coupling_data_func(self, func):
         if callable(func):
-            self._coupled_data_func = func
+            self._coupling_data_func = func
+
 
 class NotSetCorrectlyError(Exception):
     "raised when the object is not configured correctly!"
