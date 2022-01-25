@@ -371,14 +371,15 @@ class Fenics(GenericJob):
         self.status.running = True
         self._u = self.solution
 
-        if self.BC is not None and self.BC not in self.BCs:
-            self.BCs.append(self.BC)
 
         if self._adapter_conf is None:
             for step in np.arange(self.input.n_steps):
                 for expr in self.time_dependent_expressions:
                     expr.t += self.input.dt
-                FEN.solve(self.LHS == self.RHS, self.u, self.BCs, solver_parameters=self.input.solver_parameters)
+                if len(self.BCs) == 0:
+                    FEN.solve(self.LHS == self.RHS, self.u, self.BC, solver_parameters=self.input.solver_parameters)
+                else:
+                    FEN.solve(self.LHS == self.RHS, self.u, self.BCs, solver_parameters=self.input.solver_parameters)
                 if step % self.input.n_print == 0 or step == self.input.n_print - 1:
                     self._append_to_output()
                 try:
