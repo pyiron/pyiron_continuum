@@ -430,6 +430,8 @@ class Fenics(GenericJob):
                         expr.t += self.dt
 
                 self._adapter.finalize()
+                self.status.collect = True
+                self.run()
             else:
                 raise TypeError(f'the adapter is expected to be of type fenicsprecice.Adapter,'
                                 f'but it received {type(self._adapter)} ')
