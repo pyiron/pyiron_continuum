@@ -9,10 +9,12 @@ dependencies:
   - damask-grid
   - damask =3.0.0a5
   - fenics =2019.1.0
+  - pyprecice=2.3.0.1
   - k3d
   - matplotlib
   - mshr =2019.1.0
   - numpy
+  - precice=2.3.0
   - pyiron
   - pyiron-data >=0.0.17
   - python-damask
@@ -22,3 +24,6 @@ dependencies:
   - superlu_dist=6.2.0=*_4
   - scikit-image
   - papermill
+  - pip
+  - pip:
+      - git+https://github.com/precice/fenics-adapter.git
