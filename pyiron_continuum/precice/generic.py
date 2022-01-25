@@ -30,6 +30,6 @@ class Precice(GenericMaster):
 
         for process in processes:
             process.close()
-
+        self.status.finished = True
     def write_input(self):
         pass
