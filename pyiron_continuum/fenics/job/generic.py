@@ -16,16 +16,6 @@ with ImportAlarm(
     from dolfin.cpp.mesh import Mesh
     from ufl import nabla_div as ufl_nabla_div
 
-
-with ImportAlarm(
-    'if precice coupling with fenics is intended the following packages are required:'
-    '- precice'
-    '- pyprecice'
-    '- fenicsprecice '
-) as precice_alarm:
-    import fenicsprecice
-
-
 import sympy
 from pyiron_base import GenericJob, DataContainer
 from os.path import join
@@ -34,21 +24,22 @@ import numpy as np
 from pyiron_continuum.fenics.factory import ( DomainFactory,
     BoundaryConditionFactory,
     FenicsSubDomain,
-    PreciceConf)
+    PreciceConf,
+    SolverConfig,
+    )
 from pyiron_continuum.fenics.plot import Plot
-from matplotlib.docstring import copy as copy_docstring
-import os
+
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "Muhammad Hassani"
 __email__ = "hassani@mpie.de"
 __status__ = "development"
-__date__ = "Dec 6, 2020"
+__date__ = "Feb 19, 2022"
 
 
 class Fenics(GenericJob):
@@ -149,15 +140,16 @@ class Fenics(GenericJob):
         self.input.n_steps = 1
         self.input.n_print = 1
         self.input.dt = 1
-        self._dt = FEN.Constant(0)
+        self._dt = FEN.Constant(1.0)
         self.input.solver_parameters = {}
+        self._solver = None
         # TODO?: Make input sub-classes to catch invalid input?
 
         self.output = DataContainer(table_name='output')
         self.output.solution = []
 
         # TODO: Figure out how to get these attributes into input/otherwise serializable
-        self.domain = None  # the domain
+        self._domain = DomainFactory(job=self)  # the domain
         self.BC = None  # the boundary condition
         self.BCs = [] # list of boundary conditions
         self._lhs = None  # the left hand side of the equation; FEniCS function
@@ -182,6 +174,12 @@ class Fenics(GenericJob):
         self._F = None
         self._interpolated_functions = []
         self._u_n = None # interpolated function of the initial conition
+
+    @property
+    def solver(self):
+        if self._solver is None:
+            self._solver = SolverConfig(self)
+        return self._solver
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
@@ -208,23 +206,79 @@ class Fenics(GenericJob):
     def adapter(self):
         return self._adapter
 
+    def init_adapter_conf(self, config_file, coupling_boundary_subdomain,
+                          write_object, function_space=None):
+        """
+        This initializes the adaptor configuration instance.
+        job.adapter_conf allows you to define functions which updates couplings during the job.run().
+        There are two presets: 'Dirichlet and Neumann"
+        if you want to use these two presets: you just need to:
+        job.adapter_config.predefined_coupling(coupling_type, flux_direction=None)
+        coupling type can be "Dirichlet" or "Neumann"
+        if you use "Dirichlet", you need to pass
+        in the direction of flux, 'x', 'y', or 'z'
+
+        If you need another customized coupling boundary condition,
+        you can pass some functions to update the coupling during job.run()
+        The two functions needed are:
+
+            job.adapter_conf.update_boundary_func = some_user_defined_funct ;
+            job.adapter.coupling_data_func=some_user_defined_funct
+
+        The first function returns a boundary condition,
+        which adds to the list of the boundary conditions.
+        It is important that the function needs three arguments:
+            - job
+            - coupling_expression
+            - coupling_subdomain
+        An example of such a function, which adds a dirichlet boundary:
+            def some_user_defined_func(job, coupling_expression, coupling_subdomain)
+                job.domain.boundary(bc_type='Dirichlet', coupling_expression, coupling_subdomain)
+
+        The second function returns the value which is passed to the adapter.write_data()
+        The function requires two arguments:
+            - config: this represents job.adapter_conf
+            - job: this represents the job itself
+        An example of such a function:
+            def some_user_defined_func(config, job):
+                return job.solution
+
+        Args:
+            config_file(str): the path to the adapter configuration json file
+            coupling_boundary_subdomain(str): the name of the coupling subdomain;
+                you can get the list of subdomain by job.domain.list_subdomains
+            write_object(FEN.Function): the write_object required
+                by the precice fenics adapter
+            function_space(FEN.FunctionSpace): the read_function_space required
+                by the precice fenics adapter; if not given the configuration assumes
+                read_function_space = write_object.function_space()
+
+        """
+        self._adapter_conf = PreciceConf(self, config_file, coupling_boundary_subdomain, write_object, function_space)
+
     @property
     def adapter_conf(self):
         return self._adapter_conf
 
-    @adapter_conf.setter
-    def adapter_conf(self, _conf):
-        if isinstance(_conf, PreciceConf):
-            self._adapter_conf = _conf
-        else:
-            raise TypeError("expected pyiron_continuum.fenics.factory.PreciceConf, "
-                            f"but received {type(_conf)}")
+    @property
+    def domain(self):
+        return self._domain
+
+    @domain.setter
+    def domain(self, _domain):
+        self._domain = _domain
 
     def generate_mesh(self):
-        if isinstance(self.domain, Mesh):
-            self._mesh = self.domain  # Intent: Allow the domain to return a unit mesh
-        else:
-            self._mesh = mshr.generate_mesh(self.domain, self.input.mesh_resolution)
+        if self._mesh is None:
+            try:
+                if isinstance(self._domain, Mesh):
+                    self._mesh = self._domain  # Intent: Allow the domain to return a unit mesh
+                elif isinstance(self._domain, DomainFactory) and self._mesh is None:
+                    self._mesh = mshr.generate_mesh(self._domain, self.input.mesh_resolution)
+            except Exception as err_msg:
+                print(f"Error: {err_msg}")
+                raise ValueError("the mesh is not set correctly, please use "
+                                 "job.domain.mesh.some_method() to create the mesh")
 
         self._V = self.V_class(self.mesh, self.input.element_type, self.input.element_order)
         if self.input.element_order > 1:
@@ -251,6 +305,10 @@ class Fenics(GenericJob):
         if self._mesh is None:
             self.refresh()
         return self._mesh
+
+    @mesh.setter
+    def mesh(self, _mesh):
+        self._mesh = _mesh
 
     @property
     def V(self):
@@ -352,15 +410,11 @@ class Fenics(GenericJob):
         vtkfile << self.solution
 
     def validate_ready_to_run(self):
-        if self.mesh is None:
+        if self._mesh is None:
             raise ValueError("No mesh is defined")
-        if self.RHS is None:
-            raise ValueError("The bilinear form (RHS) is not defined")
-        if self.LHS is None:
-            raise ValueError("The linear form (LHS) is not defined")
-        if self.V is None:
+        if self.solver.V is None:
             raise ValueError("The volume is not defined; no V defined")
-        if self.BC is None and len(self.BCs) == 0:
+        if len(self.domain.boundaries_list) == 0:
             raise ValueError("The boundary condition(s) (BC) is not defined")
 
     def run_static(self):
@@ -368,9 +422,9 @@ class Fenics(GenericJob):
         Solve a PDE based on 'LHS=RHS' using u and v as trial and test function respectively. Here, u is the desired
         unknown and RHS is the known part.
         """
-        self.status.running = True
-        self._u = self.solution
 
+
+        self.status.running = True
 
         if self._adapter_conf is None:
             for step in np.arange(self.input.n_steps):
@@ -386,39 +440,72 @@ class Fenics(GenericJob):
                     self.assigned_u.assign(self.solution)
                 except AttributeError:
                     pass
+            # The following commented section is compatible with the latest development, but since the examples are
+            # not yet adapted, the old implementation is preserved above
+            # self.solver._evaluate_equation()
+            # if self.solver.rhs is None:
+            #     raise ValueError("The bilinear form (RHS) is not defined")
+            # if self.solver.lhs is None:
+            #     raise ValueError("The linear form (LHS) is not defined")
+            # self.solver.u = self.solver.solution
+            # for step in np.arange(self.input.n_steps):
+            #     for expr in self.solver.time_dependent_expressions:
+            #         expr.t += self.solver.dt
+            #     FEN.solve(self.solver.lhs == self.solver.rhs, self.solver.u, self.domain.boundaries_list, solver_parameters=self.input.solver_parameters)
+            #     if step % self.input.n_print == 0 or step == self.input.n_print - 1:
+            #         self._append_to_output()
+            #     try:
+            #         self.solver.assigned_u.assign(self.solution)
+            #     except AttributeError:
+            #         pass
             self.status.collect = True
             self.run()
         else:
             if isinstance(self._adapter_conf, PreciceConf):
-                self.dt = FEN.Constant(0)
                 self._adapter = self._adapter_conf.instantiate_adapter()
                 _precice_dt = self._adapter.initialize(self._adapter_conf.coupling_boundary,
                                                        self._adapter_conf.function_space,
                                                        self._adapter_conf.write_object)
-                self.dt.assign(np.min([self.input.dt, _precice_dt]))
+                self.solver.dt = FEN.Constant(0)
+                self.solver.dt.assign(np.min([self.input.dt, _precice_dt]))
+
+                self.solver._evaluate_equation()
+                if self.solver.rhs is None:
+                    raise ValueError("The bilinear form (RHS) is not defined")
+                if self.solver.lhs is None:
+                    raise ValueError("The linear form (LHS) is not defined")
+                self.solver.u = self.solver.solution
+
                 self._adapter_conf.update_coupling_boundary(self._adapter)
+                self.solver.update_lhs_rhs()
+
                 t = 0
                 n = 0
+
+                for exp in self.solver.time_dependent_expressions:
+                    exp.t = t + self.solver.dt(0)
+
                 while self._adapter.is_coupling_ongoing():
-                    # write checkpoint
                     if self._adapter.is_action_required(self._adapter.action_write_iteration_checkpoint()):
-                        self._adapter.store_checkpoint(self._u_n, t, n)
+                        self._adapter.store_checkpoint(self.solver.u_n, t, n)
 
                     read_data = self._adapter.read_data()
                     self._adapter.update_coupling_expression(self._adapter_conf.coupling_expression, read_data)
 
-                    self.dt.assign(np.min([self.input.dt, _precice_dt]))
-                    FEN.solve(self.LHS == self.RHS, self.u, self.BCs)
+                    self.solver.dt.assign(np.min([self.input.dt, _precice_dt]))
+
+                    FEN.solve(self.solver.lhs == self.solver.rhs, self.solver.solution, self.domain.boundaries_list)
+
                     self._adapter.write_data(self._adapter_conf.coupling_data)
-                    _precice_dt = self._adapter.advance(self.dt(0))
+                    _precice_dt = self._adapter.advance(self.solver.dt(0))
                     if self._adapter.is_action_required(self._adapter.action_read_iteration_checkpoint()):
                         u_cp, t_cp, n_cp = self._adapter.retrieve_checkpoint()
-                        self._u_n.assign(u_cp)
+                        self.solver.u_n.assign(u_cp)
                         t = t_cp
                         n = n_cp
                     else:  # update solution
-                        self._u_n.assign(self.solution)
-                        t += float(self.dt)
+                        self.solver.u_n.assign(self.solution)
+                        t += float(self.solver.dt)
                         n += 1
 
                     if self._adapter.is_time_window_complete():
@@ -428,7 +515,8 @@ class Fenics(GenericJob):
                             self._append_to_output()
 
                     for expr in self.time_dependent_expressions:
-                        expr.t += self.dt
+                        expr.t += float(self.solver.dt)
+
 
                 self._adapter.finalize()
                 self.status.collect = True
@@ -439,7 +527,7 @@ class Fenics(GenericJob):
 
     def _append_to_output(self):
         """Evaluate the result at nodes and store in the output as a numpy array."""
-        nodal_solution = self.solution.compute_vertex_values(self.mesh)
+        nodal_solution = self.solver.solution.compute_vertex_values(self.mesh)
         nodes = self.mesh.coordinates()
         if len(nodal_solution) != len(nodes):
             nodal_solution = nodal_solution.reshape(nodes.T.shape).T

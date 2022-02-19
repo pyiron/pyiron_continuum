@@ -35,10 +35,11 @@ __date__ = "Dec 26, 2020"
 
 
 class DomainFactory(PyironFactory):
-    def __init__(self):
+    def __init__(self, job=None):
         super().__init__()
-        self._regular = RegularMeshFactory()
-        self._unit = UnitMeshFactory()
+        self._regular = RegularMeshFactory(job)
+        self._unit = UnitMeshFactory(job)
+        self._job = job
 
     @property
     def regular_mesh(self):
@@ -49,7 +50,10 @@ class DomainFactory(PyironFactory):
         return self._unit
 
     def circle(self, center, radius):
-        return mshr.Circle(FEN.Point(*center), radius)
+        if not self._job:
+            return mshr.Circle(FEN.Point(*center), radius)
+        else:
+            self._job.domain = mshr.Circle(FEN.Point(*center), radius)
 #    circle.__doc__ = mshr.Circle.__doc__
 
     def square(self, length, origin=None):
@@ -57,37 +61,61 @@ class DomainFactory(PyironFactory):
             x, y = 0, 0
         else:
             x, y = origin[0], origin[1]
-        return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
+        if not self._job:
+            return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
+        else:
+            self._job.domain = mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
 #    square.__doc__ = mshr.Rectangle.__doc__
 
-    @staticmethod
-    def box(corner1=None, corner2=None):
+
+    def box(self, corner1=None, corner2=None):
         """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
         corner1 = corner1 or (0, 0, 0)
         corner2 = corner2 or (1, 1, 1)
-        return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
+        if not self._job:
+            return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
+        else:
+            self._job.domain = mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
 
-    @staticmethod
-    def tetrahedron(p1, p2, p3, p4):
+    def tetrahedron(self, p1, p2, p3, p4):
         """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
-        return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+        if not self._job:
+            return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+        else:
+            self._job.domain = mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
 
 
 class UnitMeshFactory(PyironFactory):
+    def __init__(self, job=None):
+        super(UnitMeshFactory, self).__init__()
+        self._job = job
+
     def square(self, nx, ny):
-        return FEN.UnitSquareMesh(nx, ny)
+        if not self._job:
+            return FEN.UnitSquareMesh(nx, ny)
+        else:
+            self._job.domain = FEN.UnitSquareMesh(nx, ny)
  #   square.__doc__ = FEN.UnitSquareMesh.__doc__
 
 
 class RegularMeshFactory(PyironFactory):
-    @staticmethod
-    def rectangle(p1, p2, nx, ny, **kwargs):
-        return FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
+    def __init__(self, job=None):
+        super(RegularMeshFactory, self).__init__()
+        if job is not None:
+            self._job = job
+
+    def rectangle(self, p1, p2, nx, ny, **kwargs):
+        if not self._job:
+            return FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
+        else:
+            self._job.domain = FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
 #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
 
-    @staticmethod
-    def box(p1, p2, nx, ny, nz):
-        return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
+    def box(self, p1, p2, nx, ny, nz):
+        if not self._job:
+            return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
+        else:
+            self._job.domain = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
  #   box.__doc__ = FEN.BoxMesh.__doc__
 
 
