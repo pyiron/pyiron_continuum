@@ -173,7 +173,7 @@ class Create:
         return {method: parameters}
 
     @staticmethod
-    def phase(composition, lattice, output_list, elasticity, plasticity='null'):
+    def phase(composition, lattice, output_list, elasticity, plasticity=None):
         """
         Returns a dictionary describing the phases for damask.
         Args:
@@ -196,7 +196,7 @@ class Create:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
-        if plasticity == 'null':
+        if plasticity == None:
             return {composition: {'lattice': lattice,
                               'mechanical': {'output': output_list,
                                              'elastic': elasticity}}}
