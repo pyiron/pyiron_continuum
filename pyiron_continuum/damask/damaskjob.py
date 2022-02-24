@@ -115,7 +115,11 @@ class DAMASK(TemplateJob):
         """
             save results to vtk files
         """
-        self.output.damask.export_VTK()
+        cwd = os.getcwd() # get the current dir
+        os.chdir(self.working_directory) # cd into the working dir
+        result=self._results
+        result.export_VTK()
+        os.chdir(cwd) # cd back to the notebook dir
 
     def temporal_spatial_shape(self, name):
         property_dict = self._results.get(name)
