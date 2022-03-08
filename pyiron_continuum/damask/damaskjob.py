@@ -110,6 +110,16 @@ class DAMASK(TemplateJob):
         self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
         self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
         self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+    
+    def writeresults2vtk(self):
+        """
+            save results to vtk files
+        """
+        cwd = os.getcwd() # get the current dir
+        os.chdir(self.working_directory) # cd into the working dir
+        result=self._results
+        result.export_VTK()
+        os.chdir(cwd) # cd back to the notebook dir
 
     def temporal_spatial_shape(self, name):
         property_dict = self._results.get(name)
