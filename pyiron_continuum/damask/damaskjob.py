@@ -60,7 +60,9 @@ class DAMASK(TemplateJob):
         self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
     def phase(self, **kwargs):
-        self.input.phase = DAMASKCreator.phase(**kwargs)
+        if None not in [self.input.elasticity, self.input.plasticity]:
+            self.input.phase = DAMASKCreator.phase(elasticity=self.input.elasticity,
+                    plasticity=self.input.plasticity, **kwargs)
 
     def rotation(self, **kwargs):
         self.input.rotation = [DAMASKCreator.rotation(**kwargs)]
