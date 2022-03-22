@@ -4,12 +4,14 @@
 DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
-from pyiron_base import TemplateJob, ImportAlarm
+from pyiron_base import TemplateJob, ImportAlarm, DataContainer
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
     from damask import Result
+    from pyiron_continuum.damask.factory import Create as DAMASKCreator
+    
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,7 +28,7 @@ __email__ = "hassani@mpie.de"
 __status__ = "development"
 __date__ = "Oct 04, 2021"
 
-
+        
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -42,14 +44,34 @@ class DAMASK(TemplateJob):
         self._grid = None
         self._results = None
         self._executable_activate()
+        self.input.elasticity = None
+        self.input.plasticity = None
+        self.input.homogenization = None
+        self.input.phase = None
+        self.input.rotation = None
+    
+    def elasticity(self, **kwargs):
+        self.input.elasticity = DAMASKCreator.elasticity(**kwargs) 
 
-    @property
-    def material(self):
-        return self._material
+    def plasticity(self, **kwargs):
+        self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
 
-    @material.setter
-    def material(self, value):
-        self._material = value
+    def homogenization(self, **kwargs):
+        self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
+
+    def phase(self, **kwargs):
+        self.input.phase = DAMASKCreator.phase(**kwargs)
+
+    def rotation(self, **kwargs):
+        self.input.rotation = [DAMASKCreator.rotation(**kwargs)]
+    
+    def material(self, element):
+        if not isinstance(element, list):
+            element = [element]
+        if None not in [self.input.rotation, self.input.phase, self.input.homogenization]:
+            self.input.material = DAMASKCreator.material(self.input.rotation, 
+                            element, self.input.phase, self.input.homogenization)
+            self._material = self.input.material
 
     @property
     def grid(self):
