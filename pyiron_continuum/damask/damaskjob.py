@@ -10,7 +10,7 @@ with ImportAlarm(
         'requirements. Please install it and try again.'
 ) as damask_alarm:
     from damask import Result
-    from pyiron_continuum.damask.factory import Create as DAMASKCreator
+    from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
     
 import os
 import numpy as np
@@ -41,7 +41,7 @@ class DAMASK(TemplateJob):
         self._damask_hdf = os.path.join(self.working_directory, "damask_loading.hdf5")
         self._material = None
         self._loading = None
-        self._grid = None
+        self._grid = GridFactory
         self._results = None
         self._executable_activate()
         self.input.elasticity = None
@@ -50,7 +50,6 @@ class DAMASK(TemplateJob):
         self.input.phase = None
         self.input.rotation = None
         self.input.material = None
-        self._grid = DAMASKCreator.grid()
     
     def elasticity(self, **kwargs):
         self.input.elasticity = DAMASKCreator.elasticity(**kwargs) 
@@ -75,30 +74,26 @@ class DAMASK(TemplateJob):
         if None not in [self.input.rotation, self.input.phase, self.input.homogenization]:
             self.input.material = DAMASKCreator.material(self.input.rotation, 
                             element, self.input.phase, self.input.homogenization)
-            self._material = self.input.material
     
-    @property
-    def loading(self):
-        return self._loading
-
-    @loading.setter
-    def loading(self, value):
-        self._loading = value
-
+    def grid(self, method="voronoi_tessellation", **kwargs):
+        if method == "voronoi_tessellation":
+            self.input.grid = self._grid.via_voronoi_tessellation(**kwargs)
+        
+    def loading(self, **kwargs):
+        self.input.loading = DAMASKCreator.loading(**kwargs)
+        
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")
-        self._material.save(fname=file_path)
-        self.input.material = self._material
+        self.input.material.save(fname=file_path)
 
     def _write_loading(self):
         file_path = os.path.join(self.working_directory, "loading.yaml")
-        self._loading.save(file_path)
-        self.input.loading = self._loading
+        self.input.loading.save(file_path)
 
     def _write_geometry(self):
         file_path = os.path.join(self.working_directory, "damask")
-        self._grid.save(file_path)
-        self.input.geometry = self._grid
+        self.input.grid.save(file_path)
+        self.input.geometry = self.input.grid
 
     def write_input(self):
         self._write_loading()
