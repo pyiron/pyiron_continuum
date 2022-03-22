@@ -43,12 +43,14 @@ class DAMASK(TemplateJob):
         self._loading = None
         self._grid = GridFactory
         self._results = None
+        self._rotation = None
+        self._geometry = None
         self._executable_activate()
         self.input.elasticity = None
         self.input.plasticity = None
         self.input.homogenization = None
         self.input.phase = None
-        self.input.rotation = None
+        #self.input.rotation = None
         self.input.material = None
     
     def elasticity(self, **kwargs):
@@ -66,18 +68,18 @@ class DAMASK(TemplateJob):
                     plasticity=self.input.plasticity, **kwargs)
 
     def rotation(self, method, *args):
-        self.input.rotation = [DAMASKCreator.rotation(method, *args)]
+        self._rotation = [DAMASKCreator.rotation(method, *args)]
     
     def material(self, element):
         if not isinstance(element, list):
             element = [element]
-        if None not in [self.input.rotation, self.input.phase, self.input.homogenization]:
-            self.input.material = DAMASKCreator.material(self.input.rotation, 
+        if None not in [self._rotation, self.input.phase, self.input.homogenization]:
+            self.input.material = DAMASKCreator.material(self._rotation, 
                             element, self.input.phase, self.input.homogenization)
     
     def grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
-            self.input.grid = self._grid.via_voronoi_tessellation(**kwargs)
+            self._geometry = self._grid.via_voronoi_tessellation(**kwargs)
         
     def loading(self, **kwargs):
         self.input.loading = DAMASKCreator.loading(**kwargs)
@@ -92,8 +94,8 @@ class DAMASK(TemplateJob):
 
     def _write_geometry(self):
         file_path = os.path.join(self.working_directory, "damask")
-        self.input.grid.save(file_path)
-        self.input.geometry = self.input.grid
+        self._geometry.save(file_path)
+        #self.input.geometry = self.input.grid
 
     def write_input(self):
         self._write_loading()
