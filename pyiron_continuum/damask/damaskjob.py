@@ -49,6 +49,8 @@ class DAMASK(TemplateJob):
         self.input.homogenization = None
         self.input.phase = None
         self.input.rotation = None
+        self.input.material = None
+        self._grid = DAMASKCreator.grid()
     
     def elasticity(self, **kwargs):
         self.input.elasticity = DAMASKCreator.elasticity(**kwargs) 
@@ -64,8 +66,8 @@ class DAMASK(TemplateJob):
             self.input.phase = DAMASKCreator.phase(elasticity=self.input.elasticity,
                     plasticity=self.input.plasticity, **kwargs)
 
-    def rotation(self, **kwargs):
-        self.input.rotation = [DAMASKCreator.rotation(**kwargs)]
+    def rotation(self, method, *args):
+        self.input.rotation = [DAMASKCreator.rotation(method, *args)]
     
     def material(self, element):
         if not isinstance(element, list):
@@ -74,15 +76,7 @@ class DAMASK(TemplateJob):
             self.input.material = DAMASKCreator.material(self.input.rotation, 
                             element, self.input.phase, self.input.homogenization)
             self._material = self.input.material
-
-    @property
-    def grid(self):
-        return self._grid
-
-    @grid.setter
-    def grid(self, value):
-        self._grid = value
-
+    
     @property
     def loading(self):
         return self._loading
