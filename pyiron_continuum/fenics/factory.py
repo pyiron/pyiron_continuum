@@ -50,10 +50,8 @@ class DomainFactory(PyironFactory):
     >>> job.domain.append_boundary(given_boundary_condition)
 
     """
-    def __init__(self, job=None):
+    def __init__(self, job):
         super().__init__()
-        self._regular = RegularMeshFactory(job)
-        self._unit = UnitMeshFactory(job)
         self._job = job
         self._subdomain_dict = {}
         self._bcs = []
@@ -147,56 +145,14 @@ class DomainFactory(PyironFactory):
     def mesh(self):
         return self._mesh
 
-    @property
-    def regular_mesh(self):
-        return self._regular
-
-    @property
-    def unit_mesh(self):
-        return self._unit
-
-    def circle(self, center, radius):
-        if not self._job:
-            return mshr.Circle(FEN.Point(*center), radius)
-        else:
-            self._job.mesh = mshr.Circle(FEN.Point(*center), radius)
-#    circle.__doc__ = mshr.Circle.__doc__
-
-    def square(self, length, origin=None):
-        if origin is None:
-            x, y = 0, 0
-        else:
-            x, y = origin[0], origin[1]
-        if not self._job:
-            return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-        else:
-            self._job.mesh = mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-#    square.__doc__ = mshr.Rectangle.__doc__
-
-
-    def box(self, corner1=None, corner2=None):
-        """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
-        corner1 = corner1 or (0, 0, 0)
-        corner2 = corner2 or (1, 1, 1)
-        if not self._job:
-            return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
-        else:
-            self._job.mesh = mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
-
-    def tetrahedron(self, p1, p2, p3, p4):
-        """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
-        if not self._job:
-            return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
-        else:
-            self._job.mesh = mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
-
 
 class GeneralMeshFactory(PyironFactory):
-    def __init__(self, job=None):
+    def __init__(self, job):
         super().__init__()
         self._regular = RegularMeshFactory(job)
         self._unit = UnitMeshFactory(job)
         self._job = job
+        self._mshr_domain = None
 
     def __call__(self):
         return self._job._mesh
@@ -210,70 +166,50 @@ class GeneralMeshFactory(PyironFactory):
         return self._unit
 
     def circle(self, center, radius):
-        if not self._job:
-            return mshr.Circle(FEN.Point(*center), radius)
-        else:
-            self._job.mesh = mshr.Circle(FEN.Point(*center), radius)
-    #    circle.__doc__ = mshr.Circle.__doc__
+        self._mshr_domain = mshr.Circle(FEN.Point(*center), radius)
+        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
     def square(self, length, origin=None):
         if origin is None:
             x, y = 0, 0
         else:
             x, y = origin[0], origin[1]
-        if not self._job:
-            return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-        else:
-            self._job.mesh = mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-    #    square.__doc__ = mshr.Rectangle.__doc__
+        self._mshr_domain = mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
+        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
     def box(self, corner1=None, corner2=None):
         """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
         corner1 = corner1 or (0, 0, 0)
         corner2 = corner2 or (1, 1, 1)
-        if not self._job:
-            return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
-        else:
-            self._job.mesh = mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
+        self._mshr_domain = mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
+        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
     def tetrahedron(self, p1, p2, p3, p4):
         """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
-        if not self._job:
-            return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
-        else:
-            self._job.mesh = mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+        self._mshr_domain = mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
 class UnitMeshFactory(PyironFactory):
-    def __init__(self, job=None):
+    def __init__(self, job):
         super(UnitMeshFactory, self).__init__()
         self._job = job
 
     def square(self, nx, ny):
-        if not self._job:
-            return FEN.UnitSquareMesh(nx, ny)
-        else:
-            self._job.mesh = FEN.UnitSquareMesh(nx, ny)
+        self._job.mesh = FEN.UnitSquareMesh(nx, ny)
  #   square.__doc__ = FEN.UnitSquareMesh.__doc__
 
 
 class RegularMeshFactory(PyironFactory):
-    def __init__(self, job=None):
+    def __init__(self, job):
         super(RegularMeshFactory, self).__init__()
-        if job is not None:
-            self._job = job
+        self._job = job
 
     def rectangle(self, p1, p2, nx, ny, **kwargs):
-        if not self._job:
-            return FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
-        else:
-            self._job.mesh = FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
+        self._job.mesh = FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
 #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
 
     def box(self, p1, p2, nx, ny, nz):
-        if not self._job:
-            return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
-        else:
-            self._job.mesh = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
+        self._job.mesh = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
  #   box.__doc__ = FEN.BoxMesh.__doc__
 
 
