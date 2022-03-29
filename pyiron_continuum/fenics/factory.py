@@ -167,7 +167,7 @@ class GeneralMeshFactory(PyironFactory):
 
     def circle(self, center, radius):
         self._mshr_domain = mshr.Circle(FEN.Point(*center), radius)
-        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
     def square(self, length, origin=None):
         if origin is None:
@@ -175,19 +175,19 @@ class GeneralMeshFactory(PyironFactory):
         else:
             x, y = origin[0], origin[1]
         self._mshr_domain = mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
     def box(self, corner1=None, corner2=None):
         """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
         corner1 = corner1 or (0, 0, 0)
         corner2 = corner2 or (1, 1, 1)
         self._mshr_domain = mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
-        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
     def tetrahedron(self, p1, p2, p3, p4):
         """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
         self._mshr_domain = mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
-        self._job.mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
 
 class UnitMeshFactory(PyironFactory):
     def __init__(self, job):
@@ -195,7 +195,7 @@ class UnitMeshFactory(PyironFactory):
         self._job = job
 
     def square(self, nx, ny):
-        self._job.mesh = FEN.UnitSquareMesh(nx, ny)
+        self._job._mesh = FEN.UnitSquareMesh(nx, ny)
  #   square.__doc__ = FEN.UnitSquareMesh.__doc__
 
 
@@ -205,11 +205,11 @@ class RegularMeshFactory(PyironFactory):
         self._job = job
 
     def rectangle(self, p1, p2, nx, ny, **kwargs):
-        self._job.mesh = FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
+        self._job._mesh = FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
 #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
 
     def box(self, p1, p2, nx, ny, nz):
-        self._job.mesh = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
+        self._job._mesh = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
  #   box.__doc__ = FEN.BoxMesh.__doc__
 
 
@@ -301,33 +301,37 @@ class SolverConfig:
 
     def __init__(self, job):
         self._job = job
-        self._V = FEN.FunctionSpace(job.mesh, job.input.element_type,
-                                    job.input.element_order)  # finite element volume space
-        if job.input.element_order > 1:
-            self._V_g = FEN.VectorFunctionSpace(job.mesh, job.input.element_type, job.input.element_order - 1)
+        if self._job._mesh is None:
+            raise NotSetCorrectlyError("Before accessing job.solver, job._mesh should be defined"
+                                       "You can use job.domain.mesh to create job._mesh")
         else:
-            self._V_g = FEN.VectorFunctionSpace(job.mesh, job.input.element_type, job.input.element_order)
+            self._V = FEN.FunctionSpace(job._mesh, job.input.element_type,
+                                        job.input.element_order)  # finite element volume space
+            if job.input.element_order > 1:
+                self._V_g = FEN.VectorFunctionSpace(job._mesh, job.input.element_type, job.input.element_order - 1)
+            else:
+                self._V_g = FEN.VectorFunctionSpace(job._mesh, job.input.element_type, job.input.element_order)
 
-        self._u = FEN.TrialFunction(self._V)  # u is the unkown function
-        self._v = FEN.TestFunction(self._V)  # the test function
-        self._F = None
-        self._lhs = None
-        self._rhs = None
-        self._u_n = None
-        self._string_equation = None
-        self._f = None
-        if self._job.input.dt:
-            self.dt = self._job.input.dt
-        else:
-            self.dt = 1.0
-        self._extra_parameters = {}
-        self._extra_func = {}
-        self._solution = FEN.Function(self._V)
-        self._flux = FEN.Function(self._V_g)
-        self.time_dependent_expressions = []
-        self.assigned_u = None
-        self._update_equation_func = None
-        self._update_equation_func_args = None
+            self._u = FEN.TrialFunction(self._V)  # u is the unkown function
+            self._v = FEN.TestFunction(self._V)  # the test function
+            self._F = None
+            self._lhs = None
+            self._rhs = None
+            self._u_n = None
+            self._string_equation = None
+            self._f = None
+            if self._job.input.dt:
+                self.dt = self._job.input.dt
+            else:
+                self.dt = 1.0
+            self._extra_parameters = {}
+            self._extra_func = {}
+            self._solution = FEN.Function(self._V)
+            self._flux = FEN.Function(self._V_g)
+            self.time_dependent_expressions = []
+            self.assigned_u = None
+            self._update_equation_func = None
+            self._update_equation_func_args = None
 
     def set_extra_func(self, func_key, func):
         self._extra_func[func_key] = func
