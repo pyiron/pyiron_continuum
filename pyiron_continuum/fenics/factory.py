@@ -8,9 +8,10 @@ Factories for Fenics-related object creation.
 
 from pyiron_base import ImportAlarm
 import re
+
 with ImportAlarm(
-        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
@@ -51,6 +52,7 @@ class DomainFactory(PyironFactory):
     >>> job.domain.append_boundary(given_boundary_condition)
 
     """
+
     def __init__(self, job):
         super().__init__()
         self._job = job
@@ -88,7 +90,15 @@ class DomainFactory(PyironFactory):
         """
         self._subdomain_dict[name] = FenicsSubDomain(conditions=conditions)
 
-    def boundary(self, bc_type, expression=None, constant = None, bc_func=None, subdomain_name=None, **kwargs):
+    def boundary(
+        self,
+        bc_type,
+        expression=None,
+        constant=None,
+        bc_func=None,
+        subdomain_name=None,
+        **kwargs,
+    ):
         """
         This adds a boundary of the type bc_type based on the given expression or bc_function
         passing a subdomain_name is optional
@@ -103,23 +113,29 @@ class DomainFactory(PyironFactory):
                      In this case, FEN.Expression(expression, **kwargs) is called.
         """
         if self._job is None:
-            NotSetCorrectlyError('the domain factory is not set correctly! '
-                                 'please use job.domain.append_boundary(..)')
+            NotSetCorrectlyError(
+                "the domain factory is not set correctly! "
+                "please use job.domain.append_boundary(..)"
+            )
 
         if bc_type is None:
-            NotSetCorrectlyError('the domain factory is not set correctly! '
-                                 'please use job.domain.append_boundary(..)')
+            NotSetCorrectlyError(
+                "the domain factory is not set correctly! "
+                "please use job.domain.append_boundary(..)"
+            )
         if subdomain_name:
             subdomain = self._subdomain_dict[subdomain_name]
         else:
             subdomain = None
-        if bc_type in ['dirichlet', 'Dirichlet']:
+        if bc_type.lower() == "dirichlet":
             if constant and expression:
-                raise ValueError("The dirichlet boundary whether is set by "
-                                 "a constant value or an expression")
+                raise ValueError(
+                    "The dirichlet boundary whether is set by "
+                    "a constant value or an expression"
+                )
             elif isinstance(expression, str):
                 expression = FEN.Expression(expression, **kwargs)
-            elif not constant is None:
+            elif constant is not None:
                 expression = FEN.Constant(constant)
 
             self._bcs.append(self._bc.dirichlet(expression, bc_func, subdomain))
@@ -166,21 +182,27 @@ class GeneralMeshFactory(PyironFactory):
     def unit(self):
         return self._unit
 
-    def circle(self, center, radius, inplace = True):
+    def circle(self, center, radius, inplace=True):
         if inplace:
             self._job._set_mesh(mshr.Circle(FEN.Point(*center), radius))
         else:
             return mshr.Circle(FEN.Point(*center), radius)
 
-    def square(self, length, origin=None, inplace = True):
+    def square(self, length, origin=None, inplace=True):
         if origin is None:
             x, y = 0, 0
         else:
             x, y = origin[0], origin[1]
         if inplace:
-            self._job._set_mesh(mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)))
+            self._job._set_mesh(
+                mshr.Rectangle(
+                    FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)
+                )
+            )
         else:
-            return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
+            return mshr.Rectangle(
+                FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)
+            )
 
     def box(self, corner1=None, corner2=None, inplace=True):
         """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
@@ -191,12 +213,18 @@ class GeneralMeshFactory(PyironFactory):
         else:
             return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
 
-    def tetrahedron(self, p1, p2, p3, p4, inplace = True):
+    def tetrahedron(self, p1, p2, p3, p4, inplace=True):
         """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
         if inplace:
-            self._job._set_mesh(mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)))
+            self._job._set_mesh(
+                mshr.Tetrahedron(
+                    FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)
+                )
+            )
         else:
-            return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+            return mshr.Tetrahedron(
+                FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)
+            )
 
     def generate(self, domain):
         self._job._set_mesh(domain)
@@ -209,7 +237,9 @@ class UnitMeshFactory(PyironFactory):
 
     def square(self, nx, ny):
         self._job._mesh = FEN.UnitSquareMesh(nx, ny)
- #   square.__doc__ = FEN.UnitSquareMesh.__doc__
+
+
+#   square.__doc__ = FEN.UnitSquareMesh.__doc__
 
 
 class RegularMeshFactory(PyironFactory):
@@ -218,12 +248,17 @@ class RegularMeshFactory(PyironFactory):
         self._job = job
 
     def rectangle(self, p1, p2, nx, ny, **kwargs):
-        self._job._mesh = FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs)
-#    rectangle.__doc__ = FEN.RectangleMesh.__doc__
+        self._job._mesh = FEN.RectangleMesh(
+            FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs
+        )
+
+    #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
 
     def box(self, p1, p2, nx, ny, nz):
         self._job._mesh = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
- #   box.__doc__ = FEN.BoxMesh.__doc__
+
+
+#   box.__doc__ = FEN.BoxMesh.__doc__
 
 
 class BoundaryConditionFactory(PyironFactory):
@@ -244,7 +279,9 @@ class BoundaryConditionFactory(PyironFactory):
                 expression is applied as displacement.
         """
         if not bc_fnc is None and not subdomain is None:
-            raise ValueError('can not have both bc_func and subdomain set at the same time')
+            raise ValueError(
+                "can not have both bc_func and subdomain set at the same time"
+            )
         elif not bc_fnc is None:
             bc_fnc = bc_fnc
             return FEN.DirichletBC(self._job.solver.V, expression, bc_fnc)
@@ -263,6 +300,7 @@ class FenicsSubDomain(FEN.SubDomain):
     Example
         >>> job.domain.subdomain(condition='near(x[0], 1.0, 1E-14)')
     """
+
     def __init__(self, conditions):
         super(FenicsSubDomain, self).__init__()
         self._conditions = conditions
@@ -315,15 +353,22 @@ class SolverConfig:
     def __init__(self, job, func_space_class=FEN.FunctionSpace):
         self._job = job
         if self._job._mesh is None:
-            raise NotSetCorrectlyError("Before accessing job.solver, job._mesh should be defined"
-                                       "You can use job.domain.mesh to create job._mesh")
+            raise NotSetCorrectlyError(
+                "Before accessing job.solver, job._mesh should be defined"
+                "You can use job.domain.mesh to create job._mesh"
+            )
         else:
-            self._V = func_space_class(job._mesh, job.input.element_type,
-                                        job.input.element_order)  # finite element volume space
+            self._V = func_space_class(
+                job._mesh, job.input.element_type, job.input.element_order
+            )  # finite element volume space
             if job.input.element_order > 1:
-                self._V_g = FEN.VectorFunctionSpace(job._mesh, job.input.element_type, job.input.element_order - 1)
+                self._V_g = FEN.VectorFunctionSpace(
+                    job._mesh, job.input.element_type, job.input.element_order - 1
+                )
             else:
-                self._V_g = FEN.VectorFunctionSpace(job._mesh, job.input.element_type, job.input.element_order)
+                self._V_g = FEN.VectorFunctionSpace(
+                    job._mesh, job.input.element_type, job.input.element_order
+                )
 
             self._u = FEN.TrialFunction(self._V)  # u is the unkown function
             self._v = FEN.TestFunction(self._V)  # the test function
@@ -345,7 +390,7 @@ class SolverConfig:
             self.assigned_u = None
             self._update_equation_func = None
             self._update_equation_func_args = None
-            self._accepted_keys = ['f', 'u_n']
+            self._accepted_keys = ["f", "u_n"]
 
     def set_extra_func(self, func_key, func):
         self._extra_func[func_key] = func
@@ -364,11 +409,14 @@ class SolverConfig:
 
     @f.setter
     def f(self, expression):
-        if isinstance(expression, FEN.Expression) \
-                or isinstance(expression, FEN.Constant):
+        if isinstance(expression, FEN.Expression) or isinstance(
+            expression, FEN.Constant
+        ):
             self._f = expression
         else:
-            raise ValueError("job.solver.f must be of type fenics.Expression or fenics.Constant")
+            raise ValueError(
+                "job.solver.f must be of type fenics.Expression or fenics.Constant"
+            )
 
     def set_expression(self, key, constant=None, expression=None, **kwargs):
         if key in self._accepted_keys:
@@ -384,7 +432,9 @@ class SolverConfig:
                 else:
                     exec(f"self.{key} = FEN.Constant({constant})")
             else:
-                raise ValueError(f"for initializing {key}, one should use either a constant or expression")
+                raise ValueError(
+                    f"for initializing {key}, one should use either a constant or expression"
+                )
         else:
             self._extra_parameters[key] = [expression, kwargs]
 
@@ -418,7 +468,7 @@ class SolverConfig:
             exec(f'{key} = FEN.Expression("{val[0]}", {kwargs})')
 
         for key, val in self._extra_func.items():
-            exec(f'{key}=val')
+            exec(f"{key}=val")
 
         u = self.u
         v = self._v
@@ -428,9 +478,9 @@ class SolverConfig:
         dx = FEN.dx
         dt = self._dt
         inner = FEN.inner
-        #update_func = self._update_equation_func
+        # update_func = self._update_equation_func
         for key in self._accepted_keys:
-            if  not eval(f"self.{key}") is None:
+            if not eval(f"self.{key}") is None:
                 exec(f"{key}= self.{key}")
 
         try:
@@ -453,8 +503,15 @@ class SolverConfig:
                 raise ValueError(err_msg)
         self._u_n = expression
 
-    def set_initial_condition(self, function=None, expression=None, interpolate=True, project=False,
-                              function_space=None, **kwargs):
+    def set_initial_condition(
+        self,
+        function=None,
+        expression=None,
+        interpolate=True,
+        project=False,
+        function_space=None,
+        **kwargs,
+    ):
         """
         This function set job.solver.u_n as the initial value
         It is normally set to an interpolated or projected form
@@ -586,7 +643,8 @@ class SolverConfig:
             self.assigned_u = self._u_n
         elif self._job.input.n_steps > 1 and self.assigned_u is None:
             raise ValueError(
-                "When the timesteps are larger that one, job.solver.assigned_u or self.solver.u_n should be specified")
+                "When the timesteps are larger that one, job.solver.assigned_u or self.solver.u_n should be specified"
+            )
 
         for key, val in self._extra_parameters.items():
             kwargs = ""
@@ -600,7 +658,7 @@ class SolverConfig:
             exec(f'{key} = FEN.Expression("{val[0]}", {kwargs})')
 
         for key, val in self._extra_func.items():
-            exec(f'{key}=val')
+            exec(f"{key}=val")
 
         u = self._u
         v = self._v
@@ -630,25 +688,45 @@ class SolverConfig:
     def error_norm(self, expression, **kwargs):
         if isinstance(expression, str):
             expression = FEN.Expression(expression, **kwargs)
-        return FEN.errornorm(expression, self.solution, 'L2')
+        return FEN.errornorm(expression, self.solution, "L2")
 
 
 class StringInputParser:
     def __init__(self, input_string: str, **kwargs):
         self.input_string = input_string
         self.kwargs = kwargs
-        self._known_elements = ['x', 'near']
-        self._splitting_elements = ['\*?\*', '\+', '-', '/', '\(', '\)', ',']
+        self._known_elements = ["x", "near"]
+        self._splitting_elements = [r"\*?\*", r"\+", r"-", r"/", r"\(", r"\)", r","]
         self._test_elements()
+        self._test_kwargs()
+
+    def _test_kwargs(self):
+        failures = {}
+        for key, value in self.kwargs.items():
+            try:
+                float(value)
+            except:
+                failures[key] = value
+        if failures:
+            raise ValueError(f"Got an unexpected kwarg(s) '{failures}'")
 
     def _split_input(self):
-        return re.split('|'.join(self._splitting_elements), self.input_string.replace(' ', ''))
+        scientific_notation_re = r"[0-9]*\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+"
+        return [
+            r.strip()
+            for r in re.split(
+                "|".join(self._splitting_elements),
+                "".join(re.split(scientific_notation_re, self.input_string)),
+            )
+            if len(r.strip()) > 0
+        ]
 
     def _test_elements(self):
+        failures = []
         for e in self._split_input():
             if e in self._known_elements:
                 continue
-            elif e[0] == 'x':
+            elif e[0] == "x":
                 self._check_x_dimension(e)
                 continue
             elif e in self.kwargs.keys():
@@ -661,7 +739,9 @@ class StringInputParser:
                     float(e)
                     continue
                 except:
-                    raise ValueError(f'Got an unexpected element {e}')
+                    failures.append(e)
+        if failures:
+            raise ValueError(f"Got an unexpected symbol(s) '{failures}'")
 
     def _check_x_dimension(self, x):
         # How do we know dimension? At least we can double check it's an integer
