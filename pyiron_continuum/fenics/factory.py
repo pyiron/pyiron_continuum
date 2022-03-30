@@ -7,6 +7,7 @@ Factories for Fenics-related object creation.
 """
 
 from pyiron_base import ImportAlarm
+import re
 with ImportAlarm(
         'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
         'requirements. Please install it and try again.'
@@ -16,7 +17,7 @@ with ImportAlarm(
     from fenics import near
 from pyiron_base import PyironFactory
 
-__author__ = "Liam Huber, Muhammad Hassani"
+__author__ = "Liam Huber, Muhammad Hassani, Niklas Siemer"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -630,6 +631,45 @@ class SolverConfig:
         if isinstance(expression, str):
             expression = FEN.Expression(expression, **kwargs)
         return FEN.errornorm(expression, self.solution, 'L2')
+
+
+class StringInputParser:
+    def __init__(self, input_string: str, **kwargs):
+        self.input_string = input_string
+        self.kwargs = kwargs
+        self._known_elements = ['x', 'near']
+        self._splitting_elements = ['\*?\*', '\+', '-', '/', '\(', '\)', ',']
+        self._test_elements()
+
+    def _split_input(self):
+        return re.split('|'.join(self._splitting_elements), self.input_string.replace(' ', ''))
+
+    def _test_elements(self):
+        for e in self._split_input():
+            if e in self._known_elements:
+                continue
+            elif e[0] == 'x':
+                self._check_x_dimension(e)
+                continue
+            elif e in self.kwargs.keys():
+                self._check_kwargs_vals(self.kwargs[e])
+                continue
+            elif e.isnumeric():
+                continue
+            else:
+                try:
+                    float(e)
+                    continue
+                except:
+                    raise ValueError(f'Got an unexpected element {e}')
+
+    def _check_x_dimension(self, x):
+        # How do we know dimension? At least we can double check it's an integer
+        return
+
+    def _check_kwargs_vals(self, v):
+        # I think we pretty much only want to allow natural numbers?
+        return
 
 
 class NotSetCorrectlyError(Exception):
