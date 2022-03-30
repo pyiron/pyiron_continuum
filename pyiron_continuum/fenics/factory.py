@@ -165,29 +165,41 @@ class GeneralMeshFactory(PyironFactory):
     def unit(self):
         return self._unit
 
-    def circle(self, center, radius):
-        self._mshr_domain = mshr.Circle(FEN.Point(*center), radius)
-        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+    def circle(self, center, radius, inplace = True):
+        if inplace:
+            self._job._set_mesh(mshr.Circle(FEN.Point(*center), radius))
+        else:
+            return mshr.Circle(FEN.Point(*center), radius)
 
-    def square(self, length, origin=None):
+    def square(self, length, origin=None, inplace = True):
         if origin is None:
             x, y = 0, 0
         else:
             x, y = origin[0], origin[1]
-        self._mshr_domain = mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        if inplace:
+            self._job._set_mesh(mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)))
+        else:
+            return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
 
-    def box(self, corner1=None, corner2=None):
+    def box(self, corner1=None, corner2=None, inplace=True):
         """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
         corner1 = corner1 or (0, 0, 0)
         corner2 = corner2 or (1, 1, 1)
-        self._mshr_domain = mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
-        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        if inplace:
+            self._job._set_mesh(mshr.Box(FEN.Point(corner1), FEN.Point(corner2)))
+        else:
+            return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
 
-    def tetrahedron(self, p1, p2, p3, p4):
+    def tetrahedron(self, p1, p2, p3, p4, inplace = True):
         """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
-        self._mshr_domain = mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
-        self._job._mesh = mshr.generate_mesh(self._mshr_domain, self._job.input.mesh_resolution)
+        if inplace:
+            self._job._set_mesh(mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)))
+        else:
+            return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+
+    def generate(self, domain):
+        self._job._set_mesh(domain)
+
 
 class UnitMeshFactory(PyironFactory):
     def __init__(self, job):
@@ -299,13 +311,13 @@ class SolverConfig:
 
     """
 
-    def __init__(self, job):
+    def __init__(self, job, func_space_class=FEN.FunctionSpace):
         self._job = job
         if self._job._mesh is None:
             raise NotSetCorrectlyError("Before accessing job.solver, job._mesh should be defined"
                                        "You can use job.domain.mesh to create job._mesh")
         else:
-            self._V = FEN.FunctionSpace(job._mesh, job.input.element_type,
+            self._V = func_space_class(job._mesh, job.input.element_type,
                                         job.input.element_order)  # finite element volume space
             if job.input.element_order > 1:
                 self._V_g = FEN.VectorFunctionSpace(job._mesh, job.input.element_type, job.input.element_order - 1)
@@ -332,6 +344,7 @@ class SolverConfig:
             self.assigned_u = None
             self._update_equation_func = None
             self._update_equation_func_args = None
+            self._accepted_keys = ['f', 'u_n']
 
     def set_extra_func(self, func_key, func):
         self._extra_func[func_key] = func
@@ -356,11 +369,21 @@ class SolverConfig:
         else:
             raise ValueError("job.solver.f must be of type fenics.Expression or fenics.Constant")
 
-    # job_d.function_space.set_parameter(key='f', expression='beta - 2 - 2*alpha', degree=2, alpha=alpha, beta=beta)
-    def set_expression(self, key, expression, **kwargs):
-
-        if key == 'f':
-            self.f = FEN.Expression(expression, **kwargs)
+    def set_expression(self, key, constant=None, expression=None, **kwargs):
+        if key in self._accepted_keys:
+            if expression:
+                exec(f"self.{key} = FEN.Expression({expression}, **{kwargs})")
+            elif constant:
+                if isinstance(constant, str):
+                    for k, val in kwargs.items():
+                        exec(f"{k} = val")
+                        exec("u_m = val")
+                    constant_value = eval(constant)
+                    exec(f"self.{key} = FEN.Constant({constant_value})")
+                else:
+                    exec(f"self.{key} = FEN.Constant({constant})")
+            else:
+                raise ValueError(f"for initializing {key}, one should use either a constant or expression")
         else:
             self._extra_parameters[key] = [expression, kwargs]
 
@@ -371,7 +394,6 @@ class SolverConfig:
     def F(self):
         return self._F
 
-
     @F.setter
     def F(self, equation):
         if isinstance(equation, str):
@@ -379,44 +401,43 @@ class SolverConfig:
             self._evaluate_equation()
         else:
             self._F = equation
-            self._lhs = FEN.lhs(self._F)
-            self._rhs = FEN.rhs(self._F)
+            self.lhs = FEN.lhs(self._F)
+            self.rhs = FEN.rhs(self._F)
 
     def _evaluate_equation(self):
-        if self._F is None:
-            for key, val in self._extra_parameters.items():
-                kwargs = ""
-                counter = 0
-                for k, v in val[1].items():
-                    if counter < len(val[1]) - 1:
-                        kwargs += f"{k}={v},"
-                    else:
-                        kwargs += f"{k}={v}"
-                    counter += 1
-                exec(f'{key} = FEN.Expression("{val[0]}", {kwargs})')
+        for key, val in self._extra_parameters.items():
+            kwargs = ""
+            counter = 0
+            for k, v in val[1].items():
+                if counter < len(val[1]) - 1:
+                    kwargs += f"{k}={v},"
+                else:
+                    kwargs += f"{k}={v}"
+                counter += 1
+            exec(f'{key} = FEN.Expression("{val[0]}", {kwargs})')
 
-            for key, val in self._extra_func.items():
-                exec(f'{key}={val}')
+        for key, val in self._extra_func.items():
+            exec(f'{key}=val')
 
-            u = self.u
-            v = self._v
-            u_n = self._u_n
-            dot = FEN.dot
-            grad = FEN.grad
-            dx = FEN.dx
-            dt = self._dt
-            inner = FEN.inner
-            #update_func = self._update_equation_func
-            if not self._f is None:
-                f = self._f
+        u = self.u
+        v = self._v
+        u_n = self._u_n
+        dot = FEN.dot
+        grad = FEN.grad
+        dx = FEN.dx
+        dt = self._dt
+        inner = FEN.inner
+        #update_func = self._update_equation_func
+        for key in self._accepted_keys:
+            if  not eval(f"self.{key}") is None:
+                exec(f"{key}= self.{key}")
 
-            try:
-                self._F = eval(self._string_equation)
-                self._lhs = FEN.lhs(self._F)
-                self._rhs = FEN.rhs(self._F)
-                print('hello')
-            except Exception as err_msg:
-                raise Exception(err_msg)
+        try:
+            self._F = eval(self._string_equation)
+            self.lhs = FEN.lhs(self._F)
+            self.rhs = FEN.rhs(self._F)
+        except Exception as err_msg:
+            raise Exception(err_msg)
 
     @property
     def u_n(self):
@@ -452,7 +473,7 @@ class SolverConfig:
 
         if interpolate:
             if isinstance(expression, str):
-                FEN.Expression(expression, **kwargs)
+                expression = FEN.Expression(expression, **kwargs)
             self._u_n = self.interpolate(expression, function_space)
         elif project:
             NotImplementedError("The project mode, is not yet implemented")
@@ -484,8 +505,8 @@ class SolverConfig:
         return FEN.interpolate(expression, function_space)
 
     def update_lhs_rhs(self):
-        self._lhs = FEN.lhs(self.F)
-        self._rhs = FEN.rhs(self.F)
+        self.lhs = FEN.lhs(self.F)
+        self.rhs = FEN.rhs(self.F)
 
     @property
     def lhs(self):
@@ -577,6 +598,9 @@ class SolverConfig:
                 counter += 1
             exec(f'{key} = FEN.Expression("{val[0]}", {kwargs})')
 
+        for key, val in self._extra_func.items():
+            exec(f'{key}=val')
+
         u = self._u
         v = self._v
         u_n = self._u_n
@@ -586,8 +610,9 @@ class SolverConfig:
         dt = self._dt
         inner = FEN.inner
         Constant = FEN.Constant
-        if not self._f is None:
-            f = self._f
+        for key in self._accepted_keys:
+            if not eval(f"self.{key}") is None:
+                exec(f"{key}= self.{key}")
         try:
             return eval(to_be_evaluated)
 
