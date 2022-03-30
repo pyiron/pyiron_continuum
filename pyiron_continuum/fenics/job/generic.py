@@ -12,15 +12,20 @@ with ImportAlarm(
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
-    from dolfin.cpp.mesh import Mesh
     from ufl import nabla_div as ufl_nabla_div
+    import dolfin.cpp.mesh as FenicsMesh
 
 import sympy
 from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory
+from pyiron_continuum.fenics.factory import (
+    DomainFactory,
+    BoundaryConditionFactory,
+    SolverConfig,
+    FenicsSubDomain,
+)
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
 
@@ -125,7 +130,6 @@ class Fenics(GenericJob):
                       " Therefore, it is not possible to reload the job properly, from HDF5 file."
                       " It would be safe to remove the Fenics jobs, after defining the project.")
         self._python_only_job = True
-        self.create = Creator(self)
         self._plot = Plot(self)
 
         self.input = DataContainer(table_name='input')
@@ -136,141 +140,70 @@ class Fenics(GenericJob):
         self.input.n_print = 1
         self.input.dt = 1
         self.input.solver_parameters = {}
-        # TODO?: Make input sub-classes to catch invalid input?
 
         self.output = DataContainer(table_name='output')
         self.output.solution = []
 
         # TODO: Figure out how to get these attributes into input/otherwise serializable
-        self.domain = None  # the domain
-        self.BC = None  # the boundary condition
-        self._lhs = None  # the left hand side of the equation; FEniCS function
-        self._rhs = None  # the right hand side of the equation; FEniCS function
-        self.time_dependent_expressions = []  # Any expressions used with a `t` attribute to evolve
-        # TODO: Make a class to force these to be Expressions and to update them?
-        self.assigned_u = None
-        self.V_class = FEN.FunctionSpace
-
-        self._mesh = None  # the discretization mesh
-        self._V = None  # finite element volume space
-        self._u = None  # u is the unkown function
-        self._v = None  # the test function
-        self._solution = None
+        self._domain = DomainFactory(job=self)  # the domain
         self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
+
+        self._solver = None
+        self._mesh = None
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
-    def LHS(self):
-        return self._lhs
+    def mesh(self):
+        return self._mesh
 
-    @LHS.setter
-    def LHS(self, new_lhs):
-        self._lhs = new_lhs
+    def _set_mesh(self, _mesh):
+        if isinstance(_mesh, FenicsMesh.Mesh):
+            self._mesh = _mesh
+        else:
+            try:
+                self._mesh = mshr.generate_mesh(_mesh, self.input.mesh_resolution)
+            except Exception as err_msg:
+                print(f"Error:{err_msg}")
 
     @property
-    def RHS(self):
-        return self._rhs
+    def solver(self):
+        if self._solver is None:
+            self._solver = SolverConfig(self)
+        return self._solver
 
-    @RHS.setter
-    def RHS(self, new_rhs):
-        self._rhs = new_rhs
+    @solver.setter
+    def solver(self, _):
+        raise NotImplementedError("the solver could not be set")
 
     @property
     def plot(self):
         return self._plot
 
-    def generate_mesh(self):
-        if isinstance(self.domain, Mesh):
-            self._mesh = self.domain  # Intent: Allow the domain to return a unit mesh
-        else:
-            self._mesh = mshr.generate_mesh(self.domain, self.input.mesh_resolution)
-
-        self._V = self.V_class(self.mesh, self.input.element_type, self.input.element_order)
-        # TODO: Allow changing what type of function space is used (VectorFunctionSpace, MultiMeshFunctionSpace...)
-        # TODO: Allow having multiple sets of spaces and test/trial functions
-        self._u = FEN.TrialFunction(self.V)
-        self._v = FEN.TestFunction(self.V)
-        self._solution = FEN.Function(self.V)
-
-        if any([v is not None for v in [self.BC, self.LHS, self.RHS]]):
-            warnings.warn("The mesh is being generated, but at least one of the boundary conditions or equation sides"
-                          "is already defined -- please re-define these values since the mesh is updated")
-
-    def refresh(self):
-        self.generate_mesh()
-
     @property
-    def mesh(self):
-        if self._mesh is None:
-            self.refresh()
-        return self._mesh
+    def domain(self):
+        return self._domain
 
-    @property
-    def V(self):
-        if self._V is None:
-            self.refresh()
-        return self._V
-
-    @property
-    def u(self):
-        if self._u is None:
-            self.refresh()
-        return self._u
-
-    @property
-    def v(self):
-        if self._v is None:
-            self.refresh()
-        return self._v
-    # TODO: Do all this refreshing with a simple decorator instead of duplicate code
-
-    @property
-    def solution(self):
-        if self._solution is None:
-            self.refresh()
-        return self._solution
-
-    @property
-    def grad_u(self):
-        return FEN.grad(self.u)
-
-    @property
-    def grad_v(self):
-        return FEN.grad(self.v)
-
-    @property
-    def grad_solution(self):
-        return FEN.grad(self.solution)
-
-    @property
-    def F(self):
-        try:
-            return self.LHS - self.RHS
-        except TypeError:
-            return self.LHS
-
-    @F.setter
-    def F(self, new_equation):
-        self.LHS = FEN.lhs(new_equation)
-        self.RHS = FEN.rhs(new_equation)
+    @domain.setter
+    def domain(self, _):
+        raise NotImplementedError("the domain could not be set")
 
     def _write_vtk(self):
         """
         Write the output to a .vtk file.
         """
         vtkfile = FEN.File(self._vtk_filename)
-        vtkfile << self.solution
+        vtkfile << self.solver.solution
 
     def validate_ready_to_run(self):
-        if self.mesh is None:
+        if self._mesh is None:
             raise ValueError("No mesh is defined")
-        if self.RHS is None:
+        if self.solver.rhs is None:
             raise ValueError("The bilinear form (RHS) is not defined")
-        if self.LHS is None:
+        if self.solver.lhs is None:
             raise ValueError("The linear form (LHS) is not defined")
-        if self.V is None:
+        if self.solver.V is None:
             raise ValueError("The volume is not defined; no V defined")
-        if self.BC is None:
+        if len(self.domain.boundaries_list) == 0:
             raise ValueError("The boundary condition(s) (BC) is not defined")
 
     def run_static(self):
@@ -279,15 +212,15 @@ class Fenics(GenericJob):
         unknown and RHS is the known part.
         """
         self.status.running = True
-        self._u = self.solution
+        self.solver.u = self.solver.solution
         for step in np.arange(self.input.n_steps):
-            for expr in self.time_dependent_expressions:
+            for expr in self.solver.time_dependent_expressions:
                 expr.t += self.input.dt
-            FEN.solve(self.LHS == self.RHS, self.u, self.BC, solver_parameters=self.input.solver_parameters)
+            FEN.solve(self.solver.lhs == self.solver.rhs, self.solver.u, self.domain.boundaries_list, solver_parameters=self.input.solver_parameters)
             if step % self.input.n_print == 0 or step == self.input.n_print - 1:
                 self._append_to_output()
             try:
-                self.assigned_u.assign(self.solution)
+                self.solver.assigned_u.assign(self.solver.solution)
             except AttributeError:
                 pass
         self.status.collect = True
@@ -295,8 +228,8 @@ class Fenics(GenericJob):
 
     def _append_to_output(self):
         """Evaluate the result at nodes and store in the output as a numpy array."""
-        nodal_solution = self.solution.compute_vertex_values(self.mesh)
-        nodes = self.mesh.coordinates()
+        nodal_solution = self.solver.solution.compute_vertex_values(self._mesh)
+        nodes = self._mesh.coordinates()
         if len(nodal_solution) != len(nodes):
             nodal_solution = nodal_solution.reshape(nodes.T.shape).T
         self.output.solution.append(nodal_solution)
@@ -314,33 +247,6 @@ class Fenics(GenericJob):
         self.to_hdf()
         self.status.finished = True
 
-#    @copy_docstring(FEN.project)
-    def project_function(self, v, **kwargs):
-        """
-        Project v onto the job's element, V.
-
-        Args:
-            v (?): The function to project.
-            **kwargs: Valid `fenics.project` kwargs (except `V`, which is provided automatically).
-
-        Returns:
-            (?): Projected function.
-        """
-        return FEN.project(v, V=self.V, **kwargs)
-
-#    @copy_docstring(FEN.interpolate)
-    def interpolate_function(self, v):
-        """
-        Interpolate v on the job's element, V.
-
-        Args:
-            v (?): The function to interpolate.
-
-        Returns:
-            (?): Interpolated function.
-        """
-        return FEN.interpolate(v, V=self.V)
-
     def to_hdf(self, hdf=None, group_name=None):
         super().to_hdf(hdf=hdf, group_name=group_name)
         self.input.to_hdf(hdf=self.project_hdf5)
@@ -351,80 +257,10 @@ class Fenics(GenericJob):
         self.input.from_hdf(hdf=self.project_hdf5)
         self.output.from_hdf(hdf=self.project_hdf5)
 
-    # Convenience bindings:
-    @property
-    def fenics(self):
-        return FEN
-
-    @property
-    def mshr(self):
-        return mshr
-
     @property
     def sympy(self):
         return sympy
 
-#    @copy_docstring(FEN.Constant)
-    def Constant(self, value):
-        return FEN.Constant(value)
-
-#    @copy_docstring(FEN.Expression)
-    def Expression(self, *args, **kwargs):
-        return FEN.Expression(*args, **kwargs)
-
-#   @copy_docstring(FEN.Identity)
-    def Identity(self, dim):
-        return FEN.Identity(dim)
-
     @property
-#    @copy_docstring(FEN.dx)
-    def dx(self):
-        return FEN.dx
-
-    @property
-#    @copy_docstring(FEN.ds)
-    def ds(self):
-        return FEN.ds
-
-#    @copy_docstring(FEN.grad)
-    def grad(self, arg):
-        return FEN.grad(arg)
-
- #   @copy_docstring(FEN.nabla_grad)
-    def nabla_grad(self, arg):
-        return FEN.nabla_grad(arg)
-
- #   @copy_docstring(ufl_nabla_div)
-    def nabla_div(self, f):
-        return ufl_nabla_div(f)
-
-#  @copy_docstring(FEN.inner)
-    def inner(self, a, b):
-        return FEN.inner(a, b)
-
-#    @copy_docstring(FEN.dot)
-    def dot(self, arg1, arg2):
-        return FEN.dot(arg1, arg2)
-
-#    @copy_docstring(FEN.tr)
-    def tr(self, A):
-        return FEN.tr(A)
-
-#    @copy_docstring(FEN.sqrt)
-    def sqrt(self, f):
-        return FEN.sqrt(f)
-
-
-class Creator:
-    def __init__(self, job):
-        self._job = job
-        self._domain = DomainFactory()
-        self._bc = BoundaryConditionFactory(job)
-
-    @property
-    def domain(self):
-        return self._domain
-
-    @property
-    def bc(self):
-        return self._bc
+    def fenics(self):
+        return FEN
