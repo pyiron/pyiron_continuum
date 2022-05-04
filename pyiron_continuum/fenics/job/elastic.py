@@ -5,17 +5,19 @@
 """
 A job class for FEM linear elasticity with [fenics](https://fenicsproject.org/pub/tutorial/html/._ftut1008.html).
 """
-from pyiron_base import ImportAlarm
+from pyiron_base import ImportAlarm, HasStorage
 with ImportAlarm(
         'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as fenics_alarm:
     import fenics as FEN
     from ufl import nabla_div as ufl_nabla_div
+    from fenics import Constant, Expression, near
 
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
 from pyiron_continuum.fenics.factory import SolverConfig
+from pyiron_continuum.fenics.parser import FenicsString
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -27,6 +29,23 @@ __maintainer__ = "Liam Huber"
 __email__ = "huber@mpie.de"
 __status__ = "development"
 __date__ = "Dec 26, 2020"
+
+
+class SimpleBoundaries(HasStorage):
+    def __init__(self):
+        super().__init__()
+        self.storage.pairs = []
+
+    def add(self, value, condition):
+        value = FenicsString(value)
+        condition = FenicsString(condition)
+        self.storage.pairs.append((value, condition))
+
+    def list(self):
+        return self.storage.pairs
+
+    def clear(self):
+        self.storage.pairs = []
 
 
 class FenicsLinearElastic(Fenics):
@@ -56,6 +75,7 @@ class FenicsLinearElastic(Fenics):
 
         self.input.bulk_modulus = 76
         self.input.shear_modulus = 26
+        self.input.boundaries = SimpleBoundaries()
 
         self.output.von_Mises = []
 
@@ -65,7 +85,27 @@ class FenicsLinearElastic(Fenics):
             self._solver = ElasticSolver(job=self)
         return self._solver
 
+    def _instantiate_bcs(self):
+        for (v, w) in self.input.boundaries.list():
+            def boundary_func(x, on_boundary):
+                try:
+                    return on_boundary and eval(w)
+                except Exception as err_msg:
+                    print(err_msg)
+            self.domain._bcs.append(FEN.DirichletBC(self.solver.V, eval(v), boundary_func))
+
+    def _build_domain(self):
+        self.domain.mesh.regular.box(
+            (0, 0, 0),
+            (1, 1, 1),
+            self.input.mesh_resolution,
+            self.input.mesh_resolution,
+            self.input.mesh_resolution
+        )
+
     def validate_ready_to_run(self):
+        self._build_domain()
+        self._instantiate_bcs()
         self.solver.set_sides_eq()
         super().validate_ready_to_run()
 
