@@ -61,6 +61,10 @@ class DomainFactory(PyironFactory):
         self._bc = BoundaryConditionFactory(job=self._job)
         self._mesh = GeneralMeshFactory(job=self._job)
 
+    def clear_boundaries(self):
+        """Clear all existing boundary conditions in the conditions list."""
+        self._bcs = []
+
     def get_subdomain(self, name):
         """
         returns a subdomain with a given name
