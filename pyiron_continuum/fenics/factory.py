@@ -6,15 +6,15 @@
 Factories for Fenics-related object creation.
 """
 
-from pyiron_base import ImportAlarm
-
+from pyiron_base import ImportAlarm, HasStorage
+import re
 with ImportAlarm(
     "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
     "requirements. Please install it and try again."
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
-    from fenics import near
+    from fenics import near, Constant, Expression
 from pyiron_base import PyironFactory
 
 __author__ = "Liam Huber, Muhammad Hassani, Niklas Siemer"
@@ -27,6 +27,70 @@ __maintainer__ = "Liam Huber"
 __email__ = "huber@mpie.de"
 __status__ = "development"
 __date__ = "Dec 26, 2020"
+
+
+class StringInputParser(HasStorage):
+    def __init__(self, input_string: str, **kwargs):
+        super().__init__()
+        self._known_elements = ["x", "near", "Constant", "Expression"]
+        self._splitting_elements = [r"\*?\*", r"\+", r"-", r"/", r"\(", r"\)", r","]
+        self._test_kwargs(kwargs)
+        self._test_elements(input_string)
+        self.storage.input_string = input_string
+        self.storage.kwargs = kwargs
+
+    @property
+    def input_string(self):
+        return self.storage.input_string
+
+    @property
+    def kwargs(self):
+        return self.storage.kwargs
+
+    def _test_kwargs(self, kwargs):
+        failures = {}
+        for key, value in kwargs.items():
+            try:
+                float(value)
+            except:
+                failures[key] = value
+        if failures:
+            raise ValueError(f"Got an unexpected kwarg(s) '{failures}'")
+
+    def _split_input(self, input_string):
+        scientific_notation_re = r"[0-9]*\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+"
+        return [
+            r.strip()
+            for r in re.split(
+                "|".join(self._splitting_elements),
+                "".join(re.split(scientific_notation_re, input_string)),
+            )
+            if len(r.strip()) > 0
+        ]
+
+    def _test_elements(self, input_string):
+        failures = []
+        for e in self._split_input(input_string):
+            if e in self._known_elements:
+                continue
+            elif e[0] == "x":
+                self._check_x_dimension(e)
+                continue
+            elif e.isnumeric():
+                continue
+            else:
+                try:
+                    float(e)
+                    continue
+                except:
+                    failures.append(e)
+        if failures:
+            raise ValueError(f"Got an unexpected symbol(s) '{failures}'")
+
+    def _check_x_dimension(self, x):
+        # How do we know dimension? At least we can double check it's an integer
+        return
+
 
 
 class DomainFactory(PyironFactory):
