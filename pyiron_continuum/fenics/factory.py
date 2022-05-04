@@ -92,6 +92,33 @@ class StringInputParser(HasStorage):
         return
 
 
+class SimpleBoundaries(HasStorage):
+    def __init__(self):
+        super().__init__()
+        self.storage.pairs = []
+
+    def add(self, value, condition):
+        StringInputParser(value)
+        StringInputParser(condition)
+        self.storage.pairs.append((value, condition))
+
+    def list(self):
+        return self.storage.pairs
+
+    def clear(self):
+        self.storage.pairs = []
+
+    def to_fenics(self, function_space):
+        fenics_objects = []
+        for (v, w) in self.list():
+            def boundary_func(x, on_boundary):
+                try:
+                    return on_boundary and eval(w)
+                except Exception as err_msg:
+                    print(err_msg)
+            fenics_objects.append(FEN.DirichletBC(function_space, eval(v), boundary_func))
+        return fenics_objects
+
 
 class DomainFactory(PyironFactory):
     """
