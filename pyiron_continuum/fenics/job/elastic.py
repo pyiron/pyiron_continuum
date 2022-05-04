@@ -17,7 +17,6 @@ with ImportAlarm(
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
 from pyiron_continuum.fenics.factory import SolverConfig, StringInputParser
-from pyiron_continuum.fenics.parser import FenicsString
 
 __author__ = "Liam Huber"
 __copyright__ = (
