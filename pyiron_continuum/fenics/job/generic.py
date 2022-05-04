@@ -16,7 +16,7 @@ with ImportAlarm(
     import dolfin.cpp.mesh as FenicsMesh
 
 import sympy
-from pyiron_base import GenericJob, DataContainer
+from pyiron_base import TemplateJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
@@ -41,7 +41,7 @@ __status__ = "development"
 __date__ = "Dec 6, 2020"
 
 
-class Fenics(GenericJob):
+class Fenics(TemplateJob):
     """
     The job provides an interface to the [FEniCS project](https://fenicsproject.org) PDE solver using the finite element
     method (FEM).
@@ -132,7 +132,6 @@ class Fenics(GenericJob):
         self._python_only_job = True
         self._plot = Plot(self)
 
-        self.input = DataContainer(table_name='input')
         self.input.mesh_resolution = 2
         self.input.element_type = 'P'
         self.input.element_order = 1
@@ -141,7 +140,6 @@ class Fenics(GenericJob):
         self.input.dt = 1
         self.input.solver_parameters = {}
 
-        self.output = DataContainer(table_name='output')
         self.output.solution = []
 
         # TODO: Figure out how to get these attributes into input/otherwise serializable
@@ -246,16 +244,6 @@ class Fenics(GenericJob):
         self._write_vtk()  # TODO: Get the output files so they're all tarballed after successful runs, like other codes
         self.to_hdf()
         self.status.finished = True
-
-    def to_hdf(self, hdf=None, group_name=None):
-        super().to_hdf(hdf=hdf, group_name=group_name)
-        self.input.to_hdf(hdf=self.project_hdf5)
-        self.output.to_hdf(hdf=self.project_hdf5)
-
-    def from_hdf(self, hdf=None, group_name=None):
-        super().from_hdf(hdf=hdf, group_name=group_name)
-        self.input.from_hdf(hdf=self.project_hdf5)
-        self.output.from_hdf(hdf=self.project_hdf5)
 
     @property
     def sympy(self):
