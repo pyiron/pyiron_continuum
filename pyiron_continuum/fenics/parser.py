@@ -1,6 +1,66 @@
 import re
 
 
+class FenicsString(str):
+    def __new__(cls, content, **kwargs):
+        cls._splitting_elements = [r"\*?\*", r"\+", r"-", r"/", r"\(", r"\)", r","]
+
+        cls._known_elements = ["x"]
+        cls._library = "FEN"
+        cls._library_elements = ["near", "Constant", "Expression"]
+
+        cls._test_kwargs(cls, kwargs)
+        split_content = cls._split_input(cls, content)
+        cls._parse_elements(cls, split_content)
+        cls._content = content
+        return super(FenicsString, cls).__new__(cls, content)
+
+    def _test_kwargs(self, kwargs):
+        """Ensure all kwargs are numeric, i.e. can be cast as a float"""
+        failures = {}
+        for key, value in kwargs.items():
+            try:
+                float(value)
+            except:
+                failures[key] = value
+        if failures:
+            raise ValueError(f"Got an unexpected kwarg(s) '{failures}'")
+
+    def _split_input(self, content):
+        scientific_notation_re = r"[0-9]*\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+"
+        return [
+            r.strip()
+            for r in re.split(
+                "|".join(self._splitting_elements),
+                "".join(re.split(scientific_notation_re, content)),
+            )
+            if len(r.strip()) > 0
+        ]
+
+    def _parse_elements(self, elements):
+        failures = []
+        for i, e in enumerate(elements):
+            if e in self._known_elements:
+                continue
+            elif e in self._library_elements:
+                elements[i] = f"{self._library}.{e}"
+            elif e[0] == "x":
+                # How to get the allowable dimensions early? Maybe we could at least check if integer?
+                continue
+            elif e.isnumeric():
+                continue
+            else:
+                try:
+                    float(e)
+                    continue
+                except:
+                    failures.append(e)
+        if failures:
+            raise ValueError(f"Got an unexpected symbol(s) '{failures}'")
+        else:
+            return ''.join(elements)
+
+
 class StringInputParser:
     def __init__(self, input_string: str, **kwargs):
         self.input_string = input_string
