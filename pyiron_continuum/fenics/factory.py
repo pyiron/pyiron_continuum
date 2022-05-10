@@ -14,8 +14,14 @@ with ImportAlarm(
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
-    from fenics import near, Constant, Expression
+    from fenics import (
+        near, Constant, Expression, Point, BoxMesh, RectangleMesh, UnitSquareMesh, UnitCubeMesh, UnitDiscMesh,
+        UnitTriangleMesh, UnitIntervalMesh
+    )
+    from mshr import generate_mesh, Tetrahedron, Box, Rectangle, Circle
+    import dolfin.cpp.mesh as FenicsMesh
 from pyiron_base import PyironFactory
+from abc import ABC, abstractmethod
 
 __author__ = "Liam Huber, Muhammad Hassani, Niklas Siemer"
 __copyright__ = (
@@ -29,23 +35,17 @@ __status__ = "development"
 __date__ = "Dec 26, 2020"
 
 
-class StringInputParser(HasStorage):
-    def __init__(self, input_string: str, **kwargs):
-        super().__init__()
-        self._known_elements = ["x", "near", "Constant", "Expression"]
+class StringInputParser(ABC):
+    def __init__(self, input_string: str, __verbose=True, **kwargs):
         self._splitting_elements = [r"\*?\*", r"\+", r"-", r"/", r"\(", r"\)", r","]
+        self._verbose = __verbose
         self._test_kwargs(kwargs)
-        self._test_elements(input_string)
-        self.storage.input_string = input_string
-        self.storage.kwargs = kwargs
+        self._test_elements(input_string, kwargs)
 
     @property
-    def input_string(self):
-        return self.storage.input_string
-
-    @property
-    def kwargs(self):
-        return self.storage.kwargs
+    @abstractmethod
+    def _known_elements(self):
+        pass
 
     def _test_kwargs(self, kwargs):
         failures = {}
@@ -53,8 +53,11 @@ class StringInputParser(HasStorage):
             try:
                 float(value)
             except:
-                failures[key] = value
-        if failures:
+                try:
+                    self.__class__(value, __verbose=False)
+                except:
+                    failures[key] = value
+        if failures and self._verbose:
             raise ValueError(f"Got an unexpected kwarg(s) '{failures}'")
 
     def _split_input(self, input_string):
@@ -68,15 +71,18 @@ class StringInputParser(HasStorage):
             if len(r.strip()) > 0
         ]
 
-    def _test_elements(self, input_string):
+    def _test_elements(self, input_string, kwargs):
         failures = []
         for e in self._split_input(input_string):
             if e in self._known_elements:
                 continue
-            elif e[0] == "x":
-                self._check_x_dimension(e)
-                continue
             elif e.isnumeric():
+                continue
+            elif e in kwargs.keys():
+                continue
+            elif e[0] == 'x' and e[1] == '[' and e[-1] == ']':
+                # TODO: This is a crap test hard wired for the boundary conditions, but we need to fix the regex to
+                #  allow known elements to be indexed...
                 continue
             else:
                 try:
@@ -84,12 +90,24 @@ class StringInputParser(HasStorage):
                     continue
                 except:
                     failures.append(e)
-        if failures:
+        if failures and self._verbose:
             raise ValueError(f"Got an unexpected symbol(s) '{failures}'")
 
-    def _check_x_dimension(self, x):
-        # How do we know dimension? At least we can double check it's an integer
-        return
+
+class BCParser(StringInputParser):
+    @property
+    def _known_elements(self):
+        return ["x", "near", "Constant", "Expression", "and", "or", ">", "<"]
+
+
+class MeshParser(StringInputParser):
+    @property
+    def _known_elements(self):
+        return [
+            "Point", "BoxMesh", "RectangleMesh", "UnitSquareMesh", "UnitCubeMesh", "UnitDiscMesh", "UnitTriangleMesh",
+            "UnitIntervalMesh",
+            "generate_mesh", "Tetrahedron", "Box", "Rectangle", "Circle"
+        ]
 
 
 class SerialBoundaries(PyironFactory, HasStorage):
@@ -99,8 +117,8 @@ class SerialBoundaries(PyironFactory, HasStorage):
         self.storage.pairs = []
 
     def add(self, value, condition):
-        StringInputParser(value)
-        StringInputParser(condition)
+        # BCParser(value)
+        # BCParser(condition)
         self.storage.pairs.append((value, condition))
 
     def list(self):
@@ -125,22 +143,30 @@ class SerialMesh(PyironFactory, HasStorage):
     def __init__(self):
         PyironFactory.__init__(self)
         HasStorage.__init__(self)
-        self.storage.style = 'unit_square'
-        self.storage.kwargs = {'nx': 2, 'ny': 2}
+        self._mesh = None
+        self.storage.expression = 'BoxMesh(p1, p2, nx, ny, nz)'
+        self.storage.kwargs = {'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 2, 'ny': 2, 'nz': 2}
+
+    def from_string(self, expression, **kwargs):
+        MeshParser(expression, **kwargs)
+        self.storage.expression = expression
+        self.storage.kwargs = kwargs
+        self._mesh = self.generate()
+
+    def generate(self):
+        for k, v in self.storage.kwargs.items():
+            exec(f'{k} = {v}')
+        mesh = eval(self.storage.expression)
+        if not isinstance(mesh, FenicsMesh.Mesh):
+            raise TypeError(f'Expected the mesh to be of type dolfin.cpp.mesh.Mesh, but got {type(mesh)}. You may '
+                            f'need to wrap your expression in "generate_mesh()" to convert a mshr mesh to a dolphin '
+                            f'mesh.')
+        return mesh
 
     def __call__(self):
-        return getattr(self, self.storage.style)(**self.storage.kwargs)
-
-    def unit_square(self, nx=2, ny=2):
-        # TODO: Use a decorator to handle the storage update programmatically
-        self.storage.style = 'unit_square'
-        self.storage.kwargs = {'nx': nx, 'ny': ny}
-        return FEN.UnitSquareMesh(nx, ny)
-
-    def regular_box(self, p1, p2, nx, ny, nz):
-        self.storage.style = 'regular_box'
-        self.storage.kwargs = {'p1': p1, 'p2': p2, 'nx': nx, 'ny': ny, 'nz': nz}
-        return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
+        if self._mesh is None:
+            self._mesh = self.generate()
+        return self._mesh
 
 
 class DomainFactory(PyironFactory):

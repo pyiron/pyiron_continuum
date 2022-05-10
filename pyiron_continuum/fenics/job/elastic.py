@@ -68,7 +68,7 @@ class FenicsLinearElastic(Fenics):
         return self._solver
 
     def validate_ready_to_run(self):
-        self._set_mesh(self.input.mesh())
+        self._mesh = self.input.mesh()
         self.domain._bcs = self.input.boundaries(self.solver.V)
         self.solver.set_sides_eq()
         super().validate_ready_to_run()
