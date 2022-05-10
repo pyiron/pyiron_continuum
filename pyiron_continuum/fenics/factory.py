@@ -92,7 +92,7 @@ class StringInputParser(HasStorage):
         return
 
 
-class SimpleBoundaries(HasStorage):
+class SerialBoundaries(HasStorage):
     def __init__(self):
         super().__init__()
         self.storage.pairs = []

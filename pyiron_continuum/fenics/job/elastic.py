@@ -15,7 +15,7 @@ with ImportAlarm(
 
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
-from pyiron_continuum.fenics.factory import SolverConfig, SimpleBoundaries
+from pyiron_continuum.fenics.factory import SolverConfig, SerialBoundaries
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -56,7 +56,7 @@ class FenicsLinearElastic(Fenics):
 
         self.input.bulk_modulus = 76
         self.input.shear_modulus = 26
-        self.input.boundaries = SimpleBoundaries()
+        self.input.boundaries = SerialBoundaries()
 
         self.output.von_Mises = []
 
