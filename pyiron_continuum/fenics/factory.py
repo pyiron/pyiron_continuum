@@ -92,9 +92,10 @@ class StringInputParser(HasStorage):
         return
 
 
-class SerialBoundaries(HasStorage):
+class SerialBoundaries(PyironFactory, HasStorage):
     def __init__(self):
-        super().__init__()
+        PyironFactory.__init__(self)
+        HasStorage.__init__(self)
         self.storage.pairs = []
 
     def add(self, value, condition):
@@ -108,7 +109,7 @@ class SerialBoundaries(HasStorage):
     def clear(self):
         self.storage.pairs = []
 
-    def to_fenics(self, function_space):
+    def __call__(self, function_space):
         fenics_objects = []
         for (v, w) in self.list():
             def boundary_func(x, on_boundary):
@@ -118,6 +119,28 @@ class SerialBoundaries(HasStorage):
                     print(err_msg)
             fenics_objects.append(FEN.DirichletBC(function_space, eval(v), boundary_func))
         return fenics_objects
+
+
+class SerialMesh(PyironFactory, HasStorage):
+    def __init__(self):
+        PyironFactory.__init__(self)
+        HasStorage.__init__(self)
+        self.storage.style = 'unit_square'
+        self.storage.kwargs = {'nx': 2, 'ny': 2}
+
+    def __call__(self):
+        return getattr(self, self.storage.style)(**self.storage.kwargs)
+
+    def unit_square(self, nx=2, ny=2):
+        # TODO: Use a decorator to handle the storage update programmatically
+        self.storage.style = 'unit_square'
+        self.storage.kwargs = {'nx': nx, 'ny': ny}
+        return FEN.UnitSquareMesh(nx, ny)
+
+    def regular_box(self, p1, p2, nx, ny, nz):
+        self.storage.style = 'regular_box'
+        self.storage.kwargs = {'p1': p1, 'p2': p2, 'nx': nx, 'ny': ny, 'nz': nz}
+        return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
 
 
 class DomainFactory(PyironFactory):
