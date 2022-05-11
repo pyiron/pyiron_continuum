@@ -15,7 +15,8 @@ with ImportAlarm(
 
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
-from pyiron_continuum.fenics.factory import SolverConfig, SerialBoundaries, SerialMesh
+from pyiron_continuum.fenics.factory import SolverConfig
+from pyiron_continuum.fenics.wrappers import SerialBoundaries, SerialMesh
 
 __author__ = "Liam Huber"
 __copyright__ = (
