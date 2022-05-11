@@ -59,12 +59,7 @@ class DomainFactory(PyironFactory):
         self._job = job
         self._subdomain_dict = {}
         self._bcs = []
-        self._bc = BoundaryConditionFactory(job=self._job)
-        self._mesh = GeneralMeshFactory(job=self._job)
 
-    def clear_boundaries(self):
-        """Clear all existing boundary conditions in the conditions list."""
-        self._bcs = []
 
     def get_subdomain(self, name):
         """
@@ -143,136 +138,7 @@ class DomainFactory(PyironFactory):
             elif constant is not None:
                 expression = FEN.Constant(constant)
 
-            self._bcs.append(self._bc.dirichlet(expression, bc_func, subdomain))
-
-    def append_bc(self, new_bc):
-        """
-        this appends the new_bc to the list of boundary conditions
-        Args:
-            new_bc: a fenics boundary condition
-        """
-        try:
-            self._bcs.append(new_bc)
-        except Exception as err_msg:
-            raise Exception(err_msg)
-
-    @property
-    def boundaries_list(self):
-        """
-        list of boundary conditions
-        """
-        return self._bcs
-
-    @property
-    def mesh(self):
-        return self._mesh
-
-
-class GeneralMeshFactory(PyironFactory):
-    def __init__(self, job):
-        super().__init__()
-        self._regular = RegularMeshFactory(job)
-        self._unit = UnitMeshFactory(job)
-        self._job = job
-        self._mshr_domain = None
-
-    def __call__(self):
-        return self._job._mesh
-
-    @property
-    def regular(self):
-        return self._regular
-
-    @property
-    def unit(self):
-        return self._unit
-
-    def circle(self, center, radius, inplace=True):
-        if inplace:
-            self._job._set_mesh(mshr.Circle(FEN.Point(*center), radius))
-        else:
-            return mshr.Circle(FEN.Point(*center), radius)
-
-    def square(self, length, origin=None, inplace=True):
-        if origin is None:
-            x, y = 0, 0
-        else:
-            x, y = origin[0], origin[1]
-        if inplace:
-            self._job._set_mesh(
-                mshr.Rectangle(
-                    FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)
-                )
-            )
-        else:
-            return mshr.Rectangle(
-                FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)
-            )
-
-    def box(self, corner1=None, corner2=None, inplace=True):
-        """A 3d rectangular prism from `corner1` to `corner2` ((0, 0, 0) to (1, 1, 1) by default)"""
-        corner1 = corner1 or (0, 0, 0)
-        corner2 = corner2 or (1, 1, 1)
-        if inplace:
-            self._job._set_mesh(mshr.Box(FEN.Point(corner1), FEN.Point(corner2)))
-        else:
-            return mshr.Box(FEN.Point(corner1), FEN.Point(corner2))
-
-    def tetrahedron(self, p1, p2, p3, p4, inplace=True):
-        """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
-        if inplace:
-            self._job._set_mesh(
-                mshr.Tetrahedron(
-                    FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)
-                )
-            )
-        else:
-            return mshr.Tetrahedron(
-                FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)
-            )
-
-    def generate(self, domain):
-        self._job._set_mesh(domain)
-
-
-class UnitMeshFactory(PyironFactory):
-    def __init__(self, job):
-        super(UnitMeshFactory, self).__init__()
-        self._job = job
-
-    def square(self, nx, ny):
-        self._job._mesh = FEN.UnitSquareMesh(nx, ny)
-
-
-#   square.__doc__ = FEN.UnitSquareMesh.__doc__
-
-
-class RegularMeshFactory(PyironFactory):
-    def __init__(self, job):
-        super(RegularMeshFactory, self).__init__()
-        self._job = job
-
-    def rectangle(self, p1, p2, nx, ny, **kwargs):
-        self._job._mesh = FEN.RectangleMesh(
-            FEN.Point(p1), FEN.Point(p2), nx, ny, **kwargs
-        )
-
-    #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
-
-    def box(self, p1, p2, nx, ny, nz):
-        self._job._mesh = FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
-
-
-#   box.__doc__ = FEN.BoxMesh.__doc__
-
-
-class BoundaryConditionFactory(PyironFactory):
-    def __init__(self, job):
-        self._job = job
-
-    @staticmethod
-    def _default_bc_fnc(x, on_boundary):
-        return on_boundary
+            return self.dirichlet(expression, bc_func, subdomain)
 
     def dirichlet(self, expression, bc_fnc=None, subdomain=None):
         """
@@ -294,6 +160,17 @@ class BoundaryConditionFactory(PyironFactory):
             return FEN.DirichletBC(self._job.solver.V, expression, subdomain)
         else:
             return FEN.DirichletBC(self._job.solver.V, expression, self._default_bc_fnc)
+
+    @property
+    def boundaries_list(self):
+        """
+        list of boundary conditions
+        """
+        return self._job.bcs
+
+    @property
+    def mesh(self):
+        return self._job.mesh
 
 
 class FenicsSubDomain(FEN.SubDomain):
@@ -357,22 +234,22 @@ class SolverConfig:
 
     def __init__(self, job, func_space_class=FEN.FunctionSpace):
         self._job = job
-        if self._job._mesh is None:
+        if self._job.mesh is None:
             raise NotSetCorrectlyError(
-                "Before accessing job.solver, job._mesh should be defined"
-                "You can use job.domain.mesh to create job._mesh"
+                "Before accessing job.solver, job.mesh should be defined"
+                "You can use job.domain.mesh to create job.mesh"
             )
         else:
             self._V = func_space_class(
-                job._mesh, job.input.element_type, job.input.element_order
+                job.mesh, job.input.element_type, job.input.element_order
             )  # finite element volume space
             if job.input.element_order > 1:
                 self._V_g = FEN.VectorFunctionSpace(
-                    job._mesh, job.input.element_type, job.input.element_order - 1
+                    job.mesh, job.input.element_type, job.input.element_order - 1
                 )
             else:
                 self._V_g = FEN.VectorFunctionSpace(
-                    job._mesh, job.input.element_type, job.input.element_order
+                    job.mesh, job.input.element_type, job.input.element_order
                 )
 
             self._u = FEN.TrialFunction(self._V)  # u is the unkown function

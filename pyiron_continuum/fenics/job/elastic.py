@@ -15,8 +15,7 @@ with ImportAlarm(
 
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
-from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
-from pyiron_continuum.fenics.wrappers import Mesh
+from pyiron_continuum.fenics.factory import SolverConfig
 import warnings
 
 __author__ = "Liam Huber"
@@ -59,11 +58,6 @@ class FenicsLinearElastic(Fenics):
 
         self.input.bulk_modulus = 76
         self.input.shear_modulus = 26
-        self.input.boundaries = BoundaryConditions()
-        self.input.mesh = Mesh(
-            'BoxMesh(p1, p2, nx, ny, nz)',
-            **{'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 1, 'ny': 1, 'nz': 1}
-        )
 
         self.output.von_Mises = []
 
@@ -74,8 +68,6 @@ class FenicsLinearElastic(Fenics):
         return self._solver
 
     def validate_ready_to_run(self):
-        self._mesh = self.input.mesh()
-        self.domain._bcs = self.input.boundaries(self.solver.V)
         self.solver.set_sides_eq()
         super().validate_ready_to_run()
 
@@ -116,6 +108,7 @@ class ElasticSolver(SolverConfig):
     def set_sides_eq(self):
         self.lhs = FEN.inner(self.sigma(self.u), self.epsilon(self.v)) * FEN.dx
         self.rhs = FEN.dot(self.f, self.v) * FEN.dx + FEN.dot(self.T, self.v) * FEN.ds
+
 
 class ElasticPlot(Plot):
     def stress2d(

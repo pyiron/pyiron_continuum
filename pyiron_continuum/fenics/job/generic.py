@@ -22,10 +22,11 @@ import warnings
 import numpy as np
 from pyiron_continuum.fenics.factory import (
     DomainFactory,
-    BoundaryConditionFactory,
     SolverConfig,
     FenicsSubDomain,
+    BoundaryConditions
 )
+from pyiron_continuum.fenics.wrappers import Mesh
 from pyiron_continuum.fenics.plot import Plot
 from matplotlib.docstring import copy as copy_docstring
 
@@ -132,7 +133,11 @@ class Fenics(TemplateJob):
         self._python_only_job = True
         self._plot = Plot(self)
 
-        self.input.mesh_resolution = 2
+        self.input.boundaries = BoundaryConditions()
+        self.input.mesh = Mesh(
+            'BoxMesh(p1, p2, nx, ny, nz)',
+            **{'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 1, 'ny': 1, 'nz': 1}
+        )
         self.input.element_type = 'P'
         self.input.element_order = 1
         self.input.n_steps = 1
@@ -147,21 +152,15 @@ class Fenics(TemplateJob):
         self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
 
         self._solver = None
-        self._mesh = None
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
     def mesh(self):
-        return self._mesh
+        return self.input.mesh()
 
-    def _set_mesh(self, _mesh):
-        if isinstance(_mesh, FenicsMesh.Mesh):
-            self._mesh = _mesh
-        else:
-            try:
-                self._mesh = mshr.generate_mesh(_mesh, self.input.mesh_resolution)
-            except Exception as err_msg:
-                print(f"Error:{err_msg}")
+    @property
+    def bcs(self):
+        return self.input.boundaries(self.solver.V)
 
     @property
     def solver(self):
@@ -193,8 +192,6 @@ class Fenics(TemplateJob):
         vtkfile << self.solver.solution
 
     def validate_ready_to_run(self):
-        if self._mesh is None:
-            raise ValueError("No mesh is defined")
         if self.solver.rhs is None:
             raise ValueError("The bilinear form (RHS) is not defined")
         if self.solver.lhs is None:
@@ -203,6 +200,7 @@ class Fenics(TemplateJob):
             raise ValueError("The volume is not defined; no V defined")
         if len(self.domain.boundaries_list) == 0:
             raise ValueError("The boundary condition(s) (BC) is not defined")
+        self.domain._bcs = self.input.boundaries(self.solver.V)
 
     def run_static(self):
         """
@@ -226,8 +224,8 @@ class Fenics(TemplateJob):
 
     def _append_to_output(self):
         """Evaluate the result at nodes and store in the output as a numpy array."""
-        nodal_solution = self.solver.solution.compute_vertex_values(self._mesh)
-        nodes = self._mesh.coordinates()
+        nodal_solution = self.solver.solution.compute_vertex_values(self.mesh)
+        nodes = self.mesh.coordinates()
         if len(nodal_solution) != len(nodes):
             nodal_solution = nodal_solution.reshape(nodes.T.shape).T
         self.output.solution.append(nodal_solution)
