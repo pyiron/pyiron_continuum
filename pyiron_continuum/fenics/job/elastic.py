@@ -17,6 +17,7 @@ from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
 from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
 from pyiron_continuum.fenics.wrappers import Mesh
+import warnings
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -53,6 +54,7 @@ class FenicsLinearElastic(Fenics):
     def __init__(self, project, job_name):
         """Create a new Fenics type job for linear elastic problems"""
         super().__init__(project=project, job_name=job_name)
+        warnings.warn("This is no longer the case for LinearElasticity! Save and load away.")
         self._plot = ElasticPlot(self)
 
         self.input.bulk_modulus = 76
