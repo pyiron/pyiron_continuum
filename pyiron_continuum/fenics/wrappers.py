@@ -18,10 +18,14 @@ from mshr import (
 )
 from dolfin.cpp import mesh as FenicsMesh
 from pyiron_base import PyironFactory, HasStorage
-from inspect import isclass, ismethod
+from typing import Type
 
 
 class StringInputParser(ABC):
+    """
+    Not fool proof, but does its best to ensure that a string is valid and will execute in the scope of `known_elements`
+    (provided by the developer) and `**kwargs` (provided by the user).
+    """
     def __init__(self, input_string: str, __verbose=True, **kwargs):
         self._splitting_elements = [
             r"\*?\*", r"\+", r"-", r"/",
@@ -86,10 +90,76 @@ class StringInputParser(ABC):
             raise ValueError(f"Got an unexpected symbol(s) '{failures}'")
 
 
+class FenicsWrapper(HasStorage, ABC):
+    """
+    A master class for behavior like
+    >>> my_fenics_obj = FenicsWrapperChild('some fenics code', k='v')
+    >>> my_fenics_obj.set('I changed my mind, here is different fenics-compatible code', k='w', l=10)
+    >>> my_fenics_obj()  # Returns a instance of a fenics object
+    or
+    >>> my_fenics_obj(some_important_arg)  # in case generating the fenics object requires more data
+    Note that in the latter case, the extra data had better always be available (e.g. the function space in the case of
+    meshes), or we're not serializing enough data!!!
+
+    All args and kwargs get automatically stored, but the developer must provide an appropriate parser (the `_parser`
+    property) and a method for turning those snippets into a fenics object (the `_generate` method).
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self._as_fenics = None
+        self.set(*args, **kwargs)
+
+    @property
+    @abstractmethod
+    def _parser(self) -> Type[StringInputParser]:
+        pass
+
+    def _parse(self, input_string, **kwargs):
+        return self._parser(input_string, **kwargs)
+
+    @abstractmethod
+    def _generate(self, *args, **kwargs):
+        pass
+
+    def generate(self, *args, **kwargs):
+        self._as_fenics = self._generate(*args, **kwargs)
+
+    def set(self, *args, **kwargs):
+        for arg in args:
+            # A little inefficient, as we parse the kwargs multiple times...
+            self._parse(arg, **kwargs)
+        self.storage.args = args
+        self.storage.kwargs = kwargs
+        self._as_fenics = None
+
+    def __call__(self, *args, **kwargs):
+        if self._as_fenics is None or len(args) > 0 or len(kwargs) > 0:
+            self.generate(*args, **kwargs)
+        return self._as_fenics
+
+
 class BCParser(StringInputParser):
     @property
     def _known_elements(self):
         return ["x", near, Constant, Expression]
+
+
+class DirichletBC(FenicsWrapper):
+    @property
+    def _parser(self):
+        return BCParser
+
+    def _generate(self, function_space):
+        value, condition = self.storage.args
+
+        def boundary_func(x, on_boundary):
+            try:
+                return on_boundary and eval(condition)
+            except Exception as err_msg:
+                print(err_msg)
+
+        return FEN.DirichletBC(function_space, eval(value), boundary_func)
 
 
 class MeshParser(StringInputParser):
@@ -102,7 +172,23 @@ class MeshParser(StringInputParser):
         ]
 
 
-class SerialBoundaries(PyironFactory, HasStorage):
+class Mesh(FenicsWrapper):
+    @property
+    def _parser(self):
+        return MeshParser
+
+    def _generate(self):
+        for k, v in self.storage.kwargs.items():
+            exec(f'{k} = {v}')
+        mesh = eval(self.storage.args[0])
+        if not isinstance(mesh, FenicsMesh.Mesh):
+            raise TypeError(f'Expected the mesh to be of type dolfin.cpp.mesh.Mesh, but got {type(mesh)}. You may '
+                            f'need to wrap your expression in "generate_mesh()" to convert a mshr mesh to a dolphin '
+                            f'mesh.')
+        return mesh
+
+
+class BoundaryConditions(PyironFactory, HasStorage):
     def __init__(self):
         PyironFactory.__init__(self)
         HasStorage.__init__(self)
@@ -119,43 +205,8 @@ class SerialBoundaries(PyironFactory, HasStorage):
     def clear(self):
         self.storage.pairs = []
 
+    def pop(self, i):
+        return self.storage.pairs.pop(i)
+
     def __call__(self, function_space):
-        fenics_objects = []
-        for (v, w) in self.list():
-            def boundary_func(x, on_boundary):
-                try:
-                    return on_boundary and eval(w)
-                except Exception as err_msg:
-                    print(err_msg)
-            fenics_objects.append(FEN.DirichletBC(function_space, eval(v), boundary_func))
-        return fenics_objects
-
-
-class SerialMesh(PyironFactory, HasStorage):
-    def __init__(self):
-        PyironFactory.__init__(self)
-        HasStorage.__init__(self)
-        self._mesh = None
-        self.storage.expression = 'BoxMesh(p1, p2, nx, ny, nz)'
-        self.storage.kwargs = {'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 2, 'ny': 2, 'nz': 2}
-
-    def from_string(self, expression, **kwargs):
-        MeshParser(expression, **kwargs)
-        self.storage.expression = expression
-        self.storage.kwargs = kwargs
-        self._mesh = self.generate()
-
-    def generate(self):
-        for k, v in self.storage.kwargs.items():
-            exec(f'{k} = {v}')
-        mesh = eval(self.storage.expression)
-        if not isinstance(mesh, FenicsMesh.Mesh):
-            raise TypeError(f'Expected the mesh to be of type dolfin.cpp.mesh.Mesh, but got {type(mesh)}. You may '
-                            f'need to wrap your expression in "generate_mesh()" to convert a mshr mesh to a dolphin '
-                            f'mesh.')
-        return mesh
-
-    def __call__(self):
-        if self._mesh is None:
-            self._mesh = self.generate()
-        return self._mesh
+        return [DirichletBC(*args)(function_space) for args in self.storage.pairs]

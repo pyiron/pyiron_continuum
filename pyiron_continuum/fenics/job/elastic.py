@@ -16,7 +16,7 @@ with ImportAlarm(
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
 from pyiron_continuum.fenics.factory import SolverConfig
-from pyiron_continuum.fenics.wrappers import SerialBoundaries, SerialMesh
+from pyiron_continuum.fenics.wrappers import Mesh, BoundaryConditions
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -57,8 +57,11 @@ class FenicsLinearElastic(Fenics):
 
         self.input.bulk_modulus = 76
         self.input.shear_modulus = 26
-        self.input.boundaries = SerialBoundaries()
-        self.input.mesh = SerialMesh()
+        self.input.boundaries = BoundaryConditions()
+        self.input.mesh = Mesh(
+            'BoxMesh(p1, p2, nx, ny, nz)',
+            **{'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 1, 'ny': 1, 'nz': 1}
+        )
 
         self.output.von_Mises = []
 
