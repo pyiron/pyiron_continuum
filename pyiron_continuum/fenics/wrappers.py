@@ -17,7 +17,7 @@ from mshr import (
     generate_mesh, Tetrahedron, Box, Rectangle, Circle
 )
 from dolfin.cpp import mesh as FenicsMesh
-from pyiron_base import PyironFactory, HasStorage
+from pyiron_base import HasStorage
 from typing import Type
 
 
@@ -188,25 +188,3 @@ class Mesh(FenicsWrapper):
         return mesh
 
 
-class BoundaryConditions(PyironFactory, HasStorage):
-    def __init__(self):
-        PyironFactory.__init__(self)
-        HasStorage.__init__(self)
-        self.storage.pairs = []
-
-    def add(self, value, condition):
-        BCParser(value)
-        BCParser(condition)
-        self.storage.pairs.append((value, condition))
-
-    def list(self):
-        return self.storage.pairs
-
-    def clear(self):
-        self.storage.pairs = []
-
-    def pop(self, i):
-        return self.storage.pairs.pop(i)
-
-    def __call__(self, function_space):
-        return [DirichletBC(*args)(function_space) for args in self.storage.pairs]

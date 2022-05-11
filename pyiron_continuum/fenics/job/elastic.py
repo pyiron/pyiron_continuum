@@ -15,8 +15,8 @@ with ImportAlarm(
 
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
-from pyiron_continuum.fenics.factory import SolverConfig
-from pyiron_continuum.fenics.wrappers import Mesh, BoundaryConditions
+from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
+from pyiron_continuum.fenics.wrappers import Mesh
 
 __author__ = "Liam Huber"
 __copyright__ = (
