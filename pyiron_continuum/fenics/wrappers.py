@@ -49,7 +49,7 @@ class StringInputParser(ABC):
             try:
                 float(value)
             except:
-                try:
+                try:  # Recursively check if the value is an allowable type for this parser
                     self.__class__(value, __verbose=False)
                 except:
                     failures[key] = value
