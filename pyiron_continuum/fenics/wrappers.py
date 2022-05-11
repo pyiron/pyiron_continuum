@@ -22,7 +22,12 @@ from pyiron_base import PyironFactory, HasStorage
 
 class StringInputParser(ABC):
     def __init__(self, input_string: str, __verbose=True, **kwargs):
-        self._splitting_elements = [r"\*?\*", r"\+", r"-", r"/", r"\(", r"\)", r","]
+        self._splitting_elements = [
+            r"\*?\*", r"\+", r"-", r"/",
+            r"\(", r"\)", r",", r"\[", r"\]",
+            r"<", r">", r"=", r"==",
+            r"and", r"or", r"is", r"not"
+        ]
         self._verbose = __verbose
         self._test_kwargs(kwargs)
         self._test_elements(input_string, kwargs)
@@ -65,10 +70,6 @@ class StringInputParser(ABC):
                 continue
             elif e in kwargs.keys():
                 continue
-            elif e[0] == 'x' and e[1] == '[' and e[-1] == ']':
-                # TODO: This is a crap test hard wired for the boundary conditions, but we need to fix the regex to
-                #  allow known elements to be indexed...
-                continue
             else:
                 try:
                     float(e)
@@ -82,7 +83,7 @@ class StringInputParser(ABC):
 class BCParser(StringInputParser):
     @property
     def _known_elements(self):
-        return ["x", "near", "Constant", "Expression", "and", "or", ">", "<"]
+        return ["x", "near", "Constant", "Expression"]
 
 
 class MeshParser(StringInputParser):
@@ -102,8 +103,8 @@ class SerialBoundaries(PyironFactory, HasStorage):
         self.storage.pairs = []
 
     def add(self, value, condition):
-        # BCParser(value)
-        # BCParser(condition)
+        BCParser(value)
+        BCParser(condition)
         self.storage.pairs.append((value, condition))
 
     def list(self):
