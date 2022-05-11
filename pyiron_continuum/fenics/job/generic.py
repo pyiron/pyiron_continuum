@@ -109,7 +109,7 @@ class Fenics(TemplateJob):
     Output:
         u (list): The solved function values evaluated at the mesh points at each time step.
 
-    Example:
+    Example: OUT OF DATE
         >>> job = pr.create.job.Fenics('fenics_job')
         >>> job.input.mesh_resolution = 64
         >>> job.input.element_type = 'P'
@@ -176,14 +176,6 @@ class Fenics(TemplateJob):
     def plot(self):
         return self._plot
 
-    @property
-    def domain(self):
-        return self._domain
-
-    @domain.setter
-    def domain(self, _):
-        raise NotImplementedError("the domain could not be set")
-
     def _write_vtk(self):
         """
         Write the output to a .vtk file.
@@ -198,9 +190,8 @@ class Fenics(TemplateJob):
             raise ValueError("The linear form (LHS) is not defined")
         if self.solver.V is None:
             raise ValueError("The volume is not defined; no V defined")
-        if len(self.domain.boundaries_list) == 0:
+        if len(self.bcs) == 0:
             raise ValueError("The boundary condition(s) (BC) is not defined")
-        self.domain._bcs = self.input.boundaries(self.solver.V)
 
     def run_static(self):
         """
@@ -212,7 +203,7 @@ class Fenics(TemplateJob):
         for step in np.arange(self.input.n_steps):
             for expr in self.solver.time_dependent_expressions:
                 expr.t += self.input.dt
-            FEN.solve(self.solver.lhs == self.solver.rhs, self.solver.u, self.domain.boundaries_list, solver_parameters=self.input.solver_parameters)
+            FEN.solve(self.solver.lhs == self.solver.rhs, self.solver.u, self.bcs, solver_parameters=self.input.solver_parameters)
             if step % self.input.n_print == 0 or step == self.input.n_print - 1:
                 self._append_to_output()
             try:
