@@ -18,6 +18,7 @@ from mshr import (
 )
 from dolfin.cpp import mesh as FenicsMesh
 from pyiron_base import PyironFactory, HasStorage
+from inspect import isclass, ismethod
 
 
 class StringInputParser(ABC):
@@ -35,7 +36,12 @@ class StringInputParser(ABC):
     @property
     @abstractmethod
     def _known_elements(self):
+        """Classes, methods, or strings which should be allowed to appear in the expression"""
         pass
+
+    @property
+    def known_elements(self):
+        return [k.__name__ if hasattr(k, '__name__') else k for k in self._known_elements]
 
     def _test_kwargs(self, kwargs):
         failures = {}
@@ -64,7 +70,7 @@ class StringInputParser(ABC):
     def _test_elements(self, input_string, kwargs):
         failures = []
         for e in self._split_input(input_string):
-            if e in self._known_elements:
+            if e in self.known_elements:
                 continue
             elif e.isnumeric():
                 continue
@@ -83,16 +89,16 @@ class StringInputParser(ABC):
 class BCParser(StringInputParser):
     @property
     def _known_elements(self):
-        return ["x", "near", "Constant", "Expression"]
+        return ["x", near, Constant, Expression]
 
 
 class MeshParser(StringInputParser):
     @property
     def _known_elements(self):
         return [
-            "Point", "BoxMesh", "RectangleMesh", "UnitSquareMesh", "UnitCubeMesh", "UnitDiscMesh", "UnitTriangleMesh",
-            "UnitIntervalMesh",
-            "generate_mesh", "Tetrahedron", "Box", "Rectangle", "Circle"
+            Point,
+            BoxMesh, RectangleMesh, UnitSquareMesh, UnitCubeMesh, UnitDiscMesh, UnitTriangleMesh, UnitIntervalMesh,
+            generate_mesh, Tetrahedron, Box, Rectangle, Circle
         ]
 
 
