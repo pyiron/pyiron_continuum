@@ -161,10 +161,6 @@ class Fenics(TemplateJob):
             self._solver = SolverConfig(self)
         return self._solver
 
-    @solver.setter
-    def solver(self, _):
-        raise NotImplementedError("the solver could not be set")
-
     @property
     def plot(self):
         return self._plot
