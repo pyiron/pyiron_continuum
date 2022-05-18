@@ -64,7 +64,7 @@ class SolverConfig:
         if self._job.mesh is None:
             raise NotSetCorrectlyError(
                 "Before accessing job.solver, job.mesh should be defined"
-                "You can use job.domain.mesh to create job.mesh"
+                "You can use job.input.mesh to set job.mesh"
             )
         else:
             self._V = func_space_class(
