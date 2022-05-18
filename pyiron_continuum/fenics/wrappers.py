@@ -238,3 +238,8 @@ class Mesh(FenicsWrapper):
                             f'need to wrap your input string in "generate_mesh()" to convert a mshr mesh to a dolphin '
                             f'mesh.')
         return mesh
+
+    # TODO: Make a bunch of helper functions.
+    #       I'm really not happy about the fact it's all string encoded, but don't see a way around it atm -Liam
+    def Circle(self, point, radius, resolution):
+        self.set(f'generate_mesh(Circle(Point({point}), {radius}), {resolution})')
