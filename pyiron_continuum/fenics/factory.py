@@ -7,7 +7,7 @@ Factories for Fenics-related object creation.
 """
 
 from pyiron_base import ImportAlarm, PyironFactory, HasStorage
-from pyiron_continuum.fenics.wrappers import BCParser, DirichletBC
+from pyiron_continuum.fenics.wrappers import DirichletBC, Value, Condition
 
 with ImportAlarm(
     "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
@@ -583,11 +583,14 @@ class BoundaryConditions(PyironFactory, HasStorage):
         PyironFactory.__init__(self)
         HasStorage.__init__(self)
 
-    def append(self, value, condition):
-        self.storage.append(DirichletBC(value, condition))
+    def append(self, value_string, condition_string, condition_kwargs=None, **value_kwargs):
+        expression = Value(value_string, **value_kwargs)
+        condition_kwargs = condition_kwargs if condition_kwargs is not None else {}
+        condition = Condition(condition_string, **condition_kwargs)
+        self.storage.append(DirichletBC(expression, condition))
 
     def list(self):
-        return self.storage.values()
+        return [str(v) for v in self.storage.values()]
 
     def clear(self):
         self.storage.clear()

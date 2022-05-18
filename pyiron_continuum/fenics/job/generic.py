@@ -21,7 +21,6 @@ from os.path import join
 import warnings
 import numpy as np
 from pyiron_continuum.fenics.factory import (
-    DomainFactory,
     SolverConfig,
     FenicsSubDomain,
     BoundaryConditions
@@ -148,7 +147,6 @@ class Fenics(TemplateJob):
         self.output.solution = []
 
         # TODO: Figure out how to get these attributes into input/otherwise serializable
-        self._domain = DomainFactory(job=self)  # the domain
         self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
 
         self._solver = None
@@ -192,6 +190,9 @@ class Fenics(TemplateJob):
             raise ValueError("The volume is not defined; no V defined")
         if len(self.bcs) == 0:
             raise ValueError("The boundary condition(s) (BC) is not defined")
+        for bc in self.input.boundaries.storage.values():
+            if 't' in bc.value.kwargs.keys():
+                self.solver.time_dependent_expressions.append(bc.value())
 
     def run_static(self):
         """
