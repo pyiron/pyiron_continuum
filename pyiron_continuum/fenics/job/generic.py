@@ -20,14 +20,9 @@ from pyiron_base import TemplateJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from pyiron_continuum.fenics.factory import (
-    SolverConfig,
-    FenicsSubDomain,
-    BoundaryConditions
-)
+from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
 from pyiron_continuum.fenics.wrappers import Mesh
 from pyiron_continuum.fenics.plot import Plot
-from matplotlib.docstring import copy as copy_docstring
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
