@@ -176,7 +176,7 @@ class Value(FenicsWrapper):
     """
     @property
     def _parser(self) -> StringInputParser:
-        return StringInputParser(known_elements=["'", '"'])
+        return StringInputParser(known_elements=["x", "exp", "pow"])
 
     def _generate(self):
         if 'degree' in self.kwargs.keys():
