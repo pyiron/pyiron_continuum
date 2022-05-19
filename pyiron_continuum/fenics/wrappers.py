@@ -11,7 +11,8 @@ from abc import ABC, abstractmethod
 import fenics as FEN
 from fenics import (
     near, Constant, Expression,
-    Point, BoxMesh, RectangleMesh, UnitSquareMesh, UnitCubeMesh, UnitDiscMesh, UnitTriangleMesh, UnitIntervalMesh
+    Point, BoxMesh, RectangleMesh, UnitSquareMesh, UnitCubeMesh, UnitDiscMesh, UnitTriangleMesh, UnitIntervalMesh,
+    dot, inner, grad, nabla_grad,
 )
 from mshr import (
     generate_mesh, Tetrahedron, Box, Rectangle, Circle
@@ -160,7 +161,7 @@ class Condition(FenicsWrapper):
 
         def boundary_func(x, on_boundary):
             try:
-                return on_boundary and eval(self.input_string)
+                return on_boundary and eval(self.input_string or "True")  # Allow for empty condition strings
             except Exception as err_msg:
                 print(err_msg)
 
@@ -243,3 +244,91 @@ class Mesh(FenicsWrapper):
     #       I'm really not happy about the fact it's all string encoded, but don't see a way around it atm -Liam
     def Circle(self, point, radius, resolution):
         self.set(f'generate_mesh(Circle(Point({point}), {radius}), {resolution})')
+
+
+class Solver:
+    def __init__(self, job, func_space_class=FEN.FunctionSpace):
+        self._job = job
+        self._V = func_space_class(
+            job.mesh, job.input.element_type, job.input.element_order
+        )  # finite element volume space
+        if job.input.element_order > 1:
+            self._V_g = FEN.VectorFunctionSpace(
+                job.mesh, job.input.element_type, job.input.element_order - 1
+            )
+        else:
+            self._V_g = FEN.VectorFunctionSpace(
+                job.mesh, job.input.element_type, job.input.element_order
+            )
+        self._u = FEN.TrialFunction(self._V)  # u is the unkown function
+        self._v = FEN.TestFunction(self._V)  # the test function
+        self._lhs = None
+        self._rhs = None
+        self._solution = FEN.Function(self._V)
+        self.time_dependent_expressions = []
+        self.assigned_u = None
+
+    @property
+    def lhs(self):
+        if self._lhs is None:
+            self._lhs = self._job.input.lhs(self)
+        return self._lhs
+
+    @property
+    def rhs(self):
+        if self._rhs is None:
+            self._rhs = self._job.input.rhs(self)
+        return self._rhs
+
+    @property
+    def V(self):
+        return self._V
+
+    @property
+    def u(self):
+        return self._u
+
+    @u.setter
+    def u(self, _func):
+        self._u = _func
+
+    @property
+    def v(self):
+        return self._v
+
+    @property
+    def solution(self):
+        return self._solution
+
+    @property
+    def V_g(self):
+        return self._V_g
+
+
+class NoBrakes:
+    def __init__(self):
+        return
+
+    def __call__(self, input_string, **kwargs):
+        return
+
+
+class PartialEquation(FenicsWrapper):
+    @property
+    def _parser(self):
+        return NoBrakes()
+        # return StringInputParser(known_elements=[
+        #     Constant, Expression, 'pow', 'exp',
+        #     'dx', 'ds', dot, inner, grad, nabla_grad,
+        #     'u', 'v', 'u_n',
+        # ])
+
+    def _generate(self, solver: Solver):
+        dx = FEN.dx
+        ds = FEN.ds
+        u = solver.u
+        v = solver.v
+        u_n = solver.u_n
+        for k, v in self.kwargs.items():
+            exec(f'{k} = {v}')
+        return eval(self.input_string)

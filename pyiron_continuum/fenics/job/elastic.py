@@ -16,6 +16,7 @@ with ImportAlarm(
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
 from pyiron_continuum.fenics.factory import SolverConfig
+from pyiron_continuum.fenics.wrappers import Solver
 import warnings
 
 __author__ = "Liam Huber"
@@ -67,10 +68,6 @@ class FenicsLinearElastic(Fenics):
             self._solver = ElasticSolver(job=self)
         return self._solver
 
-    def validate_ready_to_run(self):
-        self.solver.set_sides_eq()
-        super().validate_ready_to_run()
-
     def _append_to_output(self):
         super()._append_to_output()
         self.output.von_Mises.append(
@@ -79,12 +76,23 @@ class FenicsLinearElastic(Fenics):
             )
 
 
-class ElasticSolver(SolverConfig):
+class ElasticSolver(Solver):
     def __init__(self, job):
         super().__init__(job, func_space_class=FEN.VectorFunctionSpace)
         self.f = FEN.Constant((0, 0, 0))
         self.T = FEN.Constant((0, 0, 0))
-        self._accepted_keys.append('T')
+
+    @property
+    def lhs(self):
+        if self._lhs is None:
+            self._lhs = FEN.inner(self.sigma(self.u), self.epsilon(self.v)) * FEN.dx
+        return self._lhs
+
+    @property
+    def rhs(self):
+        if self._rhs is None:
+            self._rhs = FEN.dot(self.f, self.v) * FEN.dx + FEN.dot(self.T, self.v) * FEN.ds
+        return self._rhs
 
     @staticmethod
     def epsilon(u):
@@ -104,10 +112,6 @@ class ElasticSolver(SolverConfig):
                                self._job.input.element_order
                                )
                            )
-
-    def set_sides_eq(self):
-        self.lhs = FEN.inner(self.sigma(self.u), self.epsilon(self.v)) * FEN.dx
-        self.rhs = FEN.dot(self.f, self.v) * FEN.dx + FEN.dot(self.T, self.v) * FEN.ds
 
 
 class ElasticPlot(Plot):

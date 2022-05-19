@@ -21,7 +21,7 @@ from os.path import join
 import warnings
 import numpy as np
 from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
-from pyiron_continuum.fenics.wrappers import Mesh
+from pyiron_continuum.fenics.wrappers import Mesh, PartialEquation, Solver
 from pyiron_continuum.fenics.plot import Plot
 
 __author__ = "Muhammad Hassani, Liam Huber"
@@ -132,6 +132,8 @@ class Fenics(TemplateJob):
             'BoxMesh(p1, p2, nx, ny, nz)',
             **{'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 1, 'ny': 1, 'nz': 1}
         )
+        self.input.lhs = PartialEquation('0')
+        self.input.rhs = PartialEquation('0')
         self.input.element_type = 'P'
         self.input.element_order = 1
         self.input.n_steps = 1
@@ -158,7 +160,7 @@ class Fenics(TemplateJob):
     @property
     def solver(self):
         if self._solver is None:
-            self._solver = SolverConfig(self)
+            self._solver = Solver(self)
         return self._solver
 
     @property
@@ -174,7 +176,7 @@ class Fenics(TemplateJob):
 
     def validate_ready_to_run(self):
         if self.solver.rhs is None:
-            raise ValueError("The bilinear form (RHS) is not defined")
+            raise ValueError("The bilinear form (RHS) is not defined", self.solver.rhs)
         if self.solver.lhs is None:
             raise ValueError("The linear form (LHS) is not defined")
         if self.solver.V is None:
