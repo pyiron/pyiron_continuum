@@ -103,7 +103,7 @@ class FenicsWrapper(HasStorage, ABC):
     the input into a fenics object (the `_generate` method).
     """
 
-    def __init__(self, input_string, **kwargs):
+    def __init__(self, input_string="", **kwargs):
         super().__init__()
         self._as_fenics = None
         self.set(input_string, **kwargs)
@@ -195,7 +195,7 @@ class Value(FenicsWrapper):
 
 
 class DirichletBC(HasStorage):
-    def __init__(self, value: Value, condition: Condition):
+    def __init__(self, value: Value = None, condition: Condition = None):
         super().__init__()
         self.storage.value = value
         self.storage.condition = condition
