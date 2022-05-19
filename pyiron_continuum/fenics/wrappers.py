@@ -328,7 +328,6 @@ class PartialEquation(FenicsWrapper):
         ds = FEN.ds
         u = solver.u
         v = solver.v
-        u_n = solver.u_n
         for k, v in self.kwargs.items():
             exec(f'{k} = {v}')
         return eval(self.input_string)
