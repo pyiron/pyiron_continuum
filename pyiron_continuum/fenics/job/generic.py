@@ -13,7 +13,7 @@ with ImportAlarm(
     import fenics as FEN
     import mshr
     from ufl import nabla_div as ufl_nabla_div
-    import dolfin.cpp.mesh as FenicsMesh
+    import dolfin.cpp.mesh as dolfin_mesh
 
 import sympy
 from pyiron_base import TemplateJob, DataContainer
@@ -23,6 +23,7 @@ import numpy as np
 from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
 from pyiron_continuum.fenics.wrappers import Mesh, PartialEquation, Solver
 from pyiron_continuum.fenics.plot import Plot
+from typing import List, Type
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
@@ -72,23 +73,10 @@ class Fenics(TemplateJob):
     Attributes:
         input (DataContainer): The input parameters controlling the run.
         output (DataContainer): The output from the run, i.e. data that comes from `solve`ing the PDE.
-        domain (?): The spatial domain on which to build the mesh or, in the case of special meshes, the mesh itself.
-            To be provided prior to running the job.
-        BC (?): The boundary conditions for the mesh. To be provided prior to running the job.
-        LHS/RHS (?): The left-hand and right-hand sides of the equation to solve.
-        time_dependent_expressions (list[Expression]): All expressions used in the domain, BC, LHS and RHS which have a
-            `t` attribute that needs updating at each step. (Default is None, which initializes an empty list.)
-        assigned_u (?): The term which will be assigned the solution at each timestep. (Default is None, don't assign
-            anything.)
-        mesh (?): The mesh. Generated automatically.
-        u:
-        v:
-        solution:
-        F:
+        mesh (dolfin.cpp.mesh.Mesh): The discretized mesh on which the solution is being calculated.
+        bcs (list): The boundary conditions for the mesh.
 
     Input:
-        mesh_resolution (int): How dense the mesh should be (larger values = denser mesh). (Default is 2, but not used
-            if the domain is a special mesh, e.g. unit or regular.)
         element_type (str): What type of element should be used. (Default is 'P'.) TODO: Restrict choices.
         element_order (int): What order the elements have. (Default is 1.)  TODO: Better description.
         n_steps (int): How many steps to run for, where the `t` attribute of all time dependent expressions gets updated
@@ -99,22 +87,28 @@ class Fenics(TemplateJob):
         solver_parameters (dict): kwargs for FEniCS solver.
             Cf. [FEniCS docs](https://fenicsproject.org/pub/tutorial/html/._ftut1017.html) for more details. (Default is
             an empty dictionary.)
+        mesh (Mesh): must be `set` using a `fenics`- and `mshr`-compatible string, or set by calling a helper (e.g.
+            `Circle`)
+        boundaries (BoundaryConditions): BCs must be `append`ed. Existing BCs can be seen with `list` and can be
+            `pop`ped or `clear`ed if you have some you don't like.
+        lhs (PartialEquation): The left-hand-side of the equation; must be `set`.
+        rhs (PartialEquation): The right-hand-side of the equation; must be `set`.
 
     Output:
         u (list): The solved function values evaluated at the mesh points at each time step.
 
-    Example: OUT OF DATE
-        >>> job = pr.create.job.Fenics('fenics_job')
-        >>> job.input.mesh_resolution = 64
+    Example:
+        >>> job = pr.continuum.job.Fenics('fenics_job')
         >>> job.input.element_type = 'P'
         >>> job.input.element_order = 2
-        >>> job.domain = job.create.domain.circle((0, 0), 1)
-        >>> job.BC = job.create.bc.dirichlet(job.Constant(0))
-        >>> p = job.Expression('4*exp(-pow(beta, 2)*(pow(x[0], 2) + pow(x[1] - R0, 2)))', degree=1, beta=8, R0=0.6)
-        >>> job.LHS = job.dot(job.grad_u, job.grad_v) * job.dx
-        >>> job.RHS = p * job.v * job.dx
+        >>> job.input.mesh.set('UnitSquareMesh(nx, ny)', nx=20, ny=20)
+        >>> job.input.mesh();  # Remove semicolon to view the mesh
+        >>> job.input.boundaries.append(value_string='0', condition_string='x[0] < 1')
+        >>> job.input.boundaries.append(value_string='0.1', condition_string='near(x[0], 1)')
+        >>> job.input.lhs.set('dot(grad(u), grad(v)) * dx')
+        >>> job.input.rhs.set(f'Expression("4*exp(-pow(beta, 2)*(pow(x[0], 2) + pow(x[1] - R0, 2)))", degree=1, beta=1, R0=0.5) * v * dx')
         >>> job.run()
-        >>> job.plot_u()
+        >>> job.plot.solution()
     """
 
     def __init__(self, project, job_name):
@@ -150,15 +144,15 @@ class Fenics(TemplateJob):
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
-    def mesh(self):
+    def mesh(self) -> Type[dolfin_mesh.Mesh]:
         return self.input.mesh()
 
     @property
-    def bcs(self):
+    def bcs(self) -> List:
         return self.input.boundaries(self.solver.V)
 
     @property
-    def solver(self):
+    def solver(self) -> Solver:
         if self._solver is None:
             self._solver = Solver(self)
         return self._solver
