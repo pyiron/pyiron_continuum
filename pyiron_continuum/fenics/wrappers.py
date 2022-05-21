@@ -252,6 +252,18 @@ class Mesh(FenicsWrapper):
 
 
 class Solver:
+    """
+    A convenience class for generating and storing fenics objects based off the input (e.g. the element order).
+
+    Attributes:
+        V (FEN.FunctionSpace): Volume element
+        u (TrialFunction): Trial function
+        v (TestFunction): Test function
+        lhs (PartialEquation): Wrapper for the `FEN.Form` defining the left-hand-side of the equation to be solved.
+        rhs (PartialEquation): Wrapper for the `FEN.Form` defining the left-hand-side of the equation to be solved.
+        solution (FEN.Function): The solution to the equation.
+        time_dependent_expressions (list): A list of time dependent expressions
+    """
     def __init__(self, job, func_space_class=FEN.FunctionSpace):
         self._job = job
         self._V = func_space_class(
@@ -270,8 +282,7 @@ class Solver:
         self._lhs = None
         self._rhs = None
         self._solution = FEN.Function(self._V)
-        self.time_dependent_expressions = []
-        self.assigned_u = None
+        self.time_dependent_expressions = []  # TODO: Deprecate this and just have the job update all expressions instead
 
     @property
     def lhs(self):
