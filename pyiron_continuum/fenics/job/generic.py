@@ -52,9 +52,8 @@ class Fenics(TemplateJob):
     Ease of use is underway, e.g. elements, trial and test functions, and the mesh are automatically populated based on
     the provided domain. Quality of life will be continuously improved as pyiron and fenics get to know each other.
 
-    TODO: Integration with pyiron's job and data management is incomplete, as some input data types (domains and
-          boundary conditions) are not yet compatible with HDF5 storage. This is a simple problem to describe, but might
-          be a pain to solve with sufficient flexibility. We also need to consider storing more sophisticated output.
+    TODO: Clean up -- serialization happens now, but we've lost some capabilities and not all helper functions are still
+          wired up correctly.
 
     TODO: Full power and flexibility still needs to be realized by allowing (a) variable function space types, (b)
           variable number of elements and trial/test functions, and (c) multiple solve types.
@@ -114,10 +113,6 @@ class Fenics(TemplateJob):
     def __init__(self, project, job_name):
         """Create a new Fenics type job"""
         super(Fenics, self).__init__(project, job_name)
-        warnings.warn("Currently, the c++ dolfin functions used by fenics are not stored in the HDF5 file."
-                      " This includes the domains, boundary condition, spatial functions."
-                      " Therefore, it is not possible to reload the job properly, from HDF5 file."
-                      " It would be safe to remove the Fenics jobs, after defining the project.")
         self._python_only_job = True
         self._plot = Plot(self)
 
