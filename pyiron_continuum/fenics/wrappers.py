@@ -73,8 +73,6 @@ class StringInputParser:
         for e in self._split_input(input_string):
             if e in self.known_elements:
                 continue
-            elif e.isnumeric():
-                continue
             elif e in kwargs.keys():
                 continue
             else:
