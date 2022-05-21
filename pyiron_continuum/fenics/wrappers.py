@@ -145,6 +145,11 @@ class FenicsWrapper(HasStorage, ABC):
     def __str__(self):
         return self.input_string
 
+    @property
+    def known_elements(self):
+        """Special parseable terms allowed to appear in the input string."""
+        return self._parser.known_elements
+
 
 class Condition(FenicsWrapper):
     """
