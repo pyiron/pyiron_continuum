@@ -20,7 +20,7 @@ from pyiron_base import TemplateJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions
+from pyiron_continuum.fenics.factory import SolverConfig, BoundaryConditions, Expressions
 from pyiron_continuum.fenics.wrappers import Mesh, PartialEquation, Solver
 from pyiron_continuum.fenics.plot import Plot
 from typing import List, Type
@@ -117,12 +117,13 @@ class Fenics(TemplateJob):
         self._plot = Plot(self)
 
         self.input.boundaries = BoundaryConditions()
-        self.input.mesh = Mesh(
-            'BoxMesh(p1, p2, nx, ny, nz)',
-            **{'p1': 'Point((0,0,0))', 'p2': 'Point((1, 1, 1))', 'nx': 1, 'ny': 1, 'nz': 1}
+        self.input.mesh = Mesh()
+        self.input.mesh.set(
+            'BoxMesh(p1, p2, nx, ny, nz)', p1='Point((0,0,0))', p2='Point((1, 1, 1))', nx=1, ny=1, nz=1
         )
-        self.input.lhs = PartialEquation('0')
-        self.input.rhs = PartialEquation('0')
+        self.input.expressions = Expressions()
+        self.input.lhs = PartialEquation(expressions=self.input.expressions)
+        self.input.rhs = PartialEquation(expressions=self.input.expressions)
         self.input.element_type = 'P'
         self.input.element_order = 1
         self.input.n_steps = 1
