@@ -44,7 +44,7 @@ setup(
             'fenics==2019.1.0',
             'mshr==2019.1.0',
         ],
-        'schroedinger': ['k3d==2.14.1']
+        'schroedinger': ['k3d==2.14.2']
     },
     cmdclass=versioneer.get_cmdclass(),
     
