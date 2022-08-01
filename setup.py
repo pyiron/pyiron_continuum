@@ -36,7 +36,7 @@ setup(
         'matplotlib==3.5.2',
         'numpy==1.23.1',
         'pyiron_base==0.5.19',
-        'scipy==1.8.1',
+        'scipy==1.9.0',
         'sympy==1.10.1'
     ],
     extras_require={
