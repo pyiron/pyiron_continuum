@@ -204,7 +204,7 @@ class Create:
             return {composition: {'lattice': lattice,
                               'mechanical': {'output': output_list,
                                              'elastic': elasticity,
-                                             'plasticity': plasticity}}}
+                                             'plastic': plasticity}}}
 
     @staticmethod
     def elasticity(**kwargs):

@@ -7,6 +7,7 @@ pyiron.log
 .idea/
 inspectionProfiles/
 _build/
+__pycache__
 apidoc/
 .ipynb_checkpoints/
 test_times.dat
