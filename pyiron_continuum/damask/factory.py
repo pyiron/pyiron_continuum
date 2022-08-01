@@ -229,6 +229,22 @@ class Create:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
+        has_h0 = False
+        has_h = False
+        vals ={}
+        for key,value in kwargs.items():
+            if 'h_0_sl_sl' in key:
+                has_h0 = True
+                vals['h_0_sl-sl']=value
+            if 'h_sl_sl' in key:
+                has_h = True
+                vals['h_sl-sl']=value
+        if has_h0:
+            kwargs['h_0_sl-sl']=vals['h_0_sl-sl']
+            del kwargs['h_0_sl_sl']
+        if has_h:
+            kwargs['h_sl-sl']=vals['h_sl-sl']
+            del kwargs['h_sl_sl']
         return kwargs
 
     @staticmethod
