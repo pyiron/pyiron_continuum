@@ -33,10 +33,10 @@ setup(
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
     install_requires=[
-        'matplotlib==3.5.2',
-        'numpy==1.23.1',
-        'pyiron_base==0.5.19',
-        'scipy==1.8.1',
+        'matplotlib==3.5.3',
+        'numpy==1.23.2',
+        'pyiron_base==0.5.22',
+        'scipy==1.9.1',
         'sympy==1.10.1'
     ],
     extras_require={
@@ -44,7 +44,7 @@ setup(
             'fenics==2019.1.0',
             'mshr==2019.1.0',
         ],
-        'schroedinger': ['k3d==2.14.2']
+        'schroedinger': ['k3d==2.14.5']
     },
     cmdclass=versioneer.get_cmdclass(),
     
