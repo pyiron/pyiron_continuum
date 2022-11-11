@@ -146,7 +146,22 @@ class DAMASK(TemplateJob):
         return [{'mechanical': 'spectral_basic'},
                 {'mechanical': 'spectral_polarization'},
                 {'mechanical': 'FEM'}]
-
+    
+    def plot_vonmises(self,vonmises_strain,vonmises_stress):
+            """
+            Plot the stress strain curve from the job file
+            Parameters
+            ----------
+            direction(str): 'xx, xy, xz, yx, yy, yz, zx, zy, zz
+            """
+            fig, ax = plt.subplots()
+            ax.plot(vonmises_strain,vonmises_stress,
+                    linestyle='-', linewidth='2.5')
+            ax.grid(True)
+            ax.set_xlabel(r'$\varepsilon_{vM}$', fontsize=18)
+            ax.set_ylabel(r'$\sigma_{vM}$ (Pa)', fontsize=18)
+            return fig, ax
+            
     def plot_stress_strain(self, component=None, von_mises=False):
         """
         Plot the stress strain curve from the job file
@@ -183,4 +198,25 @@ class DAMASK(TemplateJob):
             raise ValueError("either direction should be passed in "
                              "or vonMises should be set to True")
         return fig, ax
+    def compare(self,exp_data):
+        inp=open(exp_data,'r')
+        line=inp.readline()
+        line=inp.readline()
+        line=inp.readline()
+        stress=[];strain=[]
+        while len(line)>0:
+            linevalue=line.split(',')
+            stress.append(float(linevalue[8-1])*1.0e6)
+            strain.append(float(linevalue[9-1]))
+            line=inp.readline()
+        inp.close()
+
+        fig, ax = plt.subplots()
+        ax.plot(strain, stress,linestyle='-', linewidth='2.5',label='experiments')
+        ax.plot(self.output.strain_von_Mises, self.output.stress_von_Mises,
+                    linestyle='--', linewidth='2.5',label='DAMASK')
+        ax.grid(True)
+        ax.set_xlabel(r'$\varepsilon_{vM}$', fontsize=18)
+        ax.set_ylabel(r'$\sigma_{vM}$ (Pa)', fontsize=18)
+        ax.legend()
 
