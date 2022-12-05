@@ -4,8 +4,8 @@ dependencies:
 - coveralls
 - coverage
 - codacy-coverage
-- matplotlib =3.5.1
-- numpy =1.22.3
-- pyiron_base =0.5.8
-- scipy =1.8.0
-- sympy =1.10.1
+- matplotlib =3.6.2
+- numpy =1.23.5
+- pyiron_base =0.5.30
+- scipy =1.9.3
+- sympy =1.11.1
