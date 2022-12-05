@@ -1,6 +1,6 @@
 import fenics as FEN
 from fenics import near
-from pyiron_continuum.fenics.factory import StringInputParser
+from pyiron_continuum.fenics.parser import StringInputParser
 
 T = 2.0            # final time
 num_steps = 10     # number of time steps
