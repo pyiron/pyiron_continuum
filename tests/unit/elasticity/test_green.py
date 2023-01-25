@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from pyiron_continuum.elasticity.green import Anisotropic
+from pyiron_continuum.elasticity.green import Anisotropic, Isotropic
 from pyiron_continuum.elasticity import tools
 
 
@@ -34,6 +34,26 @@ class TestGreen(unittest.TestCase):
         G_an = aniso.get_greens_function(positions.mean(axis=0), derivative=2)[:, :, :, index]
         G_num = np.diff(aniso.get_greens_function(positions, derivative=1), axis=0)/dz
         self.assertTrue(np.isclose(G_num-G_an, 0).all())
+
+    def test_comp_iso_aniso(self):
+        shear_modulus = 52.5
+        lame_parameter = 101.3
+        poissons_ratio = 0.5 / (1 + shear_modulus / lame_parameter)
+        C_11 = lame_parameter + 2 * shear_modulus
+        C_12 = lame_parameter
+        C_44 = shear_modulus
+        iso = Isotropic(poissons_ratio, shear_modulus)
+        aniso = Anisotropic(tools.C_from_voigt(tools.coeff_to_voigt([C_11, C_12, C_44])))
+        x = np.random.randn(100, 3) * 10
+        for i in range(3):
+            self.assertLess(
+                np.ptp(
+                    iso.get_greens_function(x, derivative=i)
+                    - aniso.get_greens_function(x, derivative=i)
+                ),
+                1e-8,
+                msg=f"Aniso- and isotropic Green's F's give different results for derivative={i}"
+            )
 
 
 if __name__ == "__main__":
