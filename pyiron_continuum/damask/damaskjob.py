@@ -5,6 +5,7 @@ DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
 from pyiron_base import TemplateJob, ImportAlarm
+
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
@@ -13,7 +14,6 @@ with ImportAlarm(
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -110,16 +110,16 @@ class DAMASK(TemplateJob):
         self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
         self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
         self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
-    
+
     def writeresults2vtk(self):
         """
             save results to vtk files
         """
-        cwd = os.getcwd() # get the current dir
-        os.chdir(self.working_directory) # cd into the working dir
-        result=self._results
+        cwd = os.getcwd()  # get the current dir
+        os.chdir(self.working_directory)  # cd into the working dir
+        result = self._results
         result.export_VTK()
-        os.chdir(cwd) # cd back to the notebook dir
+        os.chdir(cwd)  # cd back to the notebook dir
 
     def temporal_spatial_shape(self, name):
         property_dict = self._results.get(name)
@@ -136,7 +136,7 @@ class DAMASK(TemplateJob):
         for key in property_dict.keys():
             temporal_spatial_array[i] = property_dict[key]
             i = i + 1
-        return  np.average(temporal_spatial_array, axis=1)
+        return np.average(temporal_spatial_array, axis=1)
 
     @staticmethod
     def list_solvers():
@@ -146,6 +146,21 @@ class DAMASK(TemplateJob):
         return [{'mechanical': 'spectral_basic'},
                 {'mechanical': 'spectral_polarization'},
                 {'mechanical': 'FEM'}]
+
+    def plot_vonmises(self, vonmises_strain, vonmises_stress):
+        """
+        Plot the stress strain curve from the job file
+        Parameters
+        ----------
+        direction(str): 'xx, xy, xz, yx, yy, yz, zx, zy, zz
+        """
+        fig, ax = plt.subplots()
+        ax.plot(vonmises_strain, vonmises_stress,
+                linestyle='-', linewidth='2.5')
+        ax.grid(True)
+        ax.set_xlabel(r'$\varepsilon_{vM}$', fontsize=18)
+        ax.set_ylabel(r'$\sigma_{vM}$ (Pa)', fontsize=18)
+        return fig, ax
 
     def plot_stress_strain(self, component=None, von_mises=False):
         """
@@ -164,7 +179,7 @@ class DAMASK(TemplateJob):
                 ValueError("The direction should be from x, y, and z")
             if component[1] != 'x' or component[1] != 'y' or component[1] != 'z':
                 ValueError("The direction should be from x, y, and z")
-            _component_dict={'x': 0, 'y': 1, 'z': 2}
+            _component_dict = {'x': 0, 'y': 1, 'z': 2}
             _zero_axis = int(_component_dict[component[0]])
             _first_axis = int(_component_dict[component[1]])
             ax.plot(self.output.strain[:, _zero_axis, _first_axis],
@@ -184,3 +199,25 @@ class DAMASK(TemplateJob):
                              "or vonMises should be set to True")
         return fig, ax
 
+    def compare(self, exp_data):
+        inp = open(exp_data, 'r')
+        line = inp.readline()
+        line = inp.readline()
+        line = inp.readline()
+        stress = [];
+        strain = []
+        while len(line) > 0:
+            linevalue = line.split(',')
+            stress.append(float(linevalue[8 - 1]) * 1.0e6)
+            strain.append(float(linevalue[9 - 1]))
+            line = inp.readline()
+        inp.close()
+
+        fig, ax = plt.subplots()
+        ax.plot(strain, stress, linestyle='-', linewidth='2.5', label='experiments')
+        ax.plot(self.output.strain_von_Mises, self.output.stress_von_Mises,
+                linestyle='--', linewidth='2.5', label='DAMASK')
+        ax.grid(True)
+        ax.set_xlabel(r'$\varepsilon_{vM}$', fontsize=18)
+        ax.set_ylabel(r'$\sigma_{vM}$ (Pa)', fontsize=18)
+        ax.legend()
