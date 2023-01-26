@@ -4,12 +4,14 @@
 DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
-from pyiron_base import TemplateJob, ImportAlarm
+from pyiron_base import TemplateJob, ImportAlarm, DataContainer
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
     from damask import Result
+    from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
+    
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,7 +28,7 @@ __email__ = "hassani@mpie.de"
 __status__ = "development"
 __date__ = "Oct 04, 2021"
 
-
+        
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -39,48 +41,61 @@ class DAMASK(TemplateJob):
         self._damask_hdf = os.path.join(self.working_directory, "damask_loading.hdf5")
         self._material = None
         self._loading = None
-        self._grid = None
+        self._grid = GridFactory
         self._results = None
+        self._rotation = None
+        self._geometry = None
         self._executable_activate()
+        self.input.elasticity = None
+        self.input.plasticity = None
+        self.input.homogenization = None
+        self.input.phase = None
+        #self.input.rotation = None
+        self.input.material = None
+    
+    def elasticity(self, **kwargs):
+        self.input.elasticity = DAMASKCreator.elasticity(**kwargs) 
 
-    @property
-    def material(self):
-        return self._material
+    def plasticity(self, **kwargs):
+        self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
 
-    @material.setter
-    def material(self, value):
-        self._material = value
+    def homogenization(self, **kwargs):
+        self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
-    @property
-    def grid(self):
-        return self._grid
+    def phase(self, **kwargs):
+        if None not in [self.input.elasticity, self.input.plasticity]:
+            self.input.phase = DAMASKCreator.phase(elasticity=self.input.elasticity,
+                    plasticity=self.input.plasticity, **kwargs)
 
-    @grid.setter
-    def grid(self, value):
-        self._grid = value
-
-    @property
-    def loading(self):
-        return self._loading
-
-    @loading.setter
-    def loading(self, value):
-        self._loading = value
-
+    def rotation(self, method, *args):
+        self._rotation = [DAMASKCreator.rotation(method, *args)]
+    
+    def material(self, element):
+        if not isinstance(element, list):
+            element = [element]
+        if None not in [self._rotation, self.input.phase, self.input.homogenization]:
+            self.input.material = DAMASKCreator.material(self._rotation, 
+                            element, self.input.phase, self.input.homogenization)
+    
+    def grid(self, method="voronoi_tessellation", **kwargs):
+        if method == "voronoi_tessellation":
+            self._geometry = self._grid.via_voronoi_tessellation(**kwargs)
+        
+    def loading(self, **kwargs):
+        self.input.loading = DAMASKCreator.loading(**kwargs)
+        
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")
-        self._material.save(fname=file_path)
-        self.input.material = self._material
+        self.input.material.save(fname=file_path)
 
     def _write_loading(self):
         file_path = os.path.join(self.working_directory, "loading.yaml")
-        self._loading.save(file_path)
-        self.input.loading = self._loading
+        self.input.loading.save(file_path)
 
     def _write_geometry(self):
         file_path = os.path.join(self.working_directory, "damask")
-        self._grid.save(file_path)
-        self.input.geometry = self._grid
+        self._geometry.save(file_path)
+        #self.input.geometry = self.input.grid
 
     def write_input(self):
         self._write_loading()
