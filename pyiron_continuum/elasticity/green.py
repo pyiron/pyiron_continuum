@@ -289,9 +289,15 @@ class Anisotropic(Green):
         return results
 
     def get_greens_function(self, r, derivative=0, fourier=False):
-        self.r = r
+        self.r = np.asarray(r)
         if fourier:
-            G = np.einsum('ijkl,...j,...l->...ik', self.C, r, r, optimize=self.optimize)
+            G = np.einsum(
+                'ijkl,...j,...l->...ik',
+                self.C,
+                self.r,
+                self.r,
+                optimize=self.optimize
+            )
             return np.linalg.inv(G)
         self._initialize()
         if derivative == 0:
