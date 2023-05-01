@@ -32,4 +32,11 @@ jobs:
         pip install --no-deps .
     - name: Test
       shell: bash -l {0}
-      run: python -m unittest discover tests/unit
+      run: coverage run --omit pyiron_continuum/_version.py -m unittest discover tests/unit
+    - name: Coverage
+      continue-on-error: True
+      shell: bash -l {0}
+      run: |
+        coverage combine
+        coveralls
+        coverage xml
