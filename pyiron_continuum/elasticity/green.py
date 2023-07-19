@@ -4,6 +4,7 @@
 
 import numpy as np
 from pyiron_continuum.elasticity import tools
+from tqdm.auto import tqdm
 
 __author__ = "Sam Waseda"
 __copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -51,7 +52,14 @@ class Green:
         """
         raise NotImplementedError('get_greens_function must be defined in the child class')
 
-    def get_greens_function(self, r, derivative=0, fourier=False, check_unique=False):
+    def get_greens_function(
+        self,
+        r,
+        derivative=0,
+        fourier=False,
+        check_unique=False,
+        save_memory=False
+    ):
         """
         Args:
             r ((n,3)-array): Positions for which to calculate the Green's function
@@ -65,7 +73,15 @@ class Green:
         x = np.array(r)
         if check_unique:
             x, inv = np.unique(x.reshape(-1, 3), axis=0, return_inverse=True)
-        g_tmp = self._get_greens_function(r=x, derivative=derivative, fourier=fourier)
+        if save_memory:
+            g_tmp = np.array([
+                self._get_greens_function(
+                    r=xx, derivative=derivative, fourier=fourier
+                )
+                for xx in tqdm(x)
+            ])
+        else:
+            g_tmp = self._get_greens_function(r=x, derivative=derivative, fourier=fourier)
         if check_unique:
             g_tmp = g_tmp[inv].reshape(np.asarray(r).shape + (derivative + 1) * (3,))
         return g_tmp
