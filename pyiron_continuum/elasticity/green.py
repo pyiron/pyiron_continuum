@@ -38,7 +38,7 @@ class Green:
     The Fourier transform of this equation can be analytically solved for the isotropic elasticity
     theory. For the anisotropic case, the integration along the azimuthal angle is required.
     """
-    def get_greens_function(self, r, derivative=0, fourier=False):
+    def _get_greens_function(self, r, derivative=0, fourier=False):
         """
         Args:
             r ((n,3)-array): Positions for which to calculate the Green's function
@@ -50,6 +50,25 @@ class Green:
                 (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
         """
         raise NotImplementedError('get_greens_function must be defined in the child class')
+
+    def get_greens_function(self, r, derivative=0, fourier=False, check_unique=False):
+        """
+        Args:
+            r ((n,3)-array): Positions for which to calculate the Green's function
+            derivative (int): The order of the derivative. Ignored if `fourier=True`
+            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
+
+        Returns:
+            (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
+                (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
+        """
+        x = np.array(r)
+        if check_unique:
+            x, inv = np.unique(x.reshape(-1, 3), axis=0, return_inverse=True)
+        g_tmp = self._get_greens_function(r=x, derivative=derivative, fourier=fourier)
+        if check_unique:
+            g_tmp = g_tmp[inv].reshape(np.asarray(r).shape + (derivative + 1) * (3,))
+        return g_tmp
 
 
 class Isotropic(Green):
@@ -156,17 +175,7 @@ class Isotropic(Green):
         v[distance_condition] *= 0
         return v
 
-    def get_greens_function(self, r, derivative=0, fourier=False):
-        """
-        Args:
-            r ((n,3)-array): Positions for which to calculate the Green's function
-            derivative (int): The order of the derivative. Ignored if `fourier=True`
-            fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
-
-        Returns:
-            (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
-                (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
-        """
+    def _get_greens_function(self, r, derivative=0, fourier=False):
         if fourier:
             return self.G_fourier(r)
         elif derivative == 0:
@@ -288,7 +297,7 @@ class Anisotropic(Green):
         results -= np.einsum('...s,...ir->...isr', self.T, self.Ms)
         return results
 
-    def get_greens_function(self, r, derivative=0, fourier=False):
+    def _get_greens_function(self, r, derivative=0, fourier=False):
         self.r = np.asarray(r)
         if fourier:
             G = np.einsum(
