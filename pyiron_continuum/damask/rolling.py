@@ -13,7 +13,7 @@ dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, dir)
 
 from damaskjob import DAMASK
-# from damask import regridding as rgg
+import regrid as rgg
 from damask import Result
 from damask import Config
 from factory import DamaskLoading
@@ -27,20 +27,13 @@ class ROLLING(DAMASK):
     def __init__(self, project, job_name):
         """Create a new DAMASK type job for rolling"""
         super().__init__(project=project, job_name=job_name)
-
-    def rolling_parameters(self, number_passes, height_reduction, rolling_speed, contact_length, increments,
-                           regridding=False):
-        self._number_passes = number_passes
-        self._height_reduction = height_reduction
-        self._rolling_speed = rolling_speed
-        self._contact_length = contact_length
-        self._regridding = regridding
-        self._increments = increments
+        self.IsFirstRolling = True
+        self.RollingInstance = 0
 
     def loading_discretization(self, rolltimes, filename):
         time = rolltimes * self._height_reduction / (self._rolling_speed * self._number_passes)
 
-        load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
+        self.load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
         dotF = [['x', 0, 0],
                 [0, 0, 0],
                 [0, 0, -1.0 * self._rolling_speed]]
@@ -52,13 +45,134 @@ class ROLLING(DAMASK):
                     'discretization': {'t': time, 'N': self._increments * rolltimes},
                     'f_out': 5,
                     'f_restart': 5}
-        load_case['loadstep'].append(loadstep)
+        self.load_case['loadstep'].append(loadstep)
         self._loadfilename = filename
-        self._loading = load_case
+        self._loading = self.load_case
         file_path = os.path.join(self.working_directory, filename + '.yaml')
         self._loading.save(file_path)
         # self.input.loading = self._loading
         print(self._loading)
+
+    def executeRolling(self,reduction_height,reduction_speed,reduction_outputs,regrid=False,damask_exe=''):
+        if self.IsFirstRolling:
+            # for the first rolling step, no regridding is required
+            self.RollingInstance = 1
+            self.IsFirstRolling = False
+            self.ResultsFile =[]
+
+            # clean all the results file
+            args='rm -rf *.vti *.yaml *.hdf5 *.log *.C_ref *.sta'
+            subprocess.run(args, shell=True, capture_output=True)
+
+            self._write_material()
+            self._write_geometry()
+
+            self.load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
+            reduction_time = reduction_height/reduction_speed
+            dotF = [['x', 0, 0],
+                    [0, 0, 0],
+                    [0, 0, -1.0 * reduction_speed]]
+            P = [[0, 'x', 'x'],
+                 ['x', 'x', 'x'],
+                 ['x', 'x', 'x']]
+            loadstep = {'boundary_conditions': {'mechanical': {'P': P,
+                                                               'dot_F': dotF}},
+                                                               'discretization': {'t': reduction_time, 'N': reduction_outputs},
+                                                               'f_out': 5,
+                                                               'f_restart': 5}
+            self.load_case['loadstep'].append(loadstep)
+            filename= 'load'
+            self._loadfilename = filename
+            self._loading = self.load_case
+            file_path = os.path.join(self.working_directory, filename + '.yaml')
+            print('working dir:',self.working_directory)
+            if not os.path.exists(self.working_directory):
+                os.makedirs(self.working_directory)
+            self._loading.save(file_path)
+            print(self._loading)
+
+            self.geom_name='damask'
+            self.load_name='load'
+
+
+            if len(damask_exe)<11:
+                args=f'DAMASK_grid -g {self.geom_name}.vti -l load.yaml > FirstRolling.log'
+            else:
+                args=f'{damask_exe} -g {self.geom_name}.vti -l load.yaml > FirstRolling.log'
+            print('Start the first rolling test ...')
+            os.chdir(self.working_directory)
+            subprocess.run(args, shell=True, capture_output=True)
+            print('First rolling test is done !')
+            self.ResultsFile.append(f'{self.geom_name}_{self.load_name}.hdf5')
+        else:
+            # for multiple rolling test
+            self.RollingInstance += 1
+            reduction_time = reduction_height/reduction_speed
+            dotF = [['x', 0, 0],
+                    [0, 0, 0],
+                    [0, 0, -1.0 * reduction_speed]]
+            P = [[0, 'x', 'x'],
+                 ['x', 'x', 'x'],
+                 ['x', 'x', 'x']]
+            loadstep = {'boundary_conditions': {'mechanical': {'P': P,
+                                                               'dot_F': dotF}},
+                                                               'discretization': {'t': reduction_time, 'N': reduction_outputs},
+                                                               'f_out': 5,
+                                                               'f_restart': 5}
+            self.load_case['loadstep'].append(loadstep)
+            load_name= 'load_rolling%d'%(self.RollingInstance)
+            self.load_name_old = self.load_name
+            self.load_name = load_name
+            self._loading = self.load_case
+            file_path = os.path.join(self.working_directory, load_name + '.yaml')
+            self._loading.save(file_path)
+            if regrid:
+                self.load_name = self.load_name_old
+                self.regridding(1.5)
+                self.load_name = load_name
+                self.geom_name = self.regrid_geom_name
+                if len(damask_exe)<11:
+                    args=f'DAMASK_grid -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml > Rolling-%d.log'%(self.RollingInstance)
+                else:
+                    args=f'{damask_exe} -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml > Rolling-%d.log'%(self.RollingInstance)
+            else:
+                if len(damask_exe)<11:
+                    args=f'DAMASK_grid -g {self.geom_name}.vti -l {self.load_name}.yaml > Rolling-%d.log'%(self.RollingInstance)
+                else:
+                    args=f'{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml > Rolling-%d.log'%(self.RollingInstance)
+            print('Start the rolling-%d test ...'%(self.RollingInstance))
+            os.chdir(self.working_directory)
+            subprocess.run(args, shell=True, capture_output=True)
+            print('Rolling-%d test is done !'%(self.RollingInstance))
+            self.ResultsFile.append(f'{self.geom_name}_{self.load_name}.hdf5')
+
+    
+    def postProcess(self):
+        self._results=Result(f'{self.geom_name}_{self.load_name}.hdf5')
+        self._results.add_stress_Cauchy()
+        self._results.add_strain()
+        self._results.add_equivalent_Mises('sigma')
+        self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
+        self.stress = self.average_spatio_temporal_tensors('sigma')
+        self.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
+        self.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
+        self.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+
+    def plotStressStrainCurve(self,xmin,xmax,ymin,ymax):
+        plt.plot(self.strain_von_Mises,self.stress_von_Mises)
+        plt.xlim([xmin,xmax])
+        plt.ylim([ymin,ymax])
+
+    def regridding(self,scale):
+        map_0to_rg, cells_rg, size_rg, increment_title = rgg.regrid_Geom(self.working_directory,self.geom_name, self.load_name,
+                                                                        seed_scale=scale,
+                                                                        increment='last')
+        
+        self.regrid_grid,self.regrid_geom_name=rgg.write_RegriddedGeom(self.working_directory,self.geom_name, increment_title, map_0to_rg, cells_rg, size_rg)
+
+        rgg.write_RegriddedHDF5(self.working_directory,self.geom_name, self.regrid_geom_name, self.load_name, increment_title, map_0to_rg, cells_rg)
+
+        self.regrid_hdf5file = f'{self.geom_name}_{self.load_name}_restart_regridded_{increment_title}.hdf5'
 
     # def run_rolling(self):
     #     print('working direction is:', self.working_directory)

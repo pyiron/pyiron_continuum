@@ -5,7 +5,7 @@ import scipy
 import damask
 import subprocess
 
-def regrid_Geom(geom_name,load_name,seed_scale = 1.0,increment='last'):
+def regrid_Geom(work_dir,geom_name,load_name,seed_scale = 1.0,increment='last'):
     '''
     Regrid the geometry
     It requires the previous geom.vti and result.hdf5
@@ -19,7 +19,8 @@ def regrid_Geom(geom_name,load_name,seed_scale = 1.0,increment='last'):
     gridCoords_point_initial_matrix = damask.grid_filters.coordinates0_point(cells_0,size_0)
     gridCoords_point_initial = gridCoords_point_initial_matrix.reshape((-1,gridCoords_point_initial_matrix.shape[-1]), order = 'F')
 
-    d5Out = damask.Result(f'{geom_name}_{load_name}.hdf5')
+    os.chdir(f'{work_dir}')
+    d5Out = damask.Result(f'{work_dir}/{geom_name}_{load_name}.hdf5')
 
     if increment == 'last':
         inc=int(d5Out.increments[-1][10::]) # take the increment number
@@ -64,10 +65,11 @@ def regrid_Geom(geom_name,load_name,seed_scale = 1.0,increment='last'):
     print('all the information are ready !')
     return map_0to_rg, cells_rg, size_rg, increment_title
 
-def write_RegriddedGeom(geom_name, increment_title, map_0to_rg, cells_rg, size_rg):
+def write_RegriddedGeom(work_dir,geom_name, increment_title, map_0to_rg, cells_rg, size_rg):
     '''
     Save the regridded geometry to a new vti file
     '''
+    os.chdir(f'{work_dir}')
     grid_0 = damask.Grid.load(geom_name+'.vti')
     material_rg = grid_0.material.flatten('F')[map_0to_rg].reshape(cells_rg, order = 'F')
     grid = damask.Grid(material_rg, size_rg, grid_0.origin, comments=grid_0.comments \
@@ -76,11 +78,12 @@ def write_RegriddedGeom(geom_name, increment_title, map_0to_rg, cells_rg, size_r
     regrid_geom_name = f'{geom_name}_regridded_{increment_title}'
     return grid,regrid_geom_name
 
-def write_RegriddedHDF5(geom_name, regrid_geom_name, load_name, increment_title, map_0to_rg, cells_rg):
+def write_RegriddedHDF5(work_dir,geom_name, regrid_geom_name, load_name, increment_title, map_0to_rg, cells_rg):
     '''
     Write out the new hdf5 file based on the regridded geometry and deformation info
     '''
     isElastic = False
+    os.chdir(f'{work_dir}')
     fNameResults_0  = f"{geom_name}_{load_name}.hdf5"
     fNameRestart_0  = f"{geom_name}_{load_name}_restart.hdf5"
     fNameRestart_rg = f'{geom_name}_{load_name}_restart_regridded_{increment_title}.hdf5'
@@ -171,6 +174,7 @@ def write_RegriddedHDF5(geom_name, regrid_geom_name, load_name, increment_title,
             return map_0toRg_phaseBased
 
         if not isRgHistoryExist:
+            os.chdir(f'{work_dir}')
             with h5py.File('regridding.hdf5', 'w') as fRgHistory_0:
                 path = '/map/0'
                 fRgHistory_0.create_dataset(path, data = map_0to_rg)
@@ -205,7 +209,7 @@ def write_RegriddedHDF5(geom_name, regrid_geom_name, load_name, increment_title,
 
                 fRgHistory_0.create_dataset(path, data = map_0toRg_phaseBased)
                 print(f'The regridding history file is extended (index = {historyRg_idx+1}).')
-    
+    os.chdir(f'{work_dir}')
     args=f'cp {geom_name}_{load_name}_restart_regridded_{increment_title}.hdf5 {regrid_geom_name}_{load_name}_restart_regridded_{increment_title}.hdf5'
     subprocess.run(args, shell=True, capture_output=True)
     print('------------------------\nRegridding process is completed.')
