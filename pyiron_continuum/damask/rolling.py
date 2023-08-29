@@ -129,7 +129,7 @@ class ROLLING(DAMASK):
             self._loading.save(file_path)
             if regrid:
                 self.load_name = self.load_name_old
-                self.regridding(1.5)
+                self.regridding(1.01)
                 self.load_name = load_name
                 self.geom_name = self.regrid_geom_name
                 if len(damask_exe)<11:
