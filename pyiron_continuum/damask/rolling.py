@@ -64,6 +64,10 @@ class ROLLING(DAMASK):
             args='rm -rf *.vti *.yaml *.hdf5 *.log *.C_ref *.sta'
             subprocess.run(args, shell=True, capture_output=True)
 
+            print('working dir:',self.working_directory)
+            if not os.path.exists(self.working_directory):
+                os.makedirs(self.working_directory)
+
             self._write_material()
             self._write_geometry()
 
@@ -85,9 +89,6 @@ class ROLLING(DAMASK):
             self._loadfilename = filename
             self._loading = self.load_case
             file_path = os.path.join(self.working_directory, filename + '.yaml')
-            print('working dir:',self.working_directory)
-            if not os.path.exists(self.working_directory):
-                os.makedirs(self.working_directory)
             self._loading.save(file_path)
             print(self._loading)
 
