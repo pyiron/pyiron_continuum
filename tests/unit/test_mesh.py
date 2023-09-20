@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import unittest
 from pyiron_base._tests import PyironTestCase
 from pyiron_continuum.mesh import (
     RectMesh,
@@ -281,3 +282,6 @@ class TestRectMesh(PyironTestCase):
 
         mesh2 = RectMesh([1, 1], 2)
         self.assertRaises(NotImplementedError, mesh2.curl, mesh2.mesh)  # Should not work for dimensions other than 3
+
+if __name__ == "__main__":
+    unittest.main()
