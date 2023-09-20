@@ -6,7 +6,6 @@
 Store Fenics job plotting routines as a helper to declutter the main class.
 """
 from pyiron_base import ImportAlarm
-from matplotlib.docstring import copy as copy_docstring
 from pyiron_continuum.fenics.fix_plotting import plot as modified_fenics_plot
 with ImportAlarm(
         'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
@@ -37,9 +36,10 @@ class Plot:
         """Initialize the plot helper and store the parent job."""
         self._job = job
 
-    @copy_docstring(modified_fenics_plot)
     def plot(self, object, *args, **kwargs):
         return modified_fenics_plot(object, *args, **kwargs)
+
+    plot.__doc__ = modified_fenics_plot.__doc__
 
     def __call__(self, object, *args, **kwargs):
         return self.plot(object, *args, **kwargs)
