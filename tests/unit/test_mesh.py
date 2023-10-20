@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import unittest
 from pyiron_base._tests import PyironTestCase
 from pyiron_continuum.mesh import (
     RectMesh,
@@ -52,7 +53,7 @@ class TestDecorators(PyironTestCase):
         self.assertEqual(2, method(self.mesh, scalar_field, some_kwarg=2), msg="Pass kwargs")
         self.assertEqual(1, method(self.mesh, scalar_field.tolist()), msg="Should work with listlike stuff too")
         self.assertRaises(TypeError, method, self.mesh, np.ones(2))  # Reject the wrong shape
-        self.assertRaises(TypeError, method, self.mesh, "not even numeric")  # Duh
+        self.assertRaises(ValueError, method, self.mesh, "not even numeric")  # Duh
 
     def test_takes_vector_field(self):
         vector_field = self.give_vector(self.mesh)
@@ -281,3 +282,6 @@ class TestRectMesh(PyironTestCase):
 
         mesh2 = RectMesh([1, 1], 2)
         self.assertRaises(NotImplementedError, mesh2.curl, mesh2.mesh)  # Should not work for dimensions other than 3
+
+if __name__ == "__main__":
+    unittest.main()
