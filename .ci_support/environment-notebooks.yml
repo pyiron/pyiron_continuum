@@ -22,3 +22,4 @@ dependencies:
   - seaborn
   - scikit-image
   - papermill
+  - jupyter
