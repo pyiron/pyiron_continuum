@@ -10,7 +10,7 @@ dependencies:
   - damask =3.0.0a7
   - fenics =2019.1.0
   - fenics =2019.1.0=*_34
-  - mshr =2019.1.0=*_7
+  - mshr =2019.1.0=*_8
   - k3d
   - matplotlib
   - numpy
