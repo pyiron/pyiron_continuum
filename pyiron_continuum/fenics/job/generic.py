@@ -22,7 +22,6 @@ import warnings
 import numpy as np
 from pyiron_continuum.fenics.factory import DomainFactory, BoundaryConditionFactory
 from pyiron_continuum.fenics.plot import Plot
-from matplotlib.docstring import copy as copy_docstring
 
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
@@ -314,7 +313,6 @@ class Fenics(GenericJob):
         self.to_hdf()
         self.status.finished = True
 
-#    @copy_docstring(FEN.project)
     def project_function(self, v, **kwargs):
         """
         Project v onto the job's element, V.
@@ -328,7 +326,6 @@ class Fenics(GenericJob):
         """
         return FEN.project(v, V=self.V, **kwargs)
 
-#    @copy_docstring(FEN.interpolate)
     def interpolate_function(self, v):
         """
         Interpolate v on the job's element, V.
@@ -364,53 +361,41 @@ class Fenics(GenericJob):
     def sympy(self):
         return sympy
 
-#    @copy_docstring(FEN.Constant)
     def Constant(self, value):
         return FEN.Constant(value)
 
-#    @copy_docstring(FEN.Expression)
     def Expression(self, *args, **kwargs):
         return FEN.Expression(*args, **kwargs)
 
-#   @copy_docstring(FEN.Identity)
     def Identity(self, dim):
         return FEN.Identity(dim)
 
     @property
-#    @copy_docstring(FEN.dx)
     def dx(self):
         return FEN.dx
 
     @property
-#    @copy_docstring(FEN.ds)
     def ds(self):
         return FEN.ds
 
-#    @copy_docstring(FEN.grad)
     def grad(self, arg):
         return FEN.grad(arg)
 
- #   @copy_docstring(FEN.nabla_grad)
     def nabla_grad(self, arg):
         return FEN.nabla_grad(arg)
 
- #   @copy_docstring(ufl_nabla_div)
     def nabla_div(self, f):
         return ufl_nabla_div(f)
 
-#  @copy_docstring(FEN.inner)
     def inner(self, a, b):
         return FEN.inner(a, b)
 
-#    @copy_docstring(FEN.dot)
     def dot(self, arg1, arg2):
         return FEN.dot(arg1, arg2)
 
-#    @copy_docstring(FEN.tr)
     def tr(self, A):
         return FEN.tr(A)
 
-#    @copy_docstring(FEN.sqrt)
     def sqrt(self, f):
         return FEN.sqrt(f)
 
