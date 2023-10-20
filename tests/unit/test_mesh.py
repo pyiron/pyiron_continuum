@@ -53,7 +53,7 @@ class TestDecorators(PyironTestCase):
         self.assertEqual(2, method(self.mesh, scalar_field, some_kwarg=2), msg="Pass kwargs")
         self.assertEqual(1, method(self.mesh, scalar_field.tolist()), msg="Should work with listlike stuff too")
         self.assertRaises(TypeError, method, self.mesh, np.ones(2))  # Reject the wrong shape
-        self.assertRaises(TypeError, method, self.mesh, "not even numeric")  # Duh
+        self.assertRaises(ValueError, method, self.mesh, "not even numeric")  # Duh
 
     def test_takes_vector_field(self):
         vector_field = self.give_vector(self.mesh)
