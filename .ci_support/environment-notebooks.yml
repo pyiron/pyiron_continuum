@@ -7,7 +7,7 @@ dependencies:
   - codacy-coverage
   - damask-mesh =3.0.0a8
   - damask-grid =3.0.0a8
-  - damask =3.0.0a7
+  - damask =3.0.0a8
   - fenics =2019.1.0
   - fenics =2019.1.0=*_42
   - mshr =2019.1.0=*_9
