@@ -9,3 +9,4 @@ dependencies:
 - pyiron_base =0.6.9
 - scipy =1.11.4
 - sympy =1.12
+- python-blosc2  # required by tables

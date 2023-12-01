@@ -36,7 +36,7 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._damask_hdf = os.path.join(self.working_directory, "damask_loading.hdf5")
+        self._damask_hdf = os.path.join(self.working_directory, "damask_loading_material.hdf5")
         self._material = None
         self._loading = None
         self._grid = None
@@ -91,14 +91,14 @@ class DAMASK(TemplateJob):
         self._load_results()
         self.output.damask = self._results
 
-    def _load_results(self, file_name="damask_loading.hdf5"):
+    def _load_results(self, file_name="damask_loading_material.hdf5"):
         """
             loads the results from damask hdf file
             Args:
                 file_name(str): path to the hdf file
         """
         if self._results is None:
-            if file_name != "damask_loading.hdf5":
+            if file_name != "damask_loading_material.hdf5":
                 self._damask_hdf = os.path.join(self.working_directory, file_name)
 
         self._results = Result(self._damask_hdf)
