@@ -13,6 +13,7 @@ with ImportAlarm(
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import subprocess
 
 
 __author__ = "Muhammad Hassani"
@@ -91,15 +92,25 @@ class DAMASK(TemplateJob):
         self._load_results()
         self.output.damask = self._results
 
-    def _load_results(self, file_name="damask_loading.hdf5"):
+    def testrun(self):
+        cwd = os.getcwd() # get the current dir
+        os.makedirs(self.working_directory, exist_ok=True)
+        os.chdir(self.working_directory) # cd into the working dir
+        self.write_input()
+        args='DAMASK_grid -m material.yaml -l loading.yaml -g damask.vti'
+        subprocess.run(args, shell=True, capture_output=True)
+        os.chdir(cwd) # cd back to the notebook dir
+        self._load_results()
+
+    def _load_results(self, file_name="damask_loading_material.hdf5"):
         """
             loads the results from damask hdf file
             Args:
                 file_name(str): path to the hdf file
         """
         if self._results is None:
-            if file_name != "damask_loading.hdf5":
-                self._damask_hdf = os.path.join(self.working_directory, file_name)
+            file_name="damask_loading_material.hdf5"
+        self._damask_hdf = os.path.join(self.working_directory, file_name)
 
         self._results = Result(self._damask_hdf)
         self._results.add_stress_Cauchy()
