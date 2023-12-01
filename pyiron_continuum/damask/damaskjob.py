@@ -36,7 +36,7 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._damask_hdf = os.path.join(self.working_directory, "damask_loading.hdf5")
+        self._damask_hdf = os.path.join(self.working_directory, "damask_loading_material.hdf5")
         self._material = None
         self._loading = None
         self._grid = None
