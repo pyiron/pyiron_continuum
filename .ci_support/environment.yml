@@ -6,7 +6,7 @@ dependencies:
 - codacy-coverage
 - matplotlib =3.8.2
 - numpy =1.26.2
-- pyiron_base =0.6.9
+- pyiron_base =0.6.11
 - scipy =1.11.4
 - sympy =1.12
-- python-blosc2  # required by tables
+- python-blosc2
