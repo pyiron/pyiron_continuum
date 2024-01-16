@@ -15,6 +15,7 @@ ProjectBase.register_tools('continuum', ContinuumTools)
 JOB_CLASS_DICT['Fenics'] = 'pyiron_continuum.fenics.job.generic'
 JOB_CLASS_DICT['FenicsLinearElastic'] = 'pyiron_continuum.fenics.job.elastic'
 JOB_CLASS_DICT['DAMASK'] = 'pyiron_continuum.damask.damaskjob'
+JOB_CLASS_DICT['ROLLING'] = 'pyiron_continuum.damask.rolling'
 JOB_CLASS_DICT['TISE'] = 'pyiron_continuum.schroedinger.schroedinger'
 
 from ._version import get_versions
