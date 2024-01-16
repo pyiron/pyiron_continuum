@@ -60,14 +60,14 @@ class ROLLING(DAMASK):
             self.IsFirstRolling = False
             self.ResultsFile = []
 
+            print('working dir:', self.working_directory)
+            if not os.path.exists(self.working_directory):
+                os.makedirs(self.working_directory)
+            
             # clean all the results file
             os.chdir(self.working_directory)
             args = 'rm -rf *.vti *.yaml *.hdf5 *.log *.C_ref *.sta'
             subprocess.run(args, shell=True, capture_output=True)
-
-            print('working dir:', self.working_directory)
-            if not os.path.exists(self.working_directory):
-                os.makedirs(self.working_directory)
 
             self._write_material()
             self._write_geometry()
