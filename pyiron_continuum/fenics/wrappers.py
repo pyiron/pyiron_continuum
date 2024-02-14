@@ -19,6 +19,7 @@ from mshr import (
 )
 from dolfin.cpp import mesh as FenicsMesh
 from pyiron_base import HasStorage
+from typing import List, Dict
 
 
 class StringInputParser:
@@ -26,7 +27,7 @@ class StringInputParser:
     Not fool proof, but does its best to ensure that a string is valid and will execute in the scope of `known_elements`
     (provided by the developer at instantiation) and `**kwargs` (provided by the user at call).
     """
-    def __init__(self, known_elements):
+    def __init__(self, known_elements, known_domains=None):
         self._splitting_elements = [
             r"\*?\*", r"\+", r"-", r"/",
             r"\(", r"\)", r",", r"\[", r"\]",
@@ -35,6 +36,7 @@ class StringInputParser:
             r"'", r'"'
         ]
         self._known_elements = known_elements
+        self._known_domains = [] if known_domains is None else known_domains
 
     def __call__(self, input_string: str, __verbose=True, **kwargs):
         self._test_kwargs(kwargs, __verbose)
@@ -43,6 +45,10 @@ class StringInputParser:
     @property
     def known_elements(self):
         return [k.__name__ if hasattr(k, '__name__') else k for k in self._known_elements]
+
+    @property
+    def known_domains(self):
+        return self._known_domains
 
     def _test_kwargs(self, kwargs, __verbose):
         failures = {}
@@ -75,6 +81,8 @@ class StringInputParser:
                 continue
             elif e in kwargs.keys():
                 continue
+            elif any([e.startswith(kd + '.') for kd in self.known_domains]):
+                continue
             else:
                 try:
                     float(e)
@@ -101,18 +109,34 @@ class FenicsWrapper(HasStorage, ABC):
     the input into a fenics object (the `_generate` method).
     """
 
-    def __init__(self, input_string="", **kwargs):
+    def __init__(self, **known_domains):
         super().__init__()
         self._as_fenics = None
-        self.set(input_string, **kwargs)
+        self._known_domains = known_domains
+        self._parser = StringInputParser(known_elements=self.known_elements, known_domains=self.known_domains.keys())
+        self.set("")
 
     @property
-    @abstractmethod
-    def _parser(self) -> StringInputParser:
-        pass
+    # @abstractmethod
+    def known_elements(self) -> List:
+        """
+        Special parseable terms allowed to appear in the input string, e.g. classes or functions declared at the  module
+         level.
+        """
+        return []
 
-    def _parse(self, input_string, **kwargs):
-        return self._parser(input_string, **kwargs)
+    @property
+    # @abstractmethod
+    def known_domains(self) -> Dict:
+        """
+        Special domains which hold parseable data, allowing variables like `my_known_domain.foo`, assuming
+        `my_known_domain` is a known domain.
+
+        Warning:
+            It is the responsibility of the developer to ensure that known domains are appropriately passed to the
+            `_parser` attribute, but then they will be automatically declared in local scope in the `_generate` method.
+        """
+        return self._known_domains
 
     @abstractmethod
     def _generate(self, *args, **kwargs):
@@ -122,7 +146,7 @@ class FenicsWrapper(HasStorage, ABC):
         self._as_fenics = self._generate(*args, **kwargs)
 
     def set(self, input_string, **kwargs):
-        self._parse(input_string, **kwargs)
+        self._parser(input_string, **kwargs)
         self.storage.input_string = input_string
         self.storage.kwargs = kwargs
         self._as_fenics = None
@@ -143,11 +167,6 @@ class FenicsWrapper(HasStorage, ABC):
     def __str__(self):
         return self.input_string
 
-    @property
-    def known_elements(self):
-        """Special parseable terms allowed to appear in the input string."""
-        return self._parser.known_elements
-
 
 class Condition(FenicsWrapper):
     """
@@ -155,8 +174,8 @@ class Condition(FenicsWrapper):
     The input string defines the condition to be evaluated, and all kwargs are exec'd beforehand.
     """
     @property
-    def _parser(self):
-        return StringInputParser(known_elements=["x", near])
+    def known_elements(self) -> List:
+        return ["x", near]
 
     def _generate(self):
         for k, v in self.kwargs.items():
@@ -179,8 +198,8 @@ class Value(FenicsWrapper):
     directly to the fenics class itself.
     """
     @property
-    def _parser(self) -> StringInputParser:
-        return StringInputParser(known_elements=["x", "exp", "pow"])
+    def known_elements(self) -> List:
+        return ["x", "exp", "pow"]
 
     def _generate(self):
         if 'degree' in self.kwargs.keys():
@@ -226,12 +245,12 @@ class Mesh(FenicsWrapper):
     are exec'd beforehand.
     """
     @property
-    def _parser(self):
-        return StringInputParser(known_elements=[
+    def known_elements(self) -> List:
+        return [
             Point,
             BoxMesh, RectangleMesh, UnitSquareMesh, UnitCubeMesh, UnitDiscMesh, UnitTriangleMesh, UnitIntervalMesh,
             generate_mesh, Tetrahedron, Box, Rectangle, Circle
-        ])
+        ]
 
     def _generate(self):
         for k, v in self.kwargs.items():
@@ -319,29 +338,21 @@ class Solver:
         return self._V_g
 
 
-class NoBrakes:
-    def __init__(self):
-        return
-
-    def __call__(self, input_string, **kwargs):
-        return
-
-
 class PartialEquation(FenicsWrapper):
     @property
-    def _parser(self):
-        return NoBrakes()
-        # return StringInputParser(known_elements=[
-        #     Constant, Expression, 'pow', 'exp',
-        #     'dx', 'ds', dot, inner, grad, nabla_grad,
-        #     'u', 'v', 'u_n',
-        # ])
+    def known_elements(self) -> List:
+        return [
+            'dx', 'ds', dot, inner, grad, nabla_grad,
+            'u', 'v', 'u_n',
+        ]
 
     def _generate(self, solver: Solver):
         dx = FEN.dx
         ds = FEN.ds
         u = solver.u
         v = solver.v
+        for k, domain in self.known_domains.items():
+            exec(f'{k} = domain()')
         for k, v in self.kwargs.items():
             exec(f'{k} = {v}')
         return eval(self.input_string)

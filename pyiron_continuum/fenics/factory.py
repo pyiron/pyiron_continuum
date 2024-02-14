@@ -8,6 +8,8 @@ Factories for Fenics-related object creation.
 
 from pyiron_base import ImportAlarm, PyironFactory, HasStorage
 from pyiron_continuum.fenics.wrappers import DirichletBC, Value, Condition
+from abc import ABC, abstractmethod
+from argparse import Namespace
 
 with ImportAlarm(
     "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
@@ -405,16 +407,10 @@ class NotSetCorrectlyError(Exception):
     pass
 
 
-class BoundaryConditions(PyironFactory, HasStorage):
+class StorageFactory(PyironFactory, HasStorage, ABC):
     def __init__(self):
         PyironFactory.__init__(self)
         HasStorage.__init__(self)
-
-    def append(self, value_string, condition_string, condition_kwargs=None, **value_kwargs):
-        expression = Value(value_string, **value_kwargs)
-        condition_kwargs = condition_kwargs if condition_kwargs is not None else {}
-        condition = Condition(condition_string, **condition_kwargs)
-        self.storage.append(DirichletBC(expression, condition))
 
     def list(self):
         return [str(v) for v in self.storage.values()]
@@ -425,5 +421,36 @@ class BoundaryConditions(PyironFactory, HasStorage):
     def pop(self, i):
         return self.storage.pop(i)
 
+    @abstractmethod
+    def append(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+class BoundaryConditions(StorageFactory):
+
+    def append(self, value_string, condition_string, condition_kwargs=None, **value_kwargs):
+        expression = Value()
+        expression.set(value_string, **value_kwargs)
+        condition_kwargs = condition_kwargs if condition_kwargs is not None else {}
+        condition = Condition()
+        condition.set(condition_string, **condition_kwargs)
+        self.storage.append(DirichletBC(expression, condition))
+
     def __call__(self, function_space):
         return [bc(function_space) for bc in self.storage.values()]
+
+
+class Expressions(StorageFactory):
+
+    def append(self, name, input_string, **kwargs):
+        expression = Value()
+        expression.set(input_string, **kwargs)
+        setattr(self.storage, name, expression)
+
+    def __call__(self):
+        # TODO: nicer as namespace?
+        return Namespace(**{k: v() for k, v in self.storage.items()})
