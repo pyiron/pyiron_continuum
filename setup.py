@@ -23,28 +23,27 @@ setup(
         'Intended Audience :: Science/Research',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11'
     ],
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
     install_requires=[
-        'matplotlib==3.6.2',
-        'numpy==1.23.5',
-        'pyiron_base==0.5.30',
-        'scipy==1.9.3',
-        'sympy==1.11.1'
+        'matplotlib==3.8.2',
+        'numpy==1.26.4',
+        'pyiron_base==0.7.5',
+        'scipy==1.12.0',
+        'sympy==1.12'
     ],
     extras_require={
         'fenics': [
             'fenics==2019.1.0',
             'mshr==2019.1.0',
         ],
-        'schroedinger': ['k3d==2.14.5']
+        'schroedinger': ['k3d==2.16.0']
     },
     cmdclass=versioneer.get_cmdclass(),
     

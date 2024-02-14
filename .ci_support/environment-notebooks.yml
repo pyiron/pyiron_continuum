@@ -1,24 +1,25 @@
 channels:
   - conda-forge
 dependencies:
-  - ase
+  - ase =3.22.1
   - coveralls
   - coverage
   - codacy-coverage
-  - damask-mesh
-  - damask-grid
-  - damask =3.0.0a5
+  - damask-mesh =3.0.0a8
+  - damask-grid =3.0.0a8
+  - damask =3.0.0a8
   - fenics =2019.1.0
-  - k3d
-  - matplotlib
-  - mshr =2019.1.0
-  - numpy
-  - pyiron
-  - pyiron-data >=0.0.17
-  - python-damask
-  - pyvista
-  - scipy
-  - seaborn
-  - superlu_dist=6.2.0=*_4
-  - scikit-image
+  - fenics =2019.1.0=*_42
+  - mshr =2019.1.0=*_9
+  - k3d =2.16.0
+  - matplotlib =3.8.0
+  - numpy =1.26.3
+  - pyiron =0.5.0
+  - pyiron-data =0.0.26
+  - python-damask =3.0.0a8
+  - pyvista =0.42.3
+  - scipy =1.11.4
+  - seaborn =0.13.1
+  - scikit-image =0.22.0
   - papermill
+  - jupyter
