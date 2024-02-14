@@ -25,6 +25,7 @@ from pyiron_continuum.fenics.wrappers import Mesh, PartialEquation, Solver
 from pyiron_continuum.fenics.plot import Plot
 from typing import List, Type
 
+
 __author__ = "Muhammad Hassani, Liam Huber"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
@@ -217,10 +218,103 @@ class Fenics(TemplateJob):
         self.to_hdf()
         self.status.finished = True
 
+    def project_function(self, v, **kwargs):
+        """
+        Project v onto the job's element, V.
+
+        Args:
+            v (?): The function to project.
+            **kwargs: Valid `fenics.project` kwargs (except `V`, which is provided automatically).
+
+        Returns:
+            (?): Projected function.
+        """
+        return FEN.project(v, V=self.V, **kwargs)
+
+    def interpolate_function(self, v):
+        """
+        Interpolate v on the job's element, V.
+
+        Args:
+            v (?): The function to interpolate.
+
+        Returns:
+            (?): Interpolated function.
+        """
+        return FEN.interpolate(v, V=self.V)
+
+    def to_hdf(self, hdf=None, group_name=None):
+        super().to_hdf(hdf=hdf, group_name=group_name)
+        self.input.to_hdf(hdf=self.project_hdf5)
+        self.output.to_hdf(hdf=self.project_hdf5)
+
+    def from_hdf(self, hdf=None, group_name=None):
+        super().from_hdf(hdf=hdf, group_name=group_name)
+        self.input.from_hdf(hdf=self.project_hdf5)
+        self.output.from_hdf(hdf=self.project_hdf5)
+
+    # Convenience bindings:
+    @property
+    def fenics(self):
+        return FEN
+
+    @property
+    def mshr(self):
+        return mshr
+
     @property
     def sympy(self):
         return sympy
 
+    def Constant(self, value):
+        return FEN.Constant(value)
+
+    def Expression(self, *args, **kwargs):
+        return FEN.Expression(*args, **kwargs)
+
+    def Identity(self, dim):
+        return FEN.Identity(dim)
+
     @property
-    def fenics(self):
-        return FEN
+    def dx(self):
+        return FEN.dx
+
+    @property
+    def ds(self):
+        return FEN.ds
+
+    def grad(self, arg):
+        return FEN.grad(arg)
+
+    def nabla_grad(self, arg):
+        return FEN.nabla_grad(arg)
+
+    def nabla_div(self, f):
+        return ufl_nabla_div(f)
+
+    def inner(self, a, b):
+        return FEN.inner(a, b)
+
+    def dot(self, arg1, arg2):
+        return FEN.dot(arg1, arg2)
+
+    def tr(self, A):
+        return FEN.tr(A)
+
+    def sqrt(self, f):
+        return FEN.sqrt(f)
+
+
+class Creator:
+    def __init__(self, job):
+        self._job = job
+        self._domain = DomainFactory()
+        self._bc = BoundaryConditionFactory(job)
+
+    @property
+    def domain(self):
+        return self._domain
+
+    @property
+    def bc(self):
+        return self._bc
