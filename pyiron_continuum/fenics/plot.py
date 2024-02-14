@@ -45,10 +45,10 @@ class Plot:
         return self.plot(object, *args, **kwargs)
 
     def solution(self):
-        FEN.plot(self._job.solution)
+        FEN.plot(self._job.solver.solution)
 
     def mesh(self):
-        FEN.plot(self._job.mesh)
+        FEN.plot(self._job._mesh)
 
     @staticmethod
     def _nodes_to_2d(nodes, projection_axis):
@@ -111,7 +111,7 @@ class Plot:
         n_grid_x = n_grid_x or n_grid
         n_grid_y = n_grid_y or n_grid
 
-        nodes = self._job.mesh.coordinates() if nodes is None else nodes
+        nodes = self._job._mesh.coordinates() if nodes is None else nodes
         nodes = nodes.T
 
         projection_axis = -1 if projection_axis is None else projection_axis
@@ -167,7 +167,7 @@ class Plot:
         ax = fig.add_subplot(111, projection='3d')
 
         nodal_values = self._nodal_values_to_1d(nodal_values)
-        nodes = self._job.mesh.coordinates() if nodes is None else nodes
+        nodes = self._job._mesh.coordinates() if nodes is None else nodes
         if nodes.shape[1] != 3:
             raise ValueError("Expected nodes to have shape (n, 3)  but got {}".format(nodes.shape))
 

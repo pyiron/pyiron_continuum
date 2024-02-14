@@ -5,9 +5,19 @@
 """
 A job class for FEM linear elasticity with [fenics](https://fenicsproject.org/pub/tutorial/html/._ftut1008.html).
 """
+from pyiron_base import ImportAlarm
+with ImportAlarm(
+        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
+        'requirements. Please install it and try again.'
+) as fenics_alarm:
+    import fenics as FEN
+    from ufl import nabla_div as ufl_nabla_div
 
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.plot import Plot
+from pyiron_continuum.fenics.factory import SolverConfig
+from pyiron_continuum.fenics.wrappers import Solver
+import warnings
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -44,6 +54,7 @@ class FenicsLinearElastic(Fenics):
     def __init__(self, project, job_name):
         """Create a new Fenics type job for linear elastic problems"""
         super().__init__(project=project, job_name=job_name)
+        warnings.warn("This is no longer the case for LinearElasticity! Save and load away.")
         self._plot = ElasticPlot(self)
 
         self.input.bulk_modulus = 76
@@ -51,47 +62,56 @@ class FenicsLinearElastic(Fenics):
 
         self.output.von_Mises = []
 
-        self.V_class = self.fenics.VectorFunctionSpace
-
-        self.f = self.Constant((0, 0, 0))
-        self.T = self.Constant((0, 0, 0))
-
-    def epsilon(self, u):
-        return self.fenics.sym(self.nabla_grad(u))
-
-    def sigma(self, u):
-        lambda_ = self.input.bulk_modulus - (2 * self.input.shear_modulus / 3)
-        return lambda_ * self.nabla_div(u) * self.Identity(u.geometric_dimension()) \
-               + 2 * self.input.shear_modulus * self.epsilon(u)
-
     @property
-    def LHS(self):
-        return self._lhs
-
-    @LHS.setter
-    def LHS(self, _):
-        raise NotImplementedError
-
-    @property
-    def RHS(self):
-        return self._rhs
-
-    @RHS.setter
-    def RHS(self, _):
-        raise NotImplementedError
-
-    def validate_ready_to_run(self):
-        self._lhs = self.inner(self.sigma(self.u), self.epsilon(self.v)) * self.dx
-        self._rhs = self.dot(self.f, self.v) * self.dx + self.dot(self.T, self.v) * self.ds
-        super().validate_ready_to_run()
-
-    def von_Mises(self, u):
-        s = self.sigma(u) - (1. / 3) * self.tr(self.sigma(u)) * self.Identity(u.geometric_dimension())
-        return self.fenics.project(self.sqrt(3. / 2 * self.inner(s, s)), self.fenics.FunctionSpace(self.mesh, 'P', 1))
+    def solver(self):
+        if self._solver is None:
+            self._solver = ElasticSolver(job=self)
+        return self._solver
 
     def _append_to_output(self):
         super()._append_to_output()
-        self.output.von_Mises.append(self.von_Mises(self.solution).compute_vertex_values(self.mesh))
+        self.output.von_Mises.append(
+            self.solver.von_Mises(self.solver.solution)\
+                .compute_vertex_values(self.mesh)
+            )
+
+
+class ElasticSolver(Solver):
+    def __init__(self, job):
+        super().__init__(job, func_space_class=FEN.VectorFunctionSpace)
+        self.f = FEN.Constant((0, 0, 0))
+        self.T = FEN.Constant((0, 0, 0))
+
+    @property
+    def lhs(self):
+        if self._lhs is None:
+            self._lhs = FEN.inner(self.sigma(self.u), self.epsilon(self.v)) * FEN.dx
+        return self._lhs
+
+    @property
+    def rhs(self):
+        if self._rhs is None:
+            self._rhs = FEN.dot(self.f, self.v) * FEN.dx + FEN.dot(self.T, self.v) * FEN.ds
+        return self._rhs
+
+    @staticmethod
+    def epsilon(u):
+        return FEN.sym(FEN.nabla_grad(u))
+
+    def sigma(self, u):
+        lambda_ = self._job.input.bulk_modulus - (2 * self._job.input.shear_modulus / 3)
+        return lambda_ * ufl_nabla_div(u) * FEN.Identity(u.geometric_dimension()) \
+               + 2 * self._job.input.shear_modulus * self.epsilon(u)
+
+    def von_Mises(self, u):
+        s = self.sigma(u) - (1. / 3) * FEN.tr(self.sigma(u)) * FEN.Identity(u.geometric_dimension())
+        return FEN.project(FEN.sqrt(3. / 2 * FEN.inner(s, s)),
+                           FEN.FunctionSpace(
+                               self._job.mesh,
+                               self._job.input.element_type,
+                               self._job.input.element_order
+                               )
+                           )
 
 
 class ElasticPlot(Plot):
