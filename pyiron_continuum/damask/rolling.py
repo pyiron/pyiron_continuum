@@ -1,5 +1,4 @@
 from ast import arg
-import imp
 import os
 from random import vonmisesvariate
 import numpy as np
