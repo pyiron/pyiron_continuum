@@ -10,7 +10,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result
+    from damask import Result as ResultDamask
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,6 +27,11 @@ __status__ = "development"
 __date__ = "Oct 04, 2021"
 
 
+class Result(ResultDamask):
+    def average_spatio_temporal_tensors(self, name):
+        return np.average(list(self.get(name).values()), axis=1)
+
+
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -39,7 +44,6 @@ class DAMASK(TemplateJob):
         self._material = None
         self._loading = None
         self._grid = None
-        self._results = None
         self._executable_activate()
 
     @property
@@ -96,8 +100,6 @@ class DAMASK(TemplateJob):
             Args:
                 file_name(str): path to the hdf file
         """
-        if self._results is not None:
-            return 
         damask_hdf = os.path.join(self.working_directory, file_name)
 
         self._results = Result(damask_hdf)
@@ -105,10 +107,10 @@ class DAMASK(TemplateJob):
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.output.stress = self.average_spatio_temporal_tensors('sigma')
-        self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
-        self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+        self.output.stress = self._results.average_spatio_temporal_tensors('sigma')
+        self.output.strain = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
+        self.output.stress_von_Mises = self._results.average_spatio_temporal_tensors('sigma_vM')
+        self.output.strain_von_Mises = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
 
     def writeresults2vtk(self):
         """
@@ -119,9 +121,6 @@ class DAMASK(TemplateJob):
         result = self._results
         result.export_VTK()
         os.chdir(cwd)  # cd back to the notebook dir
-
-    def average_spatio_temporal_tensors(self, name):
-        return np.average(list(self._results.get(name).values()), axis=1)
 
     @staticmethod
     def list_solvers():
