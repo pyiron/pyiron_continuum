@@ -44,6 +44,7 @@ class DAMASK(TemplateJob):
         self._material = None
         self._loading = None
         self._grid = None
+        self._results = None
         self._executable_activate()
 
     @property
