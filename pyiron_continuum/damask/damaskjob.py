@@ -120,13 +120,6 @@ class DAMASK(TemplateJob):
         result.export_VTK()
         os.chdir(cwd)  # cd back to the notebook dir
 
-    def temporal_spatial_shape(self, name):
-        property_dict = self._results.get(name)
-        shape_list = [len(property_dict)]
-        for shape in property_dict[list(property_dict.keys())[0]].shape:
-            shape_list.append(shape)
-        return tuple(shape_list)
-
     def average_spatio_temporal_tensors(self, name):
         return np.average(list(self._results.get(name).values()), axis=1)
 
