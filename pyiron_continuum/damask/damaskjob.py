@@ -119,11 +119,7 @@ class DAMASK(TemplateJob):
         """
         if self._results is None:
             raise ValueError("Results not loaded; call collect_output")
-        cwd = os.getcwd()  # get the current dir
-        os.chdir(self.working_directory)  # cd into the working dir
-        result = self._results
-        result.export_VTK()
-        os.chdir(cwd)  # cd back to the notebook dir
+        result.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
     def list_solvers():
