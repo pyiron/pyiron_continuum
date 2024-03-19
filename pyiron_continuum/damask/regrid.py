@@ -26,11 +26,11 @@ def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment='last'
     d5Out = damask.Result(f'{work_dir}/{geom_name}_{load_name}_material.hdf5')
 
     if increment == 'last':
-        inc = int(d5Out.increments[-1][10::])  # take the increment number
+        inc = int(d5Out.increments[-1])  # take the increment number
         d5Out = d5Out.view(increments=inc)
         increment_title = d5Out.increments[-1]
     elif increment in d5Out.increments:
-        inc = int(increment[10::])  # take the increment number
+        inc = int(increment)  # take the increment number
         d5Out = d5Out.view(increments=inc)
         increment_title = increment
     else:
