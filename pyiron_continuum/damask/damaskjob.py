@@ -131,10 +131,8 @@ class DAMASK(TemplateJob):
         _shape = self.temporal_spatial_shape(name)
         temporal_spatial_array = np.empty(_shape)
         property_dict = self._results.get(name)
-        i = 0
-        for key in property_dict.keys():
-            temporal_spatial_array[i] = property_dict[key]
-            i = i + 1
+        for ii, key in enumerate(property_dict.keys()):
+            temporal_spatial_array[ii] = property_dict[key]
         return np.average(temporal_spatial_array, axis=1)
 
     @staticmethod
