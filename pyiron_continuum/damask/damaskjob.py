@@ -117,6 +117,8 @@ class DAMASK(TemplateJob):
         """
             save results to vtk files
         """
+        if self._results is None:
+            raise ValueError("Results not loaded; call collect_output")
         cwd = os.getcwd()  # get the current dir
         os.chdir(self.working_directory)  # cd into the working dir
         result = self._results
