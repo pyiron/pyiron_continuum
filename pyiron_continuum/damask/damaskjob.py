@@ -128,12 +128,7 @@ class DAMASK(TemplateJob):
         return tuple(shape_list)
 
     def average_spatio_temporal_tensors(self, name):
-        _shape = self.temporal_spatial_shape(name)
-        temporal_spatial_array = np.empty(_shape)
-        property_dict = self._results.get(name)
-        for ii, key in enumerate(property_dict.keys()):
-            temporal_spatial_array[ii] = property_dict[key]
-        return np.average(temporal_spatial_array, axis=1)
+        return np.average(list(self._results.get(name).values()), axis=1)
 
     @staticmethod
     def list_solvers():
