@@ -11,7 +11,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build_damask:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
     - name: Tests
       shell: bash -l {0}
       run: python -m unittest discover tests/integration
-  build:
+  build_fencis:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
