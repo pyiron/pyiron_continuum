@@ -5,9 +5,6 @@ dependencies:
   - coveralls
   - coverage
   - codacy-coverage
-  - damask-mesh =3.0.0b
-  - damask-grid =3.0.0b
-  - damask =3.0.0b
   - fenics =2019.1.0
   - fenics =2019.1.0=*_42
   - mshr =2019.1.0=*_9
