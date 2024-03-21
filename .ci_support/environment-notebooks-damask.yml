@@ -5,14 +5,14 @@ dependencies:
   - coveralls
   - coverage
   - codacy-coverage
-  - damask-mesh =3.0.0b
-  - damask-grid =3.0.0b
-  - damask =3.0.0b
+  - damask-mesh =3.0.0a8
+  - damask-grid =3.0.0a8
+  - damask =3.0.0a8
   - matplotlib =3.8.0
   - numpy =1.26.3
   - pyiron =0.5.0
   - pyiron-data =0.0.26
-  - python-damask =3.0.0b
+  - python-damask =3.0.0a8
   - pyvista =0.42.3
   - scipy =1.11.4
   - seaborn =0.13.1
