@@ -1,1 +1,6 @@
 fenics_linear_elasticity_exercises.ipynb
+damask_tutorial.ipynb
+damask_tutorial_elastoplasticity-isotropic.ipynb
+damask_tutorial_elastoplasticity-powerlaw.ipynb
+damask_tutorial_linearelastic.ipynb
+damask_tutorial_multiplerolling.ipynb
