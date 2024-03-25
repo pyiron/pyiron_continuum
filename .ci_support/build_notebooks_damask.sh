@@ -1,5 +1,5 @@
 #!/bin/bash
-for f in $(cat .ci_support/exclude_damask); do 
+for f in $(cat .ci_support/exclude_for_damask); do 
     rm "notebooks/$f";     
 done;
 # execute notebooks
