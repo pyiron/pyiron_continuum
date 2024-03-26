@@ -73,13 +73,13 @@ class GridFactory:
         self._origin = value
 
     @staticmethod
-    def via_voronoi_tessellation(grid_dim, num_grains, box_size):
-        if isinstance(grid_dim, int) or isinstance(grid_dim, float):
-            grid_dim = np.array([grid_dim, grid_dim, grid_dim])
+    def via_voronoi_tessellation(spatial_discretization, num_grains, box_size):
+        if isinstance(spatial_discretization, int) or isinstance(spatial_discretization, float):
+            spatial_discretization = np.array([spatial_discretization, spatial_discretization, spatial_discretization])
         if isinstance(box_size, int) or isinstance(box_size, float):
             box_size = np.array([box_size, box_size, box_size])
         seed = seeds.from_random(box_size, num_grains)
-        return Grid.from_Voronoi_tessellation(grid_dim, box_size, seed)
+        return Grid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
 
 
 class DamaskLoading(dict):
