@@ -16,7 +16,12 @@ jobs:
       python-version: "3.11"
       env-prefix: "ubuntu-latest"
       env-label: "ubuntu-latest-py3_11" 
-      env-files: .ci_support/environment.yml .ci_support/environment-notebooks-damask.yml
+      env-files: .ci_support/environment.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        pip install --no-deps .
+        mamba env update --name test --file .ci_support/environment-notebooks-damask.yml
     - name: Tests
       shell: bash -l {0}
       run: ./.ci_support/build_notebooks_damask.sh
