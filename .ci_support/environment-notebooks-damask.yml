@@ -8,6 +8,8 @@ dependencies:
   - damask-mesh =3.0.0a8
   - damask-grid =3.0.0a8
   - damask =3.0.0a8
+  - mshr =2019.1.0=*_9
+  - k3d =2.16.0
   - matplotlib =3.8.0
   - numpy =1.26.3
   - pyiron =0.5.0
