@@ -11,7 +11,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build_damask:
     env:
       CONDA_PREFIX: /usr/share/miniconda/
     runs-on: ubuntu-latest
@@ -25,7 +25,36 @@ jobs:
         channels: conda-forge
         channel-priority: strict
         auto-update-conda: true
-        environment-file: .ci_support/environment-notebooks.yml
+        environment-file: .ci_support/environment-notebooks-damask.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        pip install --no-deps .
+    - name: Test
+      shell: bash -l {0}
+      run: coverage run --omit pyiron_continuum/_version.py -m unittest discover tests/unit
+    - name: Coverage
+      continue-on-error: True
+      shell: bash -l {0}
+      run: |
+        coverage combine
+        coveralls
+        coverage xml
+  build_fenics:
+    env:
+      CONDA_PREFIX: /usr/share/miniconda/
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2.2.0
+      with:
+        python-version: "3.11"
+        mamba-version: "*"
+        miniforge-variant: Mambaforge
+        channels: conda-forge
+        channel-priority: strict
+        auto-update-conda: true
+        environment-file: .ci_support/environment-notebooks-fenics.yml
     - name: Setup
       shell: bash -l {0}
       run: |
