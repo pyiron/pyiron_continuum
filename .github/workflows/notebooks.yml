@@ -11,12 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-  - uses: pyiron/actions/cached-mamba@main
-    with:
-      python-version: "3.11"
-      env-prefix: "ubuntu-latest"
-      env-label: "ubuntu-latest-py3_11" 
-      env-files: .ci_support/environment.yml
+    - uses: conda-incubator/setup-miniconda@v2.2.0
+      with:
+        python-version: "3.11"
+        mamba-version: "*"
+        miniforge-variant: Mambaforge
+        channels: conda-forge
+        channel-priority: strict
+        auto-update-conda: true  
+        environment-file: .ci_support/environment.yml
     - name: Setup
       shell: bash -l {0}
       run: |
