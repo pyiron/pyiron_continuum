@@ -6,7 +6,7 @@ done;
 i=0;
 cd notebooks
 for notebook in $(ls ./*.ipynb); do
-      papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k "python3" || i=$((i+1));
+      papermill "${notebook}" "${notebook%.*}"-out."${notebook##*.}" -k "python3" || i=$((i+1));
 done;
 
 # push error to next level
