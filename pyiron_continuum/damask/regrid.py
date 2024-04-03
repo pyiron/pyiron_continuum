@@ -11,7 +11,7 @@ def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment='last'
     Regrid the geometry
     It requires the previous geom.vti and result.hdf5
     '''
-    geom_0 = damask.Grid.load(f'{geom_name}.vti')
+    geom_0 = damask.GeomGrid.load(f'{geom_name}.vti')
     cells_0 = geom_0.cells
     size_0 = geom_0.size
 
@@ -26,7 +26,7 @@ def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment='last'
     d5Out = damask.Result(f'{work_dir}/{geom_name}_{load_name}_material.hdf5')
 
     if increment == 'last':
-        inc = int(d5Out.increments[-1][10::])  # take the increment number
+        inc = int(d5Out.increments[-1])  # take the increment number
         d5Out = d5Out.view(increments=inc)
         increment_title = d5Out.increments[-1]
     elif increment in d5Out.increments:
@@ -75,9 +75,9 @@ def write_RegriddedGeom(work_dir, geom_name, increment_title, map_0to_rg, cells_
     Save the regridded geometry to a new vti file
     '''
     os.chdir(f'{work_dir}')
-    grid_0 = damask.Grid.load(geom_name + '.vti')
+    grid_0 = damask.GeomGrid.load(geom_name + '.vti')
     material_rg = grid_0.material.flatten('F')[map_0to_rg].reshape(cells_rg, order='F')
-    grid = damask.Grid(material_rg, size_rg, grid_0.origin, comments=grid_0.comments \
+    grid = damask.GeomGrid(material_rg, size_rg, grid_0.origin, comments=grid_0.comments \
                        ).save(f'{geom_name}_regridded_{increment_title}.vti')
     print(f'save regrid geometry to {geom_name}_regridded_{increment_title}.vti')
     regrid_geom_name = f'{geom_name}_regridded_{increment_title}'

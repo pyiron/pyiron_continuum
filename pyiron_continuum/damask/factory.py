@@ -8,7 +8,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Grid, Config, ConfigMaterial, seeds
+    from damask import GeomGrid, YAML, ConfigMaterial, seeds
 import numpy as np
 
 __author__ = "Muhammad Hassani"
@@ -54,7 +54,7 @@ class GridFactory:
 
     @staticmethod
     def read(file_path):
-        return Grid.load(fname=file_path)
+        return GeomGrid.load(fname=file_path)
 
     @property
     def origin(self):
@@ -64,7 +64,7 @@ class GridFactory:
         origin.from_Voronoi_tessellation(...)
         """
         if self._origin is None:
-            return Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
+            return GeomGrid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
         else:
             return self._origin
 
@@ -79,7 +79,7 @@ class GridFactory:
         if isinstance(box_size, int) or isinstance(box_size, float):
             box_size = np.array([box_size, box_size, box_size])
         seed = seeds.from_random(box_size, num_grains)
-        return Grid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
+        return GeomGrid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
 
 
 class DamaskLoading(dict):
@@ -102,7 +102,7 @@ class DamaskLoading(dict):
                          discretization=load_steps['discretization'],
                          additional_parameters_dict=load_steps["additional"])
             ]
-        return Config(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
+        return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
 
 
 class LoadStep(dict):

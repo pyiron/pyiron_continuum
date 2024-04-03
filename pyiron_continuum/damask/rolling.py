@@ -15,7 +15,7 @@ sys.path.insert(0, dir)
 from damaskjob import DAMASK
 import regrid as rgg
 from damask import Result
-from damask import Config
+from damask import YAML
 from factory import DamaskLoading
 
 
@@ -33,7 +33,7 @@ class ROLLING(DAMASK):
     def loading_discretization(self, rolltimes, filename):
         time = rolltimes * self._height_reduction / (self._rolling_speed * self._number_passes)
 
-        self.load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
+        self.load_case = YAML(solver={'mechanical': 'spectral_basic'}, loadstep=[])
         dotF = [['x', 0, 0],
                 [0, 0, 0],
                 [0, 0, -1.0 * self._rolling_speed]]
@@ -72,7 +72,7 @@ class ROLLING(DAMASK):
             self._write_material()
             self._write_geometry()
 
-            self.load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
+            self.load_case = YAML(solver={'mechanical': 'spectral_basic'}, loadstep=[])
             reduction_time = reduction_height / reduction_speed
             dotF = [['x', 0, 0],
                     [0, 0, 0],
@@ -152,6 +152,7 @@ class ROLLING(DAMASK):
             subprocess.run(args, shell=True, capture_output=True)
             print('Rolling-%d test is done !' % (self.RollingInstance))
             self.ResultsFile.append(f'{self.geom_name}_{self.load_name}_material.hdf5')
+        self.to_hdf()
 
     def postProcess(self):
         self._results = Result(f'{self.geom_name}_{self.load_name}_material.hdf5')
@@ -159,15 +160,16 @@ class ROLLING(DAMASK):
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.stress = self.average_spatio_temporal_tensors('sigma')
-        self.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
-        self.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+        self.output.stress = self.average_spatio_temporal_tensors('sigma')
+        self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
+        self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
+        self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
-        plt.plot(self.strain_von_Mises, self.stress_von_Mises)
+        plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
+        plt.show();
 
     def regridding(self, scale):
         map_0to_rg, cells_rg, size_rg, increment_title = rgg.regrid_Geom(self.working_directory, self.geom_name,

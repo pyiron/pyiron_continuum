@@ -41,9 +41,13 @@ setup(
     extras_require={
         'fenics': [
             'fenics==2019.1.0',
-            'mshr==2019.1.0',
+            'mshr==2019.1.0'
         ],
-        'schroedinger': ['k3d==2.16.0']
+        'schroedinger': ['k3d==2.16.0'],
+        'damask': [
+            'damask==3.0.0b',
+            'openblas==0.3.26'
+            ]
     },
     cmdclass=versioneer.get_cmdclass(),
     
