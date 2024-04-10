@@ -119,7 +119,7 @@ class DAMASK(TemplateJob):
         """
         if self._results is None:
             raise ValueError("Results not loaded; call collect_output")
-        result.export_VTK(target_dir=self.working_directory)
+        self._results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
     def list_solvers():
