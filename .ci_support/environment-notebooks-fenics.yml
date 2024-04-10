@@ -7,8 +7,8 @@ dependencies:
   - codacy-coverage
   - fenics =2019.1.0
   - fenics =2019.1.0=*_42
-  - mshr =2019.1.0=*_9
-  - k3d =2.16.0
+  - mshr
+  - k3d
   - matplotlib =3.8.0
   - numpy =1.26.3
   - pyiron =0.5.0

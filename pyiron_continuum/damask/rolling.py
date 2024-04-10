@@ -1,5 +1,4 @@
 from ast import arg
-import imp
 import os
 from random import vonmisesvariate
 import numpy as np
@@ -14,8 +13,7 @@ sys.path.insert(0, dir)
 
 from damaskjob import DAMASK
 import regrid as rgg
-from damask import Result
-from damask import Config
+from damask import Result, YAML
 from factory import DamaskLoading
 
 
@@ -33,7 +31,7 @@ class ROLLING(DAMASK):
     def loading_discretization(self, rolltimes, filename):
         time = rolltimes * self._height_reduction / (self._rolling_speed * self._number_passes)
 
-        self.load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
+        self.load_case = YAML(solver={'mechanical': 'spectral_basic'}, loadstep=[])
         dotF = [['x', 0, 0],
                 [0, 0, 0],
                 [0, 0, -1.0 * self._rolling_speed]]
@@ -72,7 +70,7 @@ class ROLLING(DAMASK):
             self._write_material()
             self._write_geometry()
 
-            self.load_case = Config(solver={'mechanical': 'spectral_basic'}, loadstep=[])
+            self.load_case = YAML(solver={'mechanical': 'spectral_basic'}, loadstep=[])
             reduction_time = reduction_height / reduction_speed
             dotF = [['x', 0, 0],
                     [0, 0, 0],
