@@ -11,7 +11,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build_fencis:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -28,7 +28,7 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install --no-deps .
-        mamba env update --name test --file .ci_support/environment-notebooks.yml
+        mamba env update --name test --file .ci_support/environment-notebooks-fenics.yml
     - name: Tests
       shell: bash -l {0}
       run: python -m unittest discover tests/integration
