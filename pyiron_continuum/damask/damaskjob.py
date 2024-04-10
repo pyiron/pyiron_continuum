@@ -10,7 +10,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result
+    from damask import Result as ResultDamask
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,6 +27,11 @@ __status__ = "development"
 __date__ = "Oct 04, 2021"
 
 
+class Result(ResultDamask):
+    def average_spatio_temporal_tensors(self, name):
+        return np.average(list(self.get(name).values()), axis=1)
+
+
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -36,7 +41,6 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._damask_hdf = os.path.join(self.working_directory, "damask_loading_material.hdf5")
         self._material = None
         self._loading = None
         self._grid = None
@@ -97,46 +101,25 @@ class DAMASK(TemplateJob):
             Args:
                 file_name(str): path to the hdf file
         """
-        if self._results is None:
-            if file_name != "damask_loading_material.hdf5":
-                self._damask_hdf = os.path.join(self.working_directory, file_name)
+        damask_hdf = os.path.join(self.working_directory, file_name)
 
-        self._results = Result(self._damask_hdf)
+        self._results = Result(damask_hdf)
         self._results.add_stress_Cauchy()
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.output.stress = self.average_spatio_temporal_tensors('sigma')
-        self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
-        self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+        self.output.stress = self._results.average_spatio_temporal_tensors('sigma')
+        self.output.strain = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
+        self.output.stress_von_Mises = self._results.average_spatio_temporal_tensors('sigma_vM')
+        self.output.strain_von_Mises = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
 
     def writeresults2vtk(self):
         """
             save results to vtk files
         """
-        cwd = os.getcwd()  # get the current dir
-        os.chdir(self.working_directory)  # cd into the working dir
-        result = self._results
-        result.export_VTK()
-        os.chdir(cwd)  # cd back to the notebook dir
-
-    def temporal_spatial_shape(self, name):
-        property_dict = self._results.get(name)
-        shape_list = [len(property_dict)]
-        for shape in property_dict[list(property_dict.keys())[0]].shape:
-            shape_list.append(shape)
-        return tuple(shape_list)
-
-    def average_spatio_temporal_tensors(self, name):
-        _shape = self.temporal_spatial_shape(name)
-        temporal_spatial_array = np.empty(_shape)
-        property_dict = self._results.get(name)
-        i = 0
-        for key in property_dict.keys():
-            temporal_spatial_array[i] = property_dict[key]
-            i = i + 1
-        return np.average(temporal_spatial_array, axis=1)
+        if self._results is None:
+            raise ValueError("Results not loaded; call collect_output")
+        self._results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
     def list_solvers():
