@@ -55,6 +55,19 @@ class TestGreen(unittest.TestCase):
                 msg=f"Aniso- and isotropic Green's F's give different results for derivative={i}"
             )
 
+    def test_memory(self):
+        aniso = Anisotropic(create_random_C())
+        positions = np.tile(np.random.random(3), 2).reshape(-1, 3)
+        G_normal = aniso.get_greens_function(positions)
+        G_save = aniso.get_greens_function(positions, save_memory=True)
+        self.assertTrue(np.all(np.isclose(G_normal, G_save)))
+        G_unique = aniso.get_greens_function(positions, check_unique=True)
+        self.assertTrue(np.all(np.isclose(G_normal, G_unique)))
+        G = aniso.get_greens_function(
+            positions, check_unique=True, save_memory=True
+        )
+        self.assertTrue(np.all(np.isclose(G_normal, G)))
+
 
 if __name__ == "__main__":
     unittest.main()
