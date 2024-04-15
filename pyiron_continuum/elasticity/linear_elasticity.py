@@ -268,7 +268,15 @@ class LinearElasticity:
         return 1/self.compliance_matrix[:3, :3].diagonal()
 
     def get_greens_function(
-        self, positions, derivative=0, fourier=False, n_mesh=100, isotropic=False, optimize=True
+        self,
+        positions,
+        derivative=0,
+        fourier=False,
+        n_mesh=100,
+        isotropic=False,
+        optimize=True,
+        check_unique=False,
+        save_memory=False,
     ):
         """
         Green's function of the equilibrium condition:
@@ -290,15 +298,34 @@ class LinearElasticity:
             ((n,3)-array): Green's function values for the given positions
         """
         if isotropic or self._is_isotropic:
-            C = Isotropic(self.poissons_ratio.mean(), self.shear_modulus.mean(), optimize=optimize)
+            C = Isotropic(
+                self.poissons_ratio.mean(),
+                self.shear_modulus.mean(),
+                optimize=optimize
+            )
         else:
-            C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
-        return C.get_greens_function(positions, derivative, fourier)
+            C = Anisotropic(
+                self.elastic_tensor, n_mesh=n_mesh, optimize=optimize
+            )
+        return C.get_greens_function(
+            r=positions,
+            derivative=derivative,
+            fourier=fourier,
+            check_unique=check_unique,
+            save_memory=save_memory
+        )
 
     get_greens_function.__doc__ += Green.__doc__
 
     def get_point_defect_displacement(
-        self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+        self,
+        positions,
+        dipole_tensor,
+        n_mesh=100,
+        isotropic=False,
+        optimize=True,
+        check_unique=False,
+        save_memory=False,
     ):
         """
         Displacement field around a point defect
@@ -321,14 +348,23 @@ class LinearElasticity:
             fourier=False,
             n_mesh=n_mesh,
             isotropic=isotropic,
-            optimize=optimize
+            optimize=optimize,
+            check_unique=check_unique,
+            save_memory=save_memory,
         )
         return -np.einsum('...ijk,...jk->...i', g_tmp, dipole_tensor)
 
     get_point_defect_displacement.__doc__ += point_defect_explanation
 
     def get_point_defect_strain(
-        self, positions, dipole_tensor, n_mesh=100, isotropic=False, optimize=True
+        self,
+        positions,
+        dipole_tensor,
+        n_mesh=100,
+        isotropic=False,
+        optimize=True,
+        check_unique=False,
+        save_memory=False
     ):
         """
         Strain field around a point defect using the Green's function method
@@ -341,6 +377,7 @@ class LinearElasticity:
             isotropic (bool): Whether to use the isotropic or anisotropic elasticity. If the medium
                 is isotropic, it will automatically be set to isotropic=True
             optimize (bool): cf. `optimize` in `numpy.einsum`
+            check_unique (bool): Whether to check the unique positions
 
         Returns:
             ((n,3,3)-array): Strain field
@@ -351,7 +388,9 @@ class LinearElasticity:
             fourier=False,
             n_mesh=n_mesh,
             isotropic=isotropic,
-            optimize=optimize
+            optimize=optimize,
+            check_unique=check_unique,
+            save_memory=save_memory
         )
         v = -np.einsum('...ijkl,...kl->...ij', g_tmp, dipole_tensor)
         return 0.5*(v+np.einsum('...ij->...ji', v))
