@@ -65,6 +65,11 @@ class Green:
             r ((n,3)-array): Positions for which to calculate the Green's function
             derivative (int): The order of the derivative. Ignored if `fourier=True`
             fourier (bool): If `True`,  the Green's function of the reciprocal space is returned.
+            check_unique (bool): If `True`, pyiron checks whether there are
+                duplicate values and avoids calculating the Green's function
+                multiple times for the same values
+            save_memory (bool): If `True`, for loop will be used instead of
+                vector calculation, which saves the memory but makes it slow.
 
         Returns:
             (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
