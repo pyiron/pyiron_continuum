@@ -11,20 +11,15 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      matrix:
-        operating-system: [ubuntu-latest]
-        python-version: [3.9]
-
+  build_fencis:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v2.2.0
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.11"
         mamba-version: "*"
+        miniforge-variant: Mambaforge
         channels: conda-forge
         channel-priority: strict
         auto-update-conda: true
@@ -33,7 +28,7 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install --no-deps .
-        mamba env update --name test --file .ci_support/environment-notebooks.yml
+        mamba env update --name test --file .ci_support/environment-notebooks-fenics.yml
     - name: Tests
       shell: bash -l {0}
       run: python -m unittest discover tests/integration

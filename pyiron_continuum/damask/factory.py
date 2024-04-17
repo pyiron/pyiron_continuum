@@ -3,11 +3,12 @@
 """Factory of the damask classes and methods to a pyironized manner"""
 
 from pyiron_base import ImportAlarm
+
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Grid, Config, ConfigMaterial, seeds
+    from damask import GeomGrid, YAML, ConfigMaterial, seeds
 import numpy as np
 
 __author__ = "Muhammad Hassani"
@@ -21,7 +22,8 @@ __email__ = "hassani@mpie.de"
 __status__ = "development"
 __date__ = "Oct 04, 2021"
 
-#TODO: reimplement export_vtk() here. Currently, damask dumps vtk files in the cwd
+
+# TODO: reimplement export_vtk() here. Currently, damask dumps vtk files in the cwd
 
 
 class MaterialFactory:
@@ -47,22 +49,22 @@ class MaterialFactory:
 
 class GridFactory:
     def __init__(self):
-        """A factory for damask._grid.Grid class."""
+        """A factory for damask._grid.GeomGrid class."""
         self._origin = None
 
     @staticmethod
     def read(file_path):
-        return Grid.load(fname=file_path)
+        return GeomGrid.load(fname=file_path)
 
     @property
     def origin(self):
         """
-        Returns damask._grid.Grid, it can be used to call damask original methods.
+        Returns damask._grid.GeomGrid, it can be used to call damask original methods.
         For example:
         origin.from_Voronoi_tessellation(...)
         """
         if self._origin is None:
-            return Grid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
+            return GeomGrid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
         else:
             return self._origin
 
@@ -71,18 +73,18 @@ class GridFactory:
         self._origin = value
 
     @staticmethod
-    def via_voronoi_tessellation(grid_dim, num_grains, box_size):
-        if isinstance(grid_dim, int) or isinstance(grid_dim, float):
-            grid_dim = np.array([grid_dim, grid_dim, grid_dim])
+    def via_voronoi_tessellation(spatial_discretization, num_grains, box_size):
+        if isinstance(spatial_discretization, int) or isinstance(spatial_discretization, float):
+            spatial_discretization = np.array([spatial_discretization, spatial_discretization, spatial_discretization])
         if isinstance(box_size, int) or isinstance(box_size, float):
             box_size = np.array([box_size, box_size, box_size])
         seed = seeds.from_random(box_size, num_grains)
-        return Grid.from_Voronoi_tessellation(grid_dim, box_size, seed)
+        return GeomGrid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
 
 
 class DamaskLoading(dict):
     def __init__(self, solver, load_steps):
-        """A factory for damask Loading class, which is a damask._config.Config object."""
+        """A factory for damask Loading class, which is a damask._config.YAML object."""
         super(DamaskLoading, self).__init__(self)
 
     def __new__(cls, solver, load_steps):
@@ -100,7 +102,8 @@ class DamaskLoading(dict):
                          discretization=load_steps['discretization'],
                          additional_parameters_dict=load_steps["additional"])
             ]
-        return Config(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
+        return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
+
 
 class LoadStep(dict):
     def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
@@ -198,13 +201,13 @@ class Create:
         """
         if plasticity == None:
             return {composition: {'lattice': lattice,
-                              'mechanical': {'output': output_list,
-                                             'elastic': elasticity}}}
+                                  'mechanical': {'output': output_list,
+                                                 'elastic': elasticity}}}
         else:
             return {composition: {'lattice': lattice,
-                              'mechanical': {'output': output_list,
-                                             'elastic': elasticity,
-                                             'plasticity': plasticity}}}
+                                  'mechanical': {'output': output_list,
+                                                 'elastic': elasticity,
+                                                 'plastic': plasticity}}}
 
     @staticmethod
     def elasticity(**kwargs):
@@ -229,6 +232,22 @@ class Create:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
+        has_h0 = False
+        has_h = False
+        vals = {}
+        for key, value in kwargs.items():
+            if 'h_0_sl_sl' in key:
+                has_h0 = True
+                vals['h_0_sl-sl'] = value
+            if 'h_sl_sl' in key:
+                has_h = True
+                vals['h_sl-sl'] = value
+        if has_h0:
+            kwargs['h_0_sl-sl'] = vals['h_0_sl-sl']
+            del kwargs['h_0_sl_sl']
+        if has_h:
+            kwargs['h_sl-sl'] = vals['h_sl-sl']
+            del kwargs['h_sl_sl']
         return kwargs
 
     @staticmethod

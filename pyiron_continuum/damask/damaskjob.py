@@ -5,17 +5,16 @@ DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
 from pyiron_base import TemplateJob, ImportAlarm, DataContainer
+
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result
+    from damask import Result as ResultDamask
     from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
-    
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -28,7 +27,12 @@ __email__ = "hassani@mpie.de"
 __status__ = "development"
 __date__ = "Oct 04, 2021"
 
-        
+
+class Result(ResultDamask):
+    def average_spatio_temporal_tensors(self, name):
+        return np.average(list(self.get(name).values()), axis=1)
+
+
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -38,7 +42,6 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._damask_hdf = os.path.join(self.working_directory, "damask_loading.hdf5")
         self._material = None
         self._loading = None
         self._grid = GridFactory
@@ -106,52 +109,31 @@ class DAMASK(TemplateJob):
         self._load_results()
         self.output.damask = self._results
 
-    def _load_results(self, file_name="damask_loading.hdf5"):
+    def _load_results(self, file_name="damask_loading_material.hdf5"):
         """
             loads the results from damask hdf file
             Args:
                 file_name(str): path to the hdf file
         """
-        if self._results is None:
-            if file_name != "damask_loading.hdf5":
-                self._damask_hdf = os.path.join(self.working_directory, file_name)
+        damask_hdf = os.path.join(self.working_directory, file_name)
 
-        self._results = Result(self._damask_hdf)
+        self._results = Result(damask_hdf)
         self._results.add_stress_Cauchy()
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.output.stress = self.average_spatio_temporal_tensors('sigma')
-        self.output.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.output.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
-        self.output.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
-    
+        self.output.stress = self._results.average_spatio_temporal_tensors('sigma')
+        self.output.strain = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
+        self.output.stress_von_Mises = self._results.average_spatio_temporal_tensors('sigma_vM')
+        self.output.strain_von_Mises = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+
     def writeresults2vtk(self):
         """
             save results to vtk files
         """
-        cwd = os.getcwd() # get the current dir
-        os.chdir(self.working_directory) # cd into the working dir
-        result=self._results
-        result.export_VTK()
-        os.chdir(cwd) # cd back to the notebook dir
-
-    def temporal_spatial_shape(self, name):
-        property_dict = self._results.get(name)
-        shape_list = [len(property_dict)]
-        for shape in property_dict[list(property_dict.keys())[0]].shape:
-            shape_list.append(shape)
-        return tuple(shape_list)
-
-    def average_spatio_temporal_tensors(self, name):
-        _shape = self.temporal_spatial_shape(name)
-        temporal_spatial_array = np.empty(_shape)
-        property_dict = self._results.get(name)
-        i = 0
-        for key in property_dict.keys():
-            temporal_spatial_array[i] = property_dict[key]
-            i = i + 1
-        return  np.average(temporal_spatial_array, axis=1)
+        if self._results is None:
+            raise ValueError("Results not loaded; call collect_output")
+        self._results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
     def list_solvers():
@@ -179,7 +161,7 @@ class DAMASK(TemplateJob):
                 ValueError("The direction should be from x, y, and z")
             if component[1] != 'x' or component[1] != 'y' or component[1] != 'z':
                 ValueError("The direction should be from x, y, and z")
-            _component_dict={'x': 0, 'y': 1, 'z': 2}
+            _component_dict = {'x': 0, 'y': 1, 'z': 2}
             _zero_axis = int(_component_dict[component[0]])
             _first_axis = int(_component_dict[component[1]])
             ax.plot(self.output.strain[:, _zero_axis, _first_axis],
@@ -198,4 +180,3 @@ class DAMASK(TemplateJob):
             raise ValueError("either direction should be passed in "
                              "or vonMises should be set to True")
         return fig, ax
-
