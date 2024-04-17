@@ -42,7 +42,6 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._material = None
         self._results = None
         self._rotation = None
         self._geometry = None
