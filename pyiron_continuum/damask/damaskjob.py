@@ -15,6 +15,7 @@ with ImportAlarm(
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -54,16 +55,16 @@ class DAMASK(TemplateJob):
         #self.input.rotation = None
         self.input.material = None
 
-    def elasticity(self, **kwargs):
+    def set_elasticity(self, **kwargs):
         self.input.elasticity = DAMASKCreator.elasticity(**kwargs)
 
-    def plasticity(self, **kwargs):
+    def set_plasticity(self, **kwargs):
         self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
 
-    def homogenization(self, **kwargs):
+    def set_homogenization(self, **kwargs):
         self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
-    def phase(self, **kwargs):
+    def set_phase(self, **kwargs):
         if None not in [self.input.elasticity, self.input.plasticity]:
             self.input.phase = DAMASKCreator.phase(
                 elasticity=self.input.elasticity,
@@ -71,7 +72,7 @@ class DAMASK(TemplateJob):
                 **kwargs
             )
 
-    def rotation(self, method, *args):
+    def set_rotation(self, method, *args):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
 
     @property
@@ -80,6 +81,10 @@ class DAMASK(TemplateJob):
 
     @material.setter
     def material(self, value):
+        warnings.warn(
+            "Setting material via property is deprecated. Use set_material instead",
+            DeprecationWarning
+        )
         self.input.material = value
 
     def set_material(self, element):
@@ -100,6 +105,10 @@ class DAMASK(TemplateJob):
 
     @grid.setter
     def grid(self, grid):
+        warnings.warn(
+            "Setting grid via property is deprecated. Use set_grid instead",
+            DeprecationWarning
+        )
         self._geometry = grid
 
     @property
@@ -108,6 +117,10 @@ class DAMASK(TemplateJob):
 
     @loading.setter
     def loading(self, value):
+        warnings.warn(
+            "Setting loading via property is deprecated. Use set_loading instead",
+            DeprecationWarning
+        )
         self.input.loading = value
 
     def set_loading(self, **kwargs):
