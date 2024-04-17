@@ -19,6 +19,11 @@ class TestDecorators(PyironTestCase):
         job.set_plasticity(hello="goodbye")
         self.assertEqual(job.input.plasticity["hello"], "goodbye")
 
+    def test_elasticity(self):
+        job = self.project.create.job.DAMASK("damask")
+        job.set_elasticity(hello="goodbye")
+        self.assertEqual(job.input.elasticity["hello"], "goodbye")
+
     @classmethod
     def tearDownClass(cls):
         cls.project.remove(enable=True)
