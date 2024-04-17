@@ -74,10 +74,15 @@ class DAMASK(TemplateJob):
     def rotation(self, method, *args):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
 
-    def material(self, element):
-        if isinstance(element, ConfigMaterial):
-            self.input.material = element
-            return
+    @property
+    def material(self):
+        return self.input.material
+
+    @material.setter
+    def mateiral(self, value):
+        self.input.material = value
+
+    def set_material(self, element):
         if not isinstance(element, list):
             element = [element]
         if None not in [self._rotation, self.input.phase, self.input.homogenization]:
@@ -85,9 +90,17 @@ class DAMASK(TemplateJob):
                 self._rotation, element, self.input.phase, self.input.homogenization
             )
 
-    def grid(self, method="voronoi_tessellation", **kwargs):
+    def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
             self._geometry = self.GridFactory.via_voronoi_tessellation(**kwargs)
+
+    @property
+    def grid(self):
+        return self._geometry
+
+    @grid.setter
+    def grid(self, grid):
+        self._geometry = grid
 
     @property
     def loading(self):
@@ -111,7 +124,6 @@ class DAMASK(TemplateJob):
     def _write_geometry(self):
         file_path = os.path.join(self.working_directory, "damask")
         self._geometry.save(file_path)
-        #self.input.geometry = self.input.grid
 
     def write_input(self):
         self._write_loading()
