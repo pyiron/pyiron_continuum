@@ -81,11 +81,11 @@ class DAMASK(TemplateJob):
     def material(self, value):
         self.input.material = value
 
-    def set_material(self, element):
-        element = np.array([element]).flatten().tolist()
+    def set_material(self, elements):
+        elements = np.array([elements]).flatten().tolist()
         if None not in [self._rotation, self.input.phase, self.input.homogenization]:
             self.input.material = DAMASKCreator.material(
-                self._rotation, element, self.input.phase, self.input.homogenization
+                self._rotation, elements, self.input.phase, self.input.homogenization
             )
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
