@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-# import warnings
+import warnings
 from pyiron_base import JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory, ImportAlarm
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
@@ -57,6 +57,9 @@ class Damask(PyironFactory):
             'discretization':{'t': 10.,'N': 40, 'f_out': 4},
             'additional': {'f_out': 4}
         """
+        warnings.warn(
+            "Setting loading via project creator is deprecated. Use job.set_loading instead"
+        )
         return DAMASKCreator.loading(solver=solver, load_steps=load_steps)
 
     @staticmethod
