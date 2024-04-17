@@ -15,7 +15,6 @@ with ImportAlarm(
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import warnings
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -81,10 +80,6 @@ class DAMASK(TemplateJob):
 
     @material.setter
     def material(self, value):
-        warnings.warn(
-            "Setting material via property is deprecated. Use set_material instead",
-            DeprecationWarning
-        )
         self.input.material = value
 
     def set_material(self, element):
@@ -105,10 +100,6 @@ class DAMASK(TemplateJob):
 
     @grid.setter
     def grid(self, grid):
-        warnings.warn(
-            "Setting grid via property is deprecated. Use set_grid instead",
-            DeprecationWarning
-        )
         self._geometry = grid
 
     @property
@@ -117,10 +108,6 @@ class DAMASK(TemplateJob):
 
     @loading.setter
     def loading(self, value):
-        warnings.warn(
-            "Setting loading via property is deprecated. Use set_loading instead",
-            DeprecationWarning
-        )
         self.input.loading = value
 
     def set_loading(self, **kwargs):
