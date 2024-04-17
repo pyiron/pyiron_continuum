@@ -10,7 +10,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result as ResultDamask
+    from damask import Result as ResultDamask, ConfigMaterial
     from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import os
 import numpy as np
@@ -43,8 +43,6 @@ class DAMASK(TemplateJob):
         """
         super(DAMASK, self).__init__(project, job_name)
         self._material = None
-        self._loading = None
-        self._grid = GridFactory
         self._results = None
         self._rotation = None
         self._geometry = None
@@ -77,20 +75,23 @@ class DAMASK(TemplateJob):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
 
     def material(self, element):
+        if isinstance(element, ConfigMaterial):
+            self.input.material = element
+            return
         if not isinstance(element, list):
             element = [element]
         if None not in [self._rotation, self.input.phase, self.input.homogenization]:
             self.input.material = DAMASKCreator.material(
                 self._rotation, element, self.input.phase, self.input.homogenization
             )
-    
+
     def grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
-            self._geometry = self._grid.via_voronoi_tessellation(**kwargs)
-        
+            self._geometry = self.GridFactory.via_voronoi_tessellation(**kwargs)
+
     def loading(self, **kwargs):
         self.input.loading = DAMASKCreator.loading(**kwargs)
-        
+
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")
         self.input.material.save(fname=file_path)
