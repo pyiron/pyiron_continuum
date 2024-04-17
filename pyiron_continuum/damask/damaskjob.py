@@ -89,7 +89,15 @@ class DAMASK(TemplateJob):
         if method == "voronoi_tessellation":
             self._geometry = self.GridFactory.via_voronoi_tessellation(**kwargs)
 
-    def loading(self, **kwargs):
+    @property
+    def loading(self):
+        return self.input.loading
+
+    @loading.setter
+    def loading(self, value):
+        self.input.loading = value
+
+    def set_loading(self, **kwargs):
         self.input.loading = DAMASKCreator.loading(**kwargs)
 
     def _write_material(self):
