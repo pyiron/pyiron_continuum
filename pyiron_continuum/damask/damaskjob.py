@@ -75,7 +75,7 @@ class DAMASK(TemplateJob):
 
     def rotation(self, method, *args):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
-    
+
     def material(self, element):
         if not isinstance(element, list):
             element = [element]
