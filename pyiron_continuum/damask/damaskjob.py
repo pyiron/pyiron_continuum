@@ -4,7 +4,7 @@
 DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
-from pyiron_base import TemplateJob, ImportAlarm, DataContainer
+from pyiron_base import TemplateJob, ImportAlarm
 
 with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
@@ -55,9 +55,9 @@ class DAMASK(TemplateJob):
         self.input.phase = None
         #self.input.rotation = None
         self.input.material = None
-    
+
     def elasticity(self, **kwargs):
-        self.input.elasticity = DAMASKCreator.elasticity(**kwargs) 
+        self.input.elasticity = DAMASKCreator.elasticity(**kwargs)
 
     def plasticity(self, **kwargs):
         self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
@@ -67,8 +67,11 @@ class DAMASK(TemplateJob):
 
     def phase(self, **kwargs):
         if None not in [self.input.elasticity, self.input.plasticity]:
-            self.input.phase = DAMASKCreator.phase(elasticity=self.input.elasticity,
-                    plasticity=self.input.plasticity, **kwargs)
+            self.input.phase = DAMASKCreator.phase(
+                elasticity=self.input.elasticity,
+                plasticity=self.input.plasticity,
+                **kwargs
+            )
 
     def rotation(self, method, *args):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
@@ -77,8 +80,9 @@ class DAMASK(TemplateJob):
         if not isinstance(element, list):
             element = [element]
         if None not in [self._rotation, self.input.phase, self.input.homogenization]:
-            self.input.material = DAMASKCreator.material(self._rotation, 
-                            element, self.input.phase, self.input.homogenization)
+            self.input.material = DAMASKCreator.material(
+                self._rotation, element, self.input.phase, self.input.homogenization
+            )
     
     def grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
