@@ -83,8 +83,7 @@ class DAMASK(TemplateJob):
         self.input.material = value
 
     def set_material(self, element):
-        if not isinstance(element, list):
-            element = [element]
+        element = np.array([element]).flatten().tolist()
         if None not in [self._rotation, self.input.phase, self.input.homogenization]:
             self.input.material = DAMASKCreator.material(
                 self._rotation, element, self.input.phase, self.input.homogenization
