@@ -45,12 +45,12 @@ class DAMASK(TemplateJob):
         self._results = None
         self._rotation = None
         self._geometry = None
+        self._elements = None
         self._executable_activate()
         self.input.elasticity = None
         self.input.plasticity = None
         self.input.homogenization = None
         self.input.phase = None
-        #self.input.rotation = None
         self.input.material = None
 
     def set_elasticity(self, **kwargs):
@@ -69,9 +69,11 @@ class DAMASK(TemplateJob):
                 plasticity=self.input.plasticity,
                 **kwargs
             )
+            self._attempt_init_material()
 
     def set_rotation(self, method, *args):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
+        self._attempt_init_material()
 
     @property
     def material(self):
@@ -81,12 +83,24 @@ class DAMASK(TemplateJob):
     def material(self, value):
         self.input.material = value
 
-    def set_material(self, elements):
-        elements = np.array([elements]).flatten().tolist()
-        if None not in [self._rotation, self.input.phase, self.input.homogenization]:
-            self.input.material = DAMASKCreator.material(
-                self._rotation, elements, self.input.phase, self.input.homogenization
-            )
+    def _attempt_init_material(self):
+        data = {
+            "rotation": self._rotation,
+            "elements": self._elements,
+            "phase": self.input.phase,
+            "homogenization": self.input.homogenization
+        }
+        if None not in data.values():
+            self.input.material = DAMASKCreator.material(**data)
+
+    def set_material(self, rotation, elements, phase, homogenization):
+        self.input.material = DAMASKCreator.material(
+            rotation, elements, phase, homogenization
+        )
+
+    def set_elements(self, elements):
+        self._elements = np.array([elements]).flatten().tolist()
+        self._attempt_init_material()
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
@@ -110,6 +124,7 @@ class DAMASK(TemplateJob):
 
     def set_loading(self, **kwargs):
         self.input.loading = DAMASKCreator.loading(**kwargs)
+        self._attempt_init_material()
 
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")
