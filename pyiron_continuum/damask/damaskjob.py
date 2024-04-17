@@ -10,7 +10,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result as ResultDamask, ConfigMaterial
+    from damask import Result as ResultDamask
     from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import os
 import numpy as np
@@ -92,7 +92,7 @@ class DAMASK(TemplateJob):
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
-            self._geometry = self.GridFactory.via_voronoi_tessellation(**kwargs)
+            self._geometry = GridFactory.via_voronoi_tessellation(**kwargs)
 
     @property
     def grid(self):
