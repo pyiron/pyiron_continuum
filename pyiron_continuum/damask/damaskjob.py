@@ -79,7 +79,7 @@ class DAMASK(TemplateJob):
         return self.input.material
 
     @material.setter
-    def mateiral(self, value):
+    def material(self, value):
         self.input.material = value
 
     def set_material(self, element):
