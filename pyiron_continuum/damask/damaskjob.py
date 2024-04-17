@@ -108,8 +108,20 @@ class DAMASK(TemplateJob):
     def loading(self, value):
         self.input.loading = value
 
-    def set_loading(self, **kwargs):
-        self.input.loading = DAMASKCreator.loading(**kwargs)
+    def set_loading(self, solver, load_steps):
+        """
+        Creates the required damask loading.
+
+        Args:
+            solver(dict): a dictionary describing the solver: e.g, {'mechanical': 'spectral_basic'}
+            load_steps(list/single dict): a list of dict or single dict, which describes the loading conditions
+                example:
+                {'mech_bc_dict':{'dot_F':[1e-2,0,0, 0,'x',0,  0,0,'x'],
+                                'P':['x','x','x', 'x',0,'x',  'x','x',0]},
+                'discretization':{'t': 10.,'N': 40, 'f_out': 4},
+                'additional': {'f_out': 4}
+        """
+        self.input.loading = DAMASKCreator.loading(solver=solver, load_steps=load_steps)
 
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")

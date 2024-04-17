@@ -46,17 +46,6 @@ class Damask(PyironFactory):
 
     @staticmethod
     def loading(solver, load_steps):
-        """
-        Creates the required damask loading.
-        Args:
-            solver(dict): a dictionary desrcribing the solver: e.g, {'mechanical': 'spectral_basic'}
-            load_steps(list/single dict): a list of dict or single dict, which describes the loading conditions
-            an example would be:
-            {'mech_bc_dict':{'dot_F':[1e-2,0,0, 0,'x',0,  0,0,'x'],
-                            'P':['x','x','x', 'x',0,'x',  'x','x',0]},
-            'discretization':{'t': 10.,'N': 40, 'f_out': 4},
-            'additional': {'f_out': 4}
-        """
         warnings.warn(
             "Setting loading via project creator is deprecated. Use job.set_loading instead"
         )
