@@ -10,8 +10,8 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result as ResultDamask
-    from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
+    from damask import Result
+from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import os
 import numpy as np
 import matplotlib.pyplot as plt
