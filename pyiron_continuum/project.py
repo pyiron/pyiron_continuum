@@ -53,40 +53,16 @@ class Damask(PyironFactory):
 
     @staticmethod
     def material(rotation, elements, phase, homogenization):
-        """
-        creates the damask material
-        Args:
-            rotation(damask.Rotation): damask rotation object
-            elements(str): elements describing the phase
-            phase(dict): a dictionary describing the phase parameters
-            homogenization(dict): a dictionary describing the damask homogenization
-        """
+        warnings.warn(
+            "Setting material via project creator is deprecated. Use job.set_material instead"
+        )
         return DAMASKCreator.material(rotation, elements, phase, homogenization)
 
     @staticmethod
     def phase(composition, lattice, output_list, elasticity, plasticity):
-        """
-        returns a dictionary describing the phases for damask
-        Args:
-            composition(str)
-            lattice(dict)
-            output_list(str)
-            elasticity(dict)
-            plasticity(dict)
-        Examples:
-            phase(composition='Aluminum', lattice= 'cF',
-                  output_list='[F, P, F_e, F_p, L_p, O]',
-                   elasticity=elasticity, plasticity=plasticity)
-            # elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
-                                        C_12= 60.41e9, C_44=28.34e9)
-            #  plasticity = plasticity(N_sl=[12], a_sl=2.25,
-                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
-                                    h_0_sl_sl=75e6,
-                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                                    n_sl=20, output=['xi_sl'],
-                                    type='phenopowerlaw', xi_0_sl=[31e6],
-                                    xi_inf_sl=[63e6])
-        """
+        warnings.warn(
+            "Setting phase via project creator is deprecated. Use job.set_phase instead"
+        )
         return DAMASKCreator.phase(composition, lattice, output_list, elasticity, plasticity)
 
     @staticmethod

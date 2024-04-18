@@ -57,12 +57,47 @@ class DAMASK(TemplateJob):
     def set_homogenization(self, **kwargs):
         self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
-    def set_phase(self, **kwargs):
+    def set_phase(self, composition, lattice, output_list):
+        """
+
+        Args:
+            composition(str)
+            lattice(dict)
+            output_list(str)
+
+        Returns:
+            None
+
+        Examples:
+            >>> job.set_elasticity(
+            ...     type='Hooke', C_11= 106.75e9, C_12= 60.41e9, C_44=28.34e9
+            ... )
+            >>> job.set_plasticity(
+            ...     N_sl=[12],
+            ...     a_sl=2.25,
+            ...     atol_xi=1.0,
+            ...     dot_gamma_0_sl=0.001,
+            ...     h_0_sl_sl=75e6,
+            ...     h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+            ...     n_sl=20,
+            ...     output=['xi_sl'],
+            ...     type='phenopowerlaw',
+            ...     xi_0_sl=[31e6],
+            ...     xi_inf_sl=[63e6]
+            ... )
+            >>> job.set_phase(
+            ...     composition='Aluminum',
+            ...     lattice='cF',
+            ...     output_list='[F, P, F_e, F_p, L_p, O]',
+            ... )
+        """
         if None not in [self.input.elasticity, self.input.plasticity]:
             self.input.phase = DAMASKCreator.phase(
                 elasticity=self.input.elasticity,
                 plasticity=self.input.plasticity,
-                **kwargs
+                composition=composition,
+                lattice=lattice,
+                output_list=output_list,
             )
             self._attempt_init_material()
 
@@ -89,6 +124,14 @@ class DAMASK(TemplateJob):
             self.input.material = DAMASKCreator.material(**data)
 
     def set_material(self, rotation, elements, phase, homogenization):
+        """
+        creates the damask material
+        Args:
+            rotation(damask.Rotation): damask rotation object
+            elements(str): elements describing the phase
+            phase(dict): a dictionary describing the phase parameters
+            homogenization(dict): a dictionary describing the damask homogenization
+        """
         self.input.material = DAMASKCreator.material(
             rotation, elements, phase, homogenization
         )
