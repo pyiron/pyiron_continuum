@@ -8,7 +8,7 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import GeomGrid, YAML, ConfigMaterial, seeds
+    from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
 
 __author__ = "Muhammad Hassani"
@@ -251,11 +251,14 @@ class Create:
         return kwargs
 
     @staticmethod
-    def rotation(method, *args):
+    def rotation(method="from_random", *args, **kwargs):
         """
-        Returns a damask.Rotation object by a given method.
         Args:
-            method(damask.Rotation.*): a method of damask.Rotation class which based on the
-                            given arguments creates the Rotation object
+            method (damask.Rotation.*/str): Method of damask.Rotation class
+                which based on the given arguments creates the Rotation object.
+                If string is given, it looks for the method within
+                `damask.Rotation` via `getattr`.
         """
-        return method(*args)
+        if isinstance(method, str):
+            method = getattr(Rotation, method)
+        return method(*args, **kwargs)

@@ -144,13 +144,15 @@ class DAMASK(TemplateJob):
         )
         self._attempt_init_material()
 
-    def set_rotation(self, method, *args):
+    def set_rotation(self, method="from_random", *args, **kwargs):
         """
         Args:
-            method(damask.Rotation.*): a method of damask.Rotation class which
-                based on the given arguments creates the Rotation object
+            method (damask.Rotation.*/str): Method of damask.Rotation class
+                which based on the given arguments creates the Rotation object.
+                If string is given, it looks for the method within
+                `damask.Rotation` via `getattr`.
         """
-        self._rotation = [DAMASKCreator.rotation(method, *args)]
+        self._rotation = [DAMASKCreator.rotation(method, *args, **kwargs)]
         self._attempt_init_material()
 
     @property
