@@ -4,6 +4,8 @@
 DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
+import warnings
+
 from pyiron_base import TemplateJob, ImportAlarm
 
 with ImportAlarm(
