@@ -152,10 +152,11 @@ class DAMASK:
     @staticmethod
     def Rotation(method="from_random", *args, **kwargs):
         """
-        returns a damask.Rotation object by a given method
         Args:
-            method(damask.Rotation.*): a method of damask.Rotation class which based on the
-                            given arguments creates the Rotation object
+            method (damask.Rotation.*/str): Method of damask.Rotation class
+                which based on the given arguments creates the Rotation object.
+                If string is given, it looks for the method within
+                `damask.Rotation` via `getattr`.
         """
         return DAMASKCreator.rotation(method=method, *args, **kwargs)
 

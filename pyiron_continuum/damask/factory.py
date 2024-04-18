@@ -253,7 +253,6 @@ class Create:
     @staticmethod
     def rotation(method="from_random", *args, **kwargs):
         """
-        Returns a damask.Rotation object by a given method.
         Args:
             method (damask.Rotation.*/str): Method of damask.Rotation class
                 which based on the given arguments creates the Rotation object.
