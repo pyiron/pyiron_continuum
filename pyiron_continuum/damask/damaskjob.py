@@ -27,11 +27,6 @@ __status__ = "development"
 __date__ = "Oct 04, 2021"
 
 
-class Result(ResultDamask):
-    def average_spatio_temporal_tensors(self, name):
-        return np.average(list(self.get(name).values()), axis=1)
-
-
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -103,15 +98,18 @@ class DAMASK(TemplateJob):
         """
         damask_hdf = os.path.join(self.working_directory, file_name)
 
+        def _average(d):
+            return np.average(list(d.values()), axis=1)
+
         self._results = Result(damask_hdf)
         self._results.add_stress_Cauchy()
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.output.stress = self._results.average_spatio_temporal_tensors('sigma')
-        self.output.strain = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.output.stress_von_Mises = self._results.average_spatio_temporal_tensors('sigma_vM')
-        self.output.strain_von_Mises = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+        self.output.stress = _average(self._results.get('sigma'))
+        self.output.strain = _average(self._results.get('epsilon_V^0.0(F)'))
+        self.output.stress_von_Mises = _average(self._results.get('sigma_vM'))
+        self.output.strain_von_Mises = _average(self._results.get('epsilon_V^0.0(F)_vM'))
 
     def writeresults2vtk(self):
         """
