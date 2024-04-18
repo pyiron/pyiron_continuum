@@ -24,6 +24,10 @@ class TestDecorators(PyironTestCase):
         job.set_elasticity(hello="goodbye")
         self.assertEqual(job.input.elasticity["hello"], "goodbye")
 
+    def test_list_solvers(self):
+        job = self.project.create.job.DAMASK("damask")
+        self.assertIsInstance(job.list_solvers(), list)
+
     @classmethod
     def tearDownClass(cls):
         cls.project.remove(enable=True)
