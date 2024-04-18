@@ -14,6 +14,16 @@ class TestDecorators(PyironTestCase):
         super().setUpClass()
         cls.project = Project('DAMASK')
 
+    def test_plasticity(self):
+        job = self.project.create.job.DAMASK("damask")
+        job.set_plasticity(hello="goodbye")
+        self.assertEqual(job.input.plasticity["hello"], "goodbye")
+
+    def test_elasticity(self):
+        job = self.project.create.job.DAMASK("damask")
+        job.set_elasticity(hello="goodbye")
+        self.assertEqual(job.input.elasticity["hello"], "goodbye")
+
     def test_list_solvers(self):
         job = self.project.create.job.DAMASK("damask")
         self.assertIsInstance(job.list_solvers(), list)

@@ -11,6 +11,7 @@ with ImportAlarm(
         'requirements. Please install it and try again.'
 ) as damask_alarm:
     from damask import Result
+from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,50 +37,101 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._material = None
-        self._loading = None
-        self._grid = None
         self._results = None
+        self._rotation = None
+        self._geometry = None
+        self._elements = None
         self._executable_activate()
+        self.input.elasticity = None
+        self.input.plasticity = None
+        self.input.homogenization = None
+        self.input.phase = None
+        self.input.material = None
+
+    def set_elasticity(self, **kwargs):
+        self.input.elasticity = DAMASKCreator.elasticity(**kwargs)
+
+    def set_plasticity(self, **kwargs):
+        self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
+
+    def set_homogenization(self, **kwargs):
+        self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
+
+    def set_phase(self, **kwargs):
+        if None not in [self.input.elasticity, self.input.plasticity]:
+            self.input.phase = DAMASKCreator.phase(
+                elasticity=self.input.elasticity,
+                plasticity=self.input.plasticity,
+                **kwargs
+            )
+            self._attempt_init_material()
+
+    def set_rotation(self, method, *args):
+        self._rotation = [DAMASKCreator.rotation(method, *args)]
+        self._attempt_init_material()
 
     @property
     def material(self):
-        return self._material
+        return self.input.material
 
     @material.setter
     def material(self, value):
-        self._material = value
+        self.input.material = value
+
+    def _attempt_init_material(self):
+        data = {
+            "rotation": self._rotation,
+            "elements": self._elements,
+            "phase": self.input.phase,
+            "homogenization": self.input.homogenization
+        }
+        if None not in data.values():
+            self.input.material = DAMASKCreator.material(**data)
+
+    def set_material(self, rotation, elements, phase, homogenization):
+        self.input.material = DAMASKCreator.material(
+            rotation, elements, phase, homogenization
+        )
+
+    def set_elements(self, elements):
+        self._elements = np.array([elements]).flatten().tolist()
+        self._attempt_init_material()
+
+    def set_grid(self, method="voronoi_tessellation", **kwargs):
+        if method == "voronoi_tessellation":
+            self._geometry = GridFactory.via_voronoi_tessellation(**kwargs)
 
     @property
     def grid(self):
-        return self._grid
+        return self._geometry
 
     @grid.setter
-    def grid(self, value):
-        self._grid = value
+    def grid(self, grid):
+        self._geometry = grid
 
     @property
     def loading(self):
-        return self._loading
+        return self.input.loading
 
     @loading.setter
     def loading(self, value):
-        self._loading = value
+        self.input.loading = value
+
+    def set_loading(self, **kwargs):
+        self.input.loading = DAMASKCreator.loading(**kwargs)
+        self._attempt_init_material()
 
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")
-        self._material.save(fname=file_path)
-        self.input.material = self._material
+        self.input.material.save(fname=file_path)
 
     def _write_loading(self):
         file_path = os.path.join(self.working_directory, "loading.yaml")
-        self._loading.save(file_path)
-        self.input.loading = self._loading
+        self.input.loading.save(file_path)
 
     def _write_geometry(self):
         file_path = os.path.join(self.working_directory, "damask")
-        self._grid.save(file_path)
-        self.input.geometry = self._grid
+        self._geometry.save(file_path)
 
     def write_input(self):
         self._write_loading()
