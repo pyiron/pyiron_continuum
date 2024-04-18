@@ -91,9 +91,7 @@ class Damask(PyironFactory):
         warnings.warn(
             "Setting rotation via project creator is deprecated. Use job.set_rotation instead"
         )
-        if isinstance(method, str):
-            method = getattr(Rotation, method)
-        return method(*args, **kwargs)
+        return DAMASKCreator.rotation(method=method, *args, **kwargs)
 
 class Project(ProjectCore):
     def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
