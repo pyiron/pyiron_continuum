@@ -10,3 +10,7 @@ dependencies:
 - scipy =1.13.0
 - sympy =1.12
 - python-blosc2
+- damask-mesh =3.0.0b
+- damask-grid =3.0.0b
+- damask =3.0.0b
+- python-damask =3.0.0b
