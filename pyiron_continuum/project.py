@@ -87,11 +87,13 @@ class Damask(PyironFactory):
         return DAMASKCreator.homogenization(method=method,parameters=parameters)
 
     @staticmethod
-    def rotation(method, *args):
+    def rotation(method, *args, **kwargs):
         warnings.warn(
             "Setting rotation via project creator is deprecated. Use job.set_rotation instead"
         )
-        return method(*args)
+        if isinstance(method, str):
+            method = getattr(Rotation, method)
+        return method(*args, **kwargs)
 
 class Project(ProjectCore):
     def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
