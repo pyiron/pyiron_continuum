@@ -152,18 +152,10 @@ class ROLLING(DAMASK):
             self.ResultsFile.append(f'{self.geom_name}_{self.load_name}_material.hdf5')
 
     def postProcess(self):
-        self._results = Result(f'{self.geom_name}_{self.load_name}_material.hdf5')
-        self._results.add_stress_Cauchy()
-        self._results.add_strain()
-        self._results.add_equivalent_Mises('sigma')
-        self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.stress = self.average_spatio_temporal_tensors('sigma')
-        self.strain = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.stress_von_Mises = self.average_spatio_temporal_tensors('sigma_vM')
-        self.strain_von_Mises = self.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+        self._load_results(f'{self.geom_name}_{self.load_name}_material.hdf5')
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
-        plt.plot(self.strain_von_Mises, self.stress_von_Mises)
+        plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
 
@@ -188,58 +180,6 @@ class ROLLING(DAMASK):
         save the old loading configuration before restart
         """
         self._write_loading()
-
-    def temporal_spatial_shape(self, name):
-        property_dict = self._results.get(name)
-        shape_list = [len(property_dict)]
-        for shape in property_dict[list(property_dict.keys())[0]].shape:
-            shape_list.append(shape)
-        return tuple(shape_list)
-
-    def average_spatio_temporal_tensors(self, name):
-        _shape = self.temporal_spatial_shape(name)
-        temporal_spatial_array = np.empty(_shape)
-        property_dict = self._results.get(name)
-        i = 0
-        for key in property_dict.keys():
-            temporal_spatial_array[i] = property_dict[key]
-            i = i + 1
-        return np.average(temporal_spatial_array, axis=1)
-
-    #################################################################
-    def temporal_spatial_shape_new(self, results, name):
-        property_dict = results.get(name)
-        shape_list = [len(property_dict)]
-        for shape in property_dict[list(property_dict.keys())[0]].shape:
-            shape_list.append(shape)
-        return tuple(shape_list)
-
-    def average_spatio_temporal_tensors_new(self, results, name):
-        _shape = self.temporal_spatial_shape_new(results, name)
-        temporal_spatial_array = np.empty(_shape)
-        property_dict = results.get(name)
-        i = 0
-        for key in property_dict.keys():
-            temporal_spatial_array[i] = property_dict[key]
-            i = i + 1
-        return np.average(temporal_spatial_array, axis=1)
-
-    def temporal_spatial_shape_regrid(self, name):
-        property_dict = self._regrid_results.get(name)
-        shape_list = [len(property_dict)]
-        for shape in property_dict[list(property_dict.keys())[0]].shape:
-            shape_list.append(shape)
-        return tuple(shape_list)
-
-    def average_spatio_temporal_tensors_regrid(self, name):
-        _shape = self.temporal_spatial_shape_regrid(name)
-        temporal_spatial_array = np.empty(_shape)
-        property_dict = self._regrid_results.get(name)
-        i = 0
-        for key in property_dict.keys():
-            temporal_spatial_array[i] = property_dict[key]
-            i = i + 1
-        return np.average(temporal_spatial_array, axis=1)
 
     ########################################################################
     ### for openphase
