@@ -150,7 +150,7 @@ class DAMASK:
         return DAMASKCreator.plasticity(**kwargs)
 
     @staticmethod
-    def Rotation(method, *args, **kwargs):
+    def Rotation(method="from_random", *args, **kwargs):
         """
         returns a damask.Rotation object by a given method
         Args:
