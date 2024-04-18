@@ -4,6 +4,8 @@
 DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
+import warnings
+
 from pyiron_base import TemplateJob, ImportAlarm
 
 with ImportAlarm(
@@ -49,24 +51,105 @@ class DAMASK(TemplateJob):
         self.input.material = None
 
     def set_elasticity(self, **kwargs):
+        """
+        Example:
+
+        >>> job.set_elasticity(
+        ...     type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+        ... )
+
+        """
         self.input.elasticity = DAMASKCreator.elasticity(**kwargs)
 
     def set_plasticity(self, **kwargs):
+        """
+
+        Example:
+
+        >>> job.set_plasticity(
+        ...     N_sl=[12], 
+        ...     a_sl=2.25, 
+        ...     atol_xi=1.0, 
+        ...     dot_gamma_0_sl=0.001, 
+        ...     h_0_sl_sl=75e6, 
+        ...     h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4], 
+        ...     n_sl=20, 
+        ...     output=['xi_sl'], 
+        ...     type='phenopowerlaw', 
+        ...     xi_0_sl=[31e6], 
+        ...     xi_inf_sl=[63e6]
+        ... )
+        """
         self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
 
     def set_homogenization(self, **kwargs):
+        """
+        Args:
+            method(str): homogenization method
+            parameters(dict): the required parameters
+
+        Example:
+        >>> job.set_homogenization(
+        ...     method='SX', 
+        ...     parameters={'N_constituents': 1, "mechanical": {"type": "pass"}}
+        ... )
+        """
         self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
-    def set_phase(self, **kwargs):
-        if None not in [self.input.elasticity, self.input.plasticity]:
-            self.input.phase = DAMASKCreator.phase(
-                elasticity=self.input.elasticity,
-                plasticity=self.input.plasticity,
-                **kwargs
+    def set_phase(self, composition, lattice, output_list):
+        """
+
+        Args:
+            composition(str)
+            lattice(dict)
+            output_list(str)
+
+        Returns:
+            None
+
+        Example:
+        >>> job.set_elasticity(
+        ...     type='Hooke', C_11= 106.75e9, C_12= 60.41e9, C_44=28.34e9
+        ... )
+        >>> job.set_plasticity(
+        ...     N_sl=[12],
+        ...     a_sl=2.25,
+        ...     atol_xi=1.0,
+        ...     dot_gamma_0_sl=0.001,
+        ...     h_0_sl_sl=75e6,
+        ...     h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+        ...     n_sl=20,
+        ...     output=['xi_sl'],
+        ...     type='phenopowerlaw',
+        ...     xi_0_sl=[31e6],
+        ...     xi_inf_sl=[63e6]
+        ... )
+        >>> job.set_phase(
+        ...     composition='Aluminum',
+        ...     lattice='cF',
+        ...     output_list='[F, P, F_e, F_p, L_p, O]',
+        ... )
+        """
+        if None in [self.input.elasticity, self.input.plasticity]:
+            raise ValueError(
+                "phase can only be defined after elasticity and plasticity are"
+                " defined (cf. job.set_elasticity and job.set_plasticity)"
             )
-            self._attempt_init_material()
+        self.input.phase = DAMASKCreator.phase(
+            elasticity=self.input.elasticity,
+            plasticity=self.input.plasticity,
+            composition=composition,
+            lattice=lattice,
+            output_list=output_list,
+        )
+        self._attempt_init_material()
 
     def set_rotation(self, method, *args):
+        """
+        Args:
+            method(damask.Rotation.*): a method of damask.Rotation class which
+                based on the given arguments creates the Rotation object
+        """
         self._rotation = [DAMASKCreator.rotation(method, *args)]
         self._attempt_init_material()
 
@@ -76,6 +159,9 @@ class DAMASK(TemplateJob):
 
     @material.setter
     def material(self, value):
+        warnings.warn(
+            "Setting material via project creator is deprecated. Use job.set_material instead"
+        )
         self.input.material = value
 
     def _attempt_init_material(self):
@@ -89,6 +175,16 @@ class DAMASK(TemplateJob):
             self.input.material = DAMASKCreator.material(**data)
 
     def set_material(self, rotation, elements, phase, homogenization):
+        """
+        Args:
+            rotation(damask.Rotation): damask rotation object
+            elements(str): elements describing the phase
+            phase(dict): a dictionary describing the phase parameters
+            homogenization(dict): a dictionary describing the damask homogenization
+
+        Returns:
+            None
+        """
         self.input.material = DAMASKCreator.material(
             rotation, elements, phase, homogenization
         )
@@ -100,6 +196,10 @@ class DAMASK(TemplateJob):
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
             self._geometry = GridFactory.via_voronoi_tessellation(**kwargs)
+        else:
+            raise NotImplementedError(
+                "Currently only `voronoi_tessellation` is implemented"
+            )
 
     @property
     def grid(self):
@@ -107,6 +207,9 @@ class DAMASK(TemplateJob):
 
     @grid.setter
     def grid(self, grid):
+        warnings.warn(
+            "Setting grid via project creator is deprecated. Use job.set_grid instead"
+        )
         self._geometry = grid
 
     @property
@@ -115,10 +218,25 @@ class DAMASK(TemplateJob):
 
     @loading.setter
     def loading(self, value):
+        warnings.warn(
+            "Setting loading via project creator is deprecated. Use job.set_loading instead"
+        )
         self.input.loading = value
 
-    def set_loading(self, **kwargs):
-        self.input.loading = DAMASKCreator.loading(**kwargs)
+    def set_loading(self, solver, load_steps):
+        """
+        Creates the required damask loading.
+
+        Args:
+            solver(dict): a dictionary describing the solver: e.g, {'mechanical': 'spectral_basic'}
+            load_steps(list/single dict): a list of dict or single dict, which describes the loading conditions
+                example:
+                {'mech_bc_dict':{'dot_F':[1e-2,0,0, 0,'x',0,  0,0,'x'],
+                                'P':['x','x','x', 'x',0,'x',  'x','x',0]},
+                'discretization':{'t': 10.,'N': 40, 'f_out': 4},
+                'additional': {'f_out': 4}
+        """
+        self.input.loading = DAMASKCreator.loading(solver=solver, load_steps=load_steps)
         self._attempt_init_material()
 
     def _write_material(self):
