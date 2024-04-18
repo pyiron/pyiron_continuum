@@ -67,49 +67,30 @@ class Damask(PyironFactory):
 
     @staticmethod
     def elasticity(**kwargs):
-        """
-        returns a dictionary of elasticity parameters for damask input file
-        Examples:
-             elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
-                                        C_12= 60.41e9, C_44=28.34e9)
-        """
+        warnings.warn(
+            "Setting elasticity via project creator is deprecated. Use job.set_elasticity instead"
+        )
         return DAMASKCreator.elasticity(**kwargs)
 
     @staticmethod
     def plasticity(**kwargs):
-        """
-        returns a dictionary of plasticity parameters for damask input file
-        Examples:
-            plasticity = plasticity(N_sl=[12], a_sl=2.25,
-                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
-                                    h_0_sl_sl=75e6,
-                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                                    n_sl=20, output=['xi_sl'],
-                                    type='phenopowerlaw', xi_0_sl=[31e6],
-                                    xi_inf_sl=[63e6])
-        """
+        warnings.warn(
+            "Setting plasticity via project creator is deprecated. Use job.set_plasticity instead"
+        )
         return DAMASKCreator.plasticity(**kwargs)
 
     @staticmethod
     def homogenization(method, parameters):
-        """
-        returns damask homogenization as a dictionary
-        Args:
-            method(str): homogenization method
-            parameters(dict): the required parameters
-        Examples:
-            homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
-        """
+        warnings.warn(
+            "Setting homogenization via project creator is deprecated. Use job.set_homogenization instead"
+        )
         return DAMASKCreator.homogenization(method=method,parameters=parameters)
 
     @staticmethod
     def rotation(method, *args):
-        """
-        returns a damask.Rotation object by a given method
-        Args:
-            method(damask.Rotation.*): a method of damask.Rotation class which based on the
-                            given arguments creates the Rotation object
-        """
+        warnings.warn(
+            "Setting rotation via project creator is deprecated. Use job.set_rotation instead"
+        )
         return method(*args)
 
 class Project(ProjectCore):
