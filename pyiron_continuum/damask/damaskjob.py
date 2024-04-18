@@ -10,8 +10,8 @@ with ImportAlarm(
         'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
 ) as damask_alarm:
-    from damask import Result as ResultDamask
-    from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
+    from damask import Result
+from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,11 +28,6 @@ __status__ = "development"
 __date__ = "Oct 04, 2021"
 
 
-class Result(ResultDamask):
-    def average_spatio_temporal_tensors(self, name):
-        return np.average(list(self.get(name).values()), axis=1)
-
-
 class DAMASK(TemplateJob):
     def __init__(self, project, job_name):
         """
@@ -45,12 +40,12 @@ class DAMASK(TemplateJob):
         self._results = None
         self._rotation = None
         self._geometry = None
+        self._elements = None
         self._executable_activate()
         self.input.elasticity = None
         self.input.plasticity = None
         self.input.homogenization = None
         self.input.phase = None
-        #self.input.rotation = None
         self.input.material = None
 
     def set_elasticity(self, **kwargs):
@@ -69,9 +64,11 @@ class DAMASK(TemplateJob):
                 plasticity=self.input.plasticity,
                 **kwargs
             )
+            self._attempt_init_material()
 
     def set_rotation(self, method, *args):
         self._rotation = [DAMASKCreator.rotation(method, *args)]
+        self._attempt_init_material()
 
     @property
     def material(self):
@@ -81,12 +78,24 @@ class DAMASK(TemplateJob):
     def material(self, value):
         self.input.material = value
 
-    def set_material(self, elements):
-        elements = np.array([elements]).flatten().tolist()
-        if None not in [self._rotation, self.input.phase, self.input.homogenization]:
-            self.input.material = DAMASKCreator.material(
-                self._rotation, elements, self.input.phase, self.input.homogenization
-            )
+    def _attempt_init_material(self):
+        data = {
+            "rotation": self._rotation,
+            "elements": self._elements,
+            "phase": self.input.phase,
+            "homogenization": self.input.homogenization
+        }
+        if None not in data.values():
+            self.input.material = DAMASKCreator.material(**data)
+
+    def set_material(self, rotation, elements, phase, homogenization):
+        self.input.material = DAMASKCreator.material(
+            rotation, elements, phase, homogenization
+        )
+
+    def set_elements(self, elements):
+        self._elements = np.array([elements]).flatten().tolist()
+        self._attempt_init_material()
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
@@ -122,6 +131,7 @@ class DAMASK(TemplateJob):
                 'additional': {'f_out': 4}
         """
         self.input.loading = DAMASKCreator.loading(solver=solver, load_steps=load_steps)
+        self._attempt_init_material()
 
     def _write_material(self):
         file_path = os.path.join(self.working_directory, "material.yaml")
@@ -152,15 +162,18 @@ class DAMASK(TemplateJob):
         """
         damask_hdf = os.path.join(self.working_directory, file_name)
 
+        def _average(d):
+            return np.average(list(d.values()), axis=1)
+
         self._results = Result(damask_hdf)
         self._results.add_stress_Cauchy()
         self._results.add_strain()
         self._results.add_equivalent_Mises('sigma')
         self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.output.stress = self._results.average_spatio_temporal_tensors('sigma')
-        self.output.strain = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)')
-        self.output.stress_von_Mises = self._results.average_spatio_temporal_tensors('sigma_vM')
-        self.output.strain_von_Mises = self._results.average_spatio_temporal_tensors('epsilon_V^0.0(F)_vM')
+        self.output.stress = _average(self._results.get('sigma'))
+        self.output.strain = _average(self._results.get('epsilon_V^0.0(F)'))
+        self.output.stress_von_Mises = _average(self._results.get('sigma_vM'))
+        self.output.strain_von_Mises = _average(self._results.get('epsilon_V^0.0(F)_vM'))
 
     def writeresults2vtk(self):
         """
