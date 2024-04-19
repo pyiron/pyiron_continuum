@@ -197,13 +197,13 @@ class TestSphinx(unittest.TestCase):
                                  output_list=['F', 'P', 'F_e', 'F_p', 'L_p', 'O'],
                                  elasticity=elasticity,plasticity=plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
-        homogenization = self.project.continuum.damask.Homogenization(method='SX', 
+        homogenization = self.project.continuum.damask.Homogenization(method='SX',
                                                              parameters={'N_constituents': 1,
                                                                          "mechanical": {"type": "pass"}})
         material = self.project.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
-        job.grid = grid 
+        job.grid = grid
         reduction_height = 0.05
         reduction_speed = 5.0e-2
         reduction_outputs = 250
