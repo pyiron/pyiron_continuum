@@ -32,8 +32,6 @@ jobs:
     - name: Tests
       shell: bash -l {0}
       run: python -m unittest discover tests/integration/fenics_tests
-
-jobs:
   build_damask:
     runs-on: ubuntu-latest
     steps:
