@@ -38,7 +38,7 @@ class TestSphinx(unittest.TestCase):
             output=['xi_sl'],
             xi_0_sl=[31.0e6],
             xi_inf_sl=[63.0e6]
-        )  
+        )
         phase = self.project.continuum.damask.Phase(
             composition='Aluminum',
             lattice=
@@ -84,13 +84,13 @@ class TestSphinx(unittest.TestCase):
                                  output_list=['F', 'P', 'F_e'],
                                  elasticity=elasticity,plasticity=None)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
-        homogenization = self.project.continuum.damask.Homogenization(method='SX', 
+        homogenization = self.project.continuum.damask.Homogenization(method='SX',
                                                              parameters={'N_constituents': 1,
                                                                          "mechanical": {"type": "pass"}})
         material = self.project.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
-        job.grid = grid 
+        job.grid = grid
         load_step =[{'mech_bc_dict':{'dot_F':[1e-3,0,0, 0,'x',0,  0,0,'x'],
                                     'P':['x','x','x', 'x',0,'x',  'x','x',0]},
                     'discretization':{'t': 50.,'N': 50},
