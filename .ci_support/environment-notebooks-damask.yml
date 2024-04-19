@@ -2,14 +2,20 @@ channels:
   - conda-forge
 dependencies:
   - ase =3.22.1
+  - coveralls
+  - coverage
+  - codacy-coverage
   - damask-mesh =3.0.0b
   - damask-grid =3.0.0b
   - damask =3.0.0b
   - k3d
+  - matplotlib =3.8.0
+  - numpy =1.26.3
   - pyiron =0.5.0
   - pyiron-data
   - python-damask =3.0.0b
   - pyvista =0.42.3
+  - scipy =1.11.4
   - seaborn =0.13.1
   - scikit-image =0.22.0
   - papermill
