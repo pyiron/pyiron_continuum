@@ -16,7 +16,7 @@ class TestSphinx(unittest.TestCase):
     def test_damask_tutorial(self):
         grains = 8
         grids = 16
-        job = self.project.create.job.DAMASK("damask_job")
+        job = self.project.create.job.DAMASK("tutorial")
         homogenization = self.project.create.DAMASK.homogenization(
             method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}}
         )
@@ -75,21 +75,21 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(job.output.stress.shape[1:], (3, 3))
 
     def test_linear_elastic(self):
-        job = pr.create.job.DAMASK('damask_job')
+        job = self.project.create.job.DAMASK('linear_elastic')
         grains=8
         grids=16
-        elasticity = pr.continuum.damask.Elasticity(type= 'Hooke', C_11= 106.75e9,
+        elasticity = self.project.continuum.damask.Elasticity(type= 'Hooke', C_11= 106.75e9,
                                            C_12= 60.41e9, C_44=28.34e9)
-        phase = pr.continuum.damask.Phase(composition='Aluminum', lattice= 'cF',
+        phase = self.project.continuum.damask.Phase(composition='Aluminum', lattice= 'cF',
                                  output_list=['F', 'P', 'F_e'],
                                  elasticity=elasticity,plasticity=None)
-        rotation = pr.continuum.damask.Rotation(shape=grains)
-        homogenization = pr.continuum.damask.Homogenization(method='SX', 
+        rotation = self.project.continuum.damask.Rotation(shape=grains)
+        homogenization = self.project.continuum.damask.Homogenization(method='SX', 
                                                              parameters={'N_constituents': 1,
                                                                          "mechanical": {"type": "pass"}})
-        material = pr.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
+        material = self.project.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
         job.material = material
-        grid = pr.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
+        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
         job.grid = grid 
         load_step =[{'mech_bc_dict':{'dot_F':[1e-3,0,0, 0,'x',0,  0,0,'x'],
                                     'P':['x','x','x', 'x',0,'x',  'x','x',0]},
@@ -97,13 +97,13 @@ class TestSphinx(unittest.TestCase):
                     'additional': {'f_out': 5}
                    }]
         solver = job.list_solvers()[0] # choose the mechanis solver
-        job.loading = pr.continuum.damask.Loading(solver=solver, load_steps=load_step)
+        job.loading = self.project.continuum.damask.Loading(solver=solver, load_steps=load_step)
         job.run()
         job.plot_stress_strain(component='xx')
         job.plot_stress_strain(von_mises=True)
 
     def test_elastoplasticity_isotropic(self):
-        job = pr.create.job.DAMASK('damask_job')
+        job = self.project.create.job.DAMASK('elastoplasticity_isotropic')
         job.set_elasticity(type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9)
         job.set_plasticity(
             type='isotropic',
@@ -130,17 +130,18 @@ class TestSphinx(unittest.TestCase):
                     'discretization':{'t': 60.,'N': 60},
                     'additional': {'f_out': 4}
                    }]
+        solver = job.list_solvers()[0]
         job.set_loading(solver=solver, load_steps=load_step)
         job.run()
         job.plot_stress_strain(component='xx')
         job.plot_stress_strain(von_mises=True)
 
     def test_elastoplasticity_powerlaw(self):
-        job = pr.create.job.DAMASK('damask_job')
+        job = self.project.create.job.DAMASK('elastoplasticity_powerlaw')
         grains=4;grids=16
-        elasticity = pr.continuum.damask.Elasticity(type= 'Hooke', C_11= 106.75e9,
+        elasticity = self.project.continuum.damask.Elasticity(type= 'Hooke', C_11= 106.75e9,
                                            C_12= 60.41e9, C_44=28.34e9)
-        plasticity = pr.continuum.damask.Plasticity(type='phenopowerlaw',
+        plasticity = self.project.continuum.damask.Plasticity(type='phenopowerlaw',
                                                     N_sl=[12],a_sl=[2.25],
                                                     atol_xi=1.0,dot_gamma_0_sl=[0.001],
                                                     h_0_sl_sl=[75.0e6],
@@ -150,16 +151,16 @@ class TestSphinx(unittest.TestCase):
                                                     xi_0_sl=[31.0e6],
                                                     xi_inf_sl=[63.0e6]
                                                    )
-        phase = pr.continuum.damask.Phase(composition='Aluminum', lattice= 'cF',
+        phase = self.project.continuum.damask.Phase(composition='Aluminum', lattice= 'cF',
                                  output_list=['F', 'P', 'F_e', 'F_p', 'L_p', 'O'],
                                  elasticity=elasticity,plasticity=plasticity)
-        rotation = pr.continuum.damask.Rotation(shape=grains)
-        homogenization = pr.continuum.damask.Homogenization(method='SX', 
+        rotation = self.project.continuum.damask.Rotation(shape=grains)
+        homogenization = self.project.continuum.damask.Homogenization(method='SX', 
                                                              parameters={'N_constituents': 1,
                                                                          "mechanical": {"type": "pass"}})
-        material = pr.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
+        material = self.project.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
         job.material = material
-        grid = pr.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
+        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
         job.grid = grid 
         load_step =[{'mech_bc_dict':{'dot_F':[1e-3,0,0, 0,'x',0,  0,0,'x'],
                                     'P':['x','x','x', 'x',0,'x',  'x','x',0]},
@@ -171,16 +172,16 @@ class TestSphinx(unittest.TestCase):
                     'additional': {'f_out': 4}
                    }]
         solver = job.list_solvers()[0] # choose the mechanis solver
-        job.loading = pr.continuum.damask.Loading(solver=solver, load_steps=load_step)
+        job.loading = self.project.continuum.damask.Loading(solver=solver, load_steps=load_step)
         job.run() # running your job, if you want the parallelization you can modify your 'pyiron/damask/bin/run_damask_3.0.0.sh file'
         job.plot_stress_strain(component='zz')
         job.plot_stress_strain(von_mises=True)
 
     def test_multiple_rolling(self):
-        job = pr.create.job.ROLLING('damask_job')
-        elasticity = pr.continuum.damask.Elasticity(type= 'Hooke', C_11= 106.75e9,
+        job = self.project.create.job.ROLLING('multiple_rolling')
+        elasticity = self.project.continuum.damask.Elasticity(type= 'Hooke', C_11= 106.75e9,
                                            C_12= 60.41e9, C_44=28.34e9)
-        plasticity = pr.continuum.damask.Plasticity(type='phenopowerlaw',
+        plasticity = self.project.continuum.damask.Plasticity(type='phenopowerlaw',
                                                     N_sl=[12],a_sl=[2.25],
                                                     atol_xi=1.0,dot_gamma_0_sl=[0.001],
                                                     h_0_sl_sl=[75.0e6],
@@ -192,16 +193,16 @@ class TestSphinx(unittest.TestCase):
                                                    )
         grains = 4
         grids = 4
-        phase = pr.continuum.damask.Phase(composition='Aluminum', lattice= 'cF',
+        phase = self.project.continuum.damask.Phase(composition='Aluminum', lattice= 'cF',
                                  output_list=['F', 'P', 'F_e', 'F_p', 'L_p', 'O'],
                                  elasticity=elasticity,plasticity=plasticity)
-        rotation = pr.continuum.damask.Rotation(shape=grains)
-        homogenization = pr.continuum.damask.Homogenization(method='SX', 
+        rotation = self.project.continuum.damask.Rotation(shape=grains)
+        homogenization = self.project.continuum.damask.Homogenization(method='SX', 
                                                              parameters={'N_constituents': 1,
                                                                          "mechanical": {"type": "pass"}})
-        material = pr.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
+        material = self.project.continuum.damask.Material([rotation],['Aluminum'], phase, homogenization)
         job.material = material
-        grid = pr.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
+        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(box_size=1.0e-5, spatial_discretization=grids, num_grains=grains)
         job.grid = grid 
         reduction_height = 0.05
         reduction_speed = 5.0e-2
