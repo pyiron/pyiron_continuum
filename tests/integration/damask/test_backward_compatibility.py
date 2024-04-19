@@ -1,6 +1,7 @@
 import unittest
 from pyiron_continuum import Project
 import os
+from damask import Rotation
 
 
 class TestSphinx(unittest.TestCase):
@@ -132,58 +133,66 @@ class TestSphinx(unittest.TestCase):
 
     def test_elastoplasticity_isotropic(self):
         job = self.project.create.job.DAMASK("elastoplasticity_isotropic")
-        job.set_elasticity(type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9)
-        job.set_plasticity(
+        job = self.project.create.job.DAMASK("damask_job")
+        elasticity = self.project.continuum.damask.Elasticity(
+            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+        )
+        plasticity = self.project.continuum.damask.Plasticity(
             type="isotropic",
             dot_gamma_0=0.001,
             n=20.0,
-            xi_0=0.85e6,
-            xi_inf=1.6e6,
+            xi_0=0.3e6,
+            xi_inf=0.6e6,
             a=2.0,
-            h_0=5.0e6,
+            h_0=1.0e6,  # hardening modulus
             M=1.0,
             h=1.0,
+            dilatation=True,
+            output=["xi"],
         )
-        job.set_phase(
+        phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
             lattice="cF",
             output_list=["F", "P", "F_e", "F_p", "L_p", "O"],
+            elasticity=elasticity,
+            plasticity=plasticity,
         )
-        job.set_rotation(shape=4)
-        job.set_homogenization(
+        rotation = self.project.continuum.damask.Rotation(Rotation.from_random, 4)
+        homogenization = self.project.continuum.damask.Homogenization(
             method="SX",
             parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
         )
-        job.set_elements("Aluminum")
-        job.set_grid(
-            method="voronoi_tessellation",
-            box_size=1.0e-5,
-            spatial_discretization=16,
-            num_grains=4,
+        material = self.project.continuum.damask.Material(
+            [rotation], ["Aluminum"], phase, homogenization
         )
+        job.material = material
+        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
+            box_size=1.0e-5, grid_dim=16, num_grains=4
+        )
+        job.grid = grid
         load_step = [
             {
                 "mech_bc_dict": {
-                    "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
+                    "dot_F": [1e-2, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
                 },
-                "discretization": {"t": 10.0, "N": 40},
-                "additional": {"f_out": 4},
+                "discretization": {"t": 20.0, "N": 100},
+                "additional": {"f_out": 5},
             },
             {
                 "mech_bc_dict": {
-                    "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
+                    "dot_F": [1e-2, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
                 },
-                "discretization": {"t": 60.0, "N": 60},
-                "additional": {"f_out": 4},
+                "discretization": {"t": 60.0, "N": 200},
+                "additional": {"f_out": 5},
             },
         ]
-        solver = job.list_solvers()[0]
-        job.set_loading(solver=solver, load_steps=load_step)
-        job.run()
-        job.plot_stress_strain(component="xx")
-        job.plot_stress_strain(von_mises=True)
+        solver = job.list_solvers()[0]  # choose the mechanis solver
+        job.loading = self.project.continuum.damask.Loading(
+            solver=solver, load_steps=load_step
+        )
+        job.run()  # running your job, if you want the parallelization you can modify your 'pyiron/damask/bin/run_damask_3.0.0.sh file'
 
     def test_elastoplasticity_powerlaw(self):
         job = self.project.create.job.DAMASK("elastoplasticity_powerlaw")
