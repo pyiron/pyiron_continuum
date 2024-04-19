@@ -17,7 +17,14 @@ not zero) cost in developer time.
 import unittest
 from pyiron_continuum import Project
 import numpy as np
-from .tutorials import page_5, page_6, page_7, page_8, page_9
+
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+from tutorials import page_5, page_6, page_7, page_8, page_9
 
 
 class TestFenicsTutorials(unittest.TestCase):
