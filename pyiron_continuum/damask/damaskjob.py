@@ -9,8 +9,8 @@ import warnings
 from pyiron_base import TemplateJob, ImportAlarm
 
 with ImportAlarm(
-        'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as damask_alarm:
     from damask import Result
 from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
@@ -67,16 +67,16 @@ class DAMASK(TemplateJob):
         Example:
 
         >>> job.set_plasticity(
-        ...     N_sl=[12], 
-        ...     a_sl=2.25, 
-        ...     atol_xi=1.0, 
-        ...     dot_gamma_0_sl=0.001, 
-        ...     h_0_sl_sl=75e6, 
-        ...     h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4], 
-        ...     n_sl=20, 
-        ...     output=['xi_sl'], 
-        ...     type='phenopowerlaw', 
-        ...     xi_0_sl=[31e6], 
+        ...     N_sl=[12],
+        ...     a_sl=2.25,
+        ...     atol_xi=1.0,
+        ...     dot_gamma_0_sl=0.001,
+        ...     h_0_sl_sl=75e6,
+        ...     h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+        ...     n_sl=20,
+        ...     output=['xi_sl'],
+        ...     type='phenopowerlaw',
+        ...     xi_0_sl=[31e6],
         ...     xi_inf_sl=[63e6]
         ... )
         """
@@ -90,7 +90,7 @@ class DAMASK(TemplateJob):
 
         Example:
         >>> job.set_homogenization(
-        ...     method='SX', 
+        ...     method='SX',
         ...     parameters={'N_constituents': 1, "mechanical": {"type": "pass"}}
         ... )
         """
@@ -171,7 +171,7 @@ class DAMASK(TemplateJob):
             "rotation": self._rotation,
             "elements": self._elements,
             "phase": self.input.phase,
-            "homogenization": self.input.homogenization
+            "homogenization": self.input.homogenization,
         }
         if None not in data.values():
             self.input.material = DAMASKCreator.material(**data)
@@ -264,9 +264,9 @@ class DAMASK(TemplateJob):
 
     def _load_results(self, file_name="damask_loading_material.hdf5"):
         """
-            loads the results from damask hdf file
-            Args:
-                file_name(str): path to the hdf file
+        loads the results from damask hdf file
+        Args:
+            file_name(str): path to the hdf file
         """
         damask_hdf = os.path.join(self.working_directory, file_name)
 
@@ -276,16 +276,18 @@ class DAMASK(TemplateJob):
         self._results = Result(damask_hdf)
         self._results.add_stress_Cauchy()
         self._results.add_strain()
-        self._results.add_equivalent_Mises('sigma')
-        self._results.add_equivalent_Mises('epsilon_V^0.0(F)')
-        self.output.stress = _average(self._results.get('sigma'))
-        self.output.strain = _average(self._results.get('epsilon_V^0.0(F)'))
-        self.output.stress_von_Mises = _average(self._results.get('sigma_vM'))
-        self.output.strain_von_Mises = _average(self._results.get('epsilon_V^0.0(F)_vM'))
+        self._results.add_equivalent_Mises("sigma")
+        self._results.add_equivalent_Mises("epsilon_V^0.0(F)")
+        self.output.stress = _average(self._results.get("sigma"))
+        self.output.strain = _average(self._results.get("epsilon_V^0.0(F)"))
+        self.output.stress_von_Mises = _average(self._results.get("sigma_vM"))
+        self.output.strain_von_Mises = _average(
+            self._results.get("epsilon_V^0.0(F)_vM")
+        )
 
     def writeresults2vtk(self):
         """
-            save results to vtk files
+        save results to vtk files
         """
         if self._results is None:
             raise ValueError("Results not loaded; call collect_output")
@@ -296,9 +298,11 @@ class DAMASK(TemplateJob):
         """
         lists the solvers for a damask job
         """
-        return [{'mechanical': 'spectral_basic'},
-                {'mechanical': 'spectral_polarization'},
-                {'mechanical': 'FEM'}]
+        return [
+            {"mechanical": "spectral_basic"},
+            {"mechanical": "spectral_polarization"},
+            {"mechanical": "FEM"},
+        ]
 
     def plot_stress_strain(self, component=None, von_mises=False):
         """
@@ -310,29 +314,45 @@ class DAMASK(TemplateJob):
         fig, ax = plt.subplots()
         if component is not None:
             if von_mises is True:
-                raise ValueError("It is not allowed that component is specified and von_mises is also True ")
+                raise ValueError(
+                    "It is not allowed that component is specified and von_mises is also True "
+                )
             if len(component) != 2:
                 ValueError("The length of direction must be 2, like 'xx', 'xy', ... ")
-            if component[0] != 'x' or component[0] != 'y' or component[0] != 'z':
+            if component[0] != "x" or component[0] != "y" or component[0] != "z":
                 ValueError("The direction should be from x, y, and z")
-            if component[1] != 'x' or component[1] != 'y' or component[1] != 'z':
+            if component[1] != "x" or component[1] != "y" or component[1] != "z":
                 ValueError("The direction should be from x, y, and z")
-            _component_dict = {'x': 0, 'y': 1, 'z': 2}
+            _component_dict = {"x": 0, "y": 1, "z": 2}
             _zero_axis = int(_component_dict[component[0]])
             _first_axis = int(_component_dict[component[1]])
-            ax.plot(self.output.strain[:, _zero_axis, _first_axis],
-                    self.output.stress[:, _zero_axis, _first_axis],
-                    linestyle='-', linewidth='2.5')
+            ax.plot(
+                self.output.strain[:, _zero_axis, _first_axis],
+                self.output.stress[:, _zero_axis, _first_axis],
+                linestyle="-",
+                linewidth="2.5",
+            )
             ax.grid(True)
-            ax.set_xlabel(rf'$\varepsilon_{component[0]}$' + rf'$_{component[1]}$', fontsize=18)
-            ax.set_ylabel(rf'$\sigma_{component[0]}$' + rf'$_{component[1]}$' + '(Pa)', fontsize=18)
+            ax.set_xlabel(
+                rf"$\varepsilon_{component[0]}$" + rf"$_{component[1]}$", fontsize=18
+            )
+            ax.set_ylabel(
+                rf"$\sigma_{component[0]}$" + rf"$_{component[1]}$" + "(Pa)",
+                fontsize=18,
+            )
         elif von_mises is True:
-            ax.plot(self.output.strain_von_Mises, self.output.stress_von_Mises,
-                    linestyle='-', linewidth='2.5')
+            ax.plot(
+                self.output.strain_von_Mises,
+                self.output.stress_von_Mises,
+                linestyle="-",
+                linewidth="2.5",
+            )
             ax.grid(True)
-            ax.set_xlabel(r'$\varepsilon_{vM}$', fontsize=18)
-            ax.set_ylabel(r'$\sigma_{vM}$ (Pa)', fontsize=18)
+            ax.set_xlabel(r"$\varepsilon_{vM}$", fontsize=18)
+            ax.set_ylabel(r"$\sigma_{vM}$ (Pa)", fontsize=18)
         else:
-            raise ValueError("either direction should be passed in "
-                             "or vonMises should be set to True")
+            raise ValueError(
+                "either direction should be passed in "
+                "or vonMises should be set to True"
+            )
         return fig, ax
