@@ -1,0 +1,79 @@
+import unittest
+from pyiron_continuum import Project
+import os
+
+
+class TestSphinx(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project('DAMASK_CHECK_ALL')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.remove(enable=True)
+
+    def test_damask_tutorial(self):
+        grains = 8
+        grids = 16
+        job = self.project.create.job.DAMASK("damask_job")
+        homogenization = self.project.create.DAMASK.homogenization(
+            method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}}
+        )
+        homogenization = self.project.continuum.damask.Homogenization(
+            method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}}
+        )
+        elasticity = self.project.continuum.damask.Elasticity(
+            type= 'Hooke', C_11= 106.75e9, C_12= 60.41e9, C_44=28.34e9
+        )
+        plasticity = self.project.continuum.damask.Plasticity(
+            type='phenopowerlaw',
+            N_sl=[12],
+            a_sl=[2.25],
+            atol_xi=1.0,
+            dot_gamma_0_sl=[0.001],
+            h_0_sl_sl=[75.0e6],
+            h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4, 1.4],
+            n_sl=[20],
+            output=['xi_sl'],
+            xi_0_sl=[31.0e6],
+            xi_inf_sl=[63.0e6]
+        )  
+        phase = self.project.continuum.damask.Phase(
+            composition='Aluminum',
+            lattice=
+            'cF', output_list=['F', 'P', 'F_e', 'F_p', 'L_p', 'O'],
+            elasticity=elasticity,
+            plasticity=plasticity
+        )
+        rotation = self.project.continuum.damask.Rotation(shape=grains)
+        material = self.project.continuum.damask.Material(
+            [rotation],['Aluminum'], phase, homogenization
+        )
+        job.material = material
+        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
+            box_size=1.0e-5, spatial_discretization=grids, num_grains=grains
+        )
+        job.grid = grid
+        load_step =[{'mech_bc_dict':{'dot_F':[1e-3,0,0, 0,'x',0,  0,0,'x'],
+                                    'P':['x','x','x', 'x',0,'x',  'x','x',0]},
+                    'discretization':{'t': 10.,'N': 40},
+                    'additional': {'f_out': 4}
+                   },{'mech_bc_dict':{'dot_F':[1e-3,0,0, 0,'x',0,  0,0,'x'],
+                                      'P':['x','x','x', 'x',0,'x',  'x','x',0]},
+                    'discretization':{'t': 60.,'N': 60},
+                    'additional': {'f_out': 4}
+                   }]
+        solver = job.list_solvers()[0]
+        job.loading = self.project.continuum.damask.Loading(
+            solver=solver, load_steps=load_step
+        )
+        job.run()
+        job.plot_stress_strain(component='zz')
+        job.plot_stress_strain(von_mises=True)
+        job.output.damask.view(increments=80)
+        self.assertEqual(job.output.stress.shape[1:], (3, 3))
+
+
+if __name__ == "__main__":
+    unittest.main()
