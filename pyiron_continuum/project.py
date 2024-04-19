@@ -7,9 +7,10 @@ import warnings
 from pyiron_base import JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory, ImportAlarm
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
+
 with ImportAlarm(
-        'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as damask_alarm:
     from pyiron_continuum.damask.factory import Create as DAMASKCreator
     from pyiron_continuum.damask.factory import GridFactory
@@ -63,7 +64,9 @@ class Damask(PyironFactory):
         warnings.warn(
             "Setting phase via project creator is deprecated. Use job.set_phase instead"
         )
-        return DAMASKCreator.phase(composition, lattice, output_list, elasticity, plasticity)
+        return DAMASKCreator.phase(
+            composition, lattice, output_list, elasticity, plasticity
+        )
 
     @staticmethod
     def elasticity(**kwargs):
@@ -84,7 +87,7 @@ class Damask(PyironFactory):
         warnings.warn(
             "Setting homogenization via project creator is deprecated. Use job.set_homogenization instead"
         )
-        return DAMASKCreator.homogenization(method=method,parameters=parameters)
+        return DAMASKCreator.homogenization(method=method, parameters=parameters)
 
     @staticmethod
     def rotation(method, *args, **kwargs):
@@ -93,13 +96,16 @@ class Damask(PyironFactory):
         )
         return DAMASKCreator.rotation(method=method, *args, **kwargs)
 
+
 class Project(ProjectCore):
-    def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
+    def __init__(
+        self, path="", user=None, sql_query=None, default_working_directory=False
+    ):
         super(Project, self).__init__(
             path=path,
             user=user,
             sql_query=sql_query,
-            default_working_directory=default_working_directory
+            default_working_directory=default_working_directory,
         )
         self.job_type = JobTypeChoice()
         self._creator = Creator(self)
@@ -154,6 +160,7 @@ class Project(ProjectCore):
         """
         ProjectGUI(self)
 
+
 Project.__doc__ = ProjectCore.__doc__
 
 
@@ -182,5 +189,3 @@ class Creator(CreatorCore):
     @DAMASK.setter
     def DAMASK(self, value):
         self._damask_creator = value
-
-
