@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import subprocess
+import warnings
 
 dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, dir)
@@ -27,6 +28,11 @@ class ROLLING(DAMASK):
         super().__init__(project=project, job_name=job_name)
         self.IsFirstRolling = True
         self.RollingInstance = 0
+        self.input.reduction_height = None
+        self.input.reduction_speed = None
+        self.input.reduction_outputs = None
+        self.input.regrid = False
+        self.input.executable_name = ""
 
     def loading_discretization(self, rolltimes, filename):
         time = rolltimes * self._height_reduction / (self._rolling_speed * self._number_passes)
@@ -51,7 +57,21 @@ class ROLLING(DAMASK):
         # self.input.loading = self._loading
         print(self._loading)
 
-    def executeRolling(self, reduction_height, reduction_speed, reduction_outputs, regrid=False, damask_exe=''):
+    def executeRolling(self, reduction_height=None, reduction_speed=None, reduction_outputs=None, regrid=None, damask_exe=None):
+        warnings.warn("`executeRolling` is deprecated; use `run`")
+        if reduction_height is not None:
+            self.input.reduction_height = reduction_height
+        if reduction_speed is not None:
+            self.input.reduction_speed = reduction_speed
+        if reduction_outputs is not None:
+            self.input.reduction_outputs = reduction_outputs
+        if regrid is not None:
+            self.input.regrid = regrid
+        if damask_exe is not None:
+            self.input.damask_exe = damask_exe
+        self.run()
+
+    def run_static(self, damask_exe=''):
         if self.IsFirstRolling:
             # for the first rolling step, no regridding is required
             self.RollingInstance = 1
@@ -71,16 +91,16 @@ class ROLLING(DAMASK):
             self._write_geometry()
 
             self.load_case = YAML(solver={'mechanical': 'spectral_basic'}, loadstep=[])
-            reduction_time = reduction_height / reduction_speed
+            reduction_time = self.input.reduction_height / self.input.reduction_speed
             dotF = [['x', 0, 0],
                     [0, 0, 0],
-                    [0, 0, -1.0 * reduction_speed]]
+                    [0, 0, -1.0 * self.input.reduction_speed]]
             P = [[0, 'x', 'x'],
                  ['x', 'x', 'x'],
                  ['x', 'x', 'x']]
             loadstep = {'boundary_conditions': {'mechanical': {'P': P,
                                                                'dot_F': dotF}},
-                        'discretization': {'t': reduction_time, 'N': reduction_outputs},
+                        'discretization': {'t': reduction_time, 'N': self.input.reduction_outputs},
                         'f_out': 5,
                         'f_restart': 5}
             self.load_case['loadstep'].append(loadstep)
@@ -94,10 +114,10 @@ class ROLLING(DAMASK):
             self.geom_name = 'damask'
             self.load_name = 'load'
 
-            if len(damask_exe) < 11:
+            if len(self.input.damask_exe) < 11:
                 args = f'DAMASK_grid -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log'
             else:
-                args = f'{damask_exe} -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log'
+                args = f'{self.input.damask_exe} -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log'
             print('Start the first rolling test ...')
             os.chdir(self.working_directory)
             print('CMD=', args)
@@ -107,16 +127,16 @@ class ROLLING(DAMASK):
         else:
             # for multiple rolling test
             self.RollingInstance += 1
-            reduction_time = reduction_height / reduction_speed
+            reduction_time = self.input.reduction_height / self.input.reduction_speed
             dotF = [['x', 0, 0],
                     [0, 0, 0],
-                    [0, 0, -1.0 * reduction_speed]]
+                    [0, 0, -1.0 * self.input.reduction_speed]]
             P = [[0, 'x', 'x'],
                  ['x', 'x', 'x'],
                  ['x', 'x', 'x']]
             loadstep = {'boundary_conditions': {'mechanical': {'P': P,
                                                                'dot_F': dotF}},
-                        'discretization': {'t': reduction_time, 'N': reduction_outputs},
+                        'discretization': {'t': reduction_time, 'N': self.input.reduction_outputs},
                         'f_out': 5,
                         'f_restart': 5}
             self.load_case['loadstep'].append(loadstep)
@@ -126,23 +146,23 @@ class ROLLING(DAMASK):
             self._loading = self.load_case
             file_path = os.path.join(self.working_directory, load_name + '.yaml')
             self._loading.save(file_path)
-            if regrid:
+            if self.input.regrid:
                 self.load_name = self.load_name_old
                 self.regridding(1.025)
                 self.load_name = load_name
                 self.geom_name = self.regrid_geom_name
-                if len(damask_exe) < 11:
+                if len(self.input.damask_exe) < 11:
                     args = f'DAMASK_grid -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log' % (
                         self.RollingInstance)
                 else:
-                    args = f'{damask_exe} -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log' % (
+                    args = f'{self.input.damask_exe} -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log' % (
                         self.RollingInstance)
             else:
-                if len(damask_exe) < 11:
+                if len(self.input.damask_exe) < 11:
                     args = f'DAMASK_grid -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log' % (
                         self.RollingInstance)
                 else:
-                    args = f'{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log' % (
+                    args = f'{self.input.damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log' % (
                         self.RollingInstance)
             print('Start the rolling-%d test ...' % (self.RollingInstance))
             print('CMD=', args)
