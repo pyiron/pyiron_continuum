@@ -110,7 +110,6 @@ def write_RegriddedHDF5(
     """
     Write out the new hdf5 file based on the regridded geometry and deformation info
     """
-    isElastic = False
     os.chdir(f"{work_dir}")
     fNameResults_0 = f"{geom_name}_{load_name}_material.hdf5"
     fNameRestart_0 = f"{geom_name}_{load_name}_material_restart.hdf5"
@@ -162,11 +161,7 @@ def write_RegriddedHDF5(
                 elif dataset == "F_p":
                     data_rg = R_e_0[map_0to1_phase]
                 elif dataset == "F":
-                    data_rg = (
-                        np.broadcast_to(np.eye(3), (len(map_0to1_phase), 3, 3))
-                        if not isElastic
-                        else V_e_0[map_0to1_phase]
-                    )
+                    data_rg = np.broadcast_to(np.eye(3), (len(map_0to1_phase), 3, 3))
                 else:
                     data_0 = fRestart_0[path][()]
                     data_rg = data_0[map_0to1_phase, ...]
@@ -190,29 +185,16 @@ def write_RegriddedHDF5(
             ]:
                 data_rg = fRestart_0[path]
             elif dataset in ["F_aim", "F_aim_lastInc"]:
-                data_rg = (
-                    np.eye(3)
-                    if not isElastic
-                    else scipy.linalg.sqrtm(
-                        np.einsum("lij,lkj->ik", F_e_0, F_e_0) / len(F_e_0)
-                    )
-                )  # MD: order correct?
+                data_rg = np.eye(3)
             elif dataset in ["T", "T_lastInc"]:
                 shape = fRestart_0[path].shape[3:]
                 data_0 = fRestart_0[path][()].reshape((-1,) + shape)
                 data_rg = data_0[map_0to_rg, ...].reshape(tuple(cells_rg[::-1]) + shape)
             elif dataset in ["F", "F_lastInc"]:
-                if isElastic:
-                    shape = fRestart_0[path].shape[3:]
-                    data_0 = fRestart_0[path][()].reshape((-1,) + shape)
-                    data_rg = data_0[map_0to_rg, ...].reshape(
-                        tuple(cells_rg[::-1]) + shape
-                    )
-                else:
-                    shape = fRestart_0[path].shape[3:]
-                    data_rg = np.broadcast_to(
-                        np.eye(3), (len(map_0to_rg), 3, 3)
-                    ).reshape(tuple(cells_rg[::-1]) + shape)
+                shape = fRestart_0[path].shape[3:]
+                data_rg = np.broadcast_to(
+                    np.eye(3), (len(map_0to_rg), 3, 3)
+                ).reshape(tuple(cells_rg[::-1]) + shape)
             else:
                 print("Warning: There is restart variables that cannot be handled!")
 
