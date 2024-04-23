@@ -5,8 +5,8 @@
 from pyiron_base import ImportAlarm
 
 with ImportAlarm(
-        'DAMASK functionality requires the `damask` module (and its dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
@@ -33,9 +33,13 @@ class MaterialFactory:
 
     @staticmethod
     def config(rotation, elements, phase, homogenization):
-        _config = ConfigMaterial({'material': [], 'phase': phase, 'homogenization': homogenization})
+        _config = ConfigMaterial(
+            {"material": [], "phase": phase, "homogenization": homogenization}
+        )
         for r, e in zip(rotation, elements):
-            _config = _config.material_add(O=r, phase=e, homogenization=list(homogenization.keys())[0])
+            _config = _config.material_add(
+                O=r, phase=e, homogenization=list(homogenization.keys())[0]
+            )
         return _config
 
     @staticmethod
@@ -64,7 +68,7 @@ class GridFactory:
         origin.from_Voronoi_tessellation(...)
         """
         if self._origin is None:
-            return GeomGrid(material=np.ones((1, 1, 1)), size=[1., 1., 1.])
+            return GeomGrid(material=np.ones((1, 1, 1)), size=[1.0, 1.0, 1.0])
         else:
             return self._origin
 
@@ -74,12 +78,18 @@ class GridFactory:
 
     @staticmethod
     def via_voronoi_tessellation(spatial_discretization, num_grains, box_size):
-        if isinstance(spatial_discretization, int) or isinstance(spatial_discretization, float):
-            spatial_discretization = np.array([spatial_discretization, spatial_discretization, spatial_discretization])
+        if isinstance(spatial_discretization, int) or isinstance(
+            spatial_discretization, float
+        ):
+            spatial_discretization = np.array(
+                [spatial_discretization, spatial_discretization, spatial_discretization]
+            )
         if isinstance(box_size, int) or isinstance(box_size, float):
             box_size = np.array([box_size, box_size, box_size])
         seed = seeds.from_random(box_size, num_grains)
-        return GeomGrid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
+        return GeomGrid.from_Voronoi_tessellation(
+            spatial_discretization, box_size, seed
+        )
 
 
 class DamaskLoading(dict):
@@ -92,15 +102,20 @@ class DamaskLoading(dict):
         loading_dict["solver"] = solver
         if isinstance(load_steps, list):
             loading_dict["loadstep"] = [
-                LoadStep(mech_bc_dict=load_step['mech_bc_dict'],
-                         discretization=load_step['discretization'],
-                         additional_parameters_dict=load_step["additional"])
-                for load_step in load_steps]
+                LoadStep(
+                    mech_bc_dict=load_step["mech_bc_dict"],
+                    discretization=load_step["discretization"],
+                    additional_parameters_dict=load_step["additional"],
+                )
+                for load_step in load_steps
+            ]
         else:
             loading_dict["loadstep"] = [
-                LoadStep(mech_bc_dict=load_steps['mech_bc_dict'],
-                         discretization=load_steps['discretization'],
-                         additional_parameters_dict=load_steps["additional"])
+                LoadStep(
+                    mech_bc_dict=load_steps["mech_bc_dict"],
+                    discretization=load_steps["discretization"],
+                    additional_parameters_dict=load_steps["additional"],
+                )
             ]
         return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
 
@@ -109,14 +124,22 @@ class LoadStep(dict):
     def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
         """An auxilary class, which helps to parse loadsteps to a dictionary."""
         super(LoadStep, self).__init__(self)
-        self.update({'boundary_conditions': {'mechanical': {}},
-                     'discretization': discretization})
+        self.update(
+            {
+                "boundary_conditions": {"mechanical": {}},
+                "discretization": discretization,
+            }
+        )
 
-        if additional_parameters_dict is not None and isinstance(additional_parameters_dict, dict):
+        if additional_parameters_dict is not None and isinstance(
+            additional_parameters_dict, dict
+        ):
             self.update(additional_parameters_dict)
 
         for key, val in mech_bc_dict.items():
-            self['boundary_conditions']['mechanical'].update({key: LoadStep.load_tensorial(val)})
+            self["boundary_conditions"]["mechanical"].update(
+                {key: LoadStep.load_tensorial(val)}
+            )
 
     @staticmethod
     def load_tensorial(arr):
@@ -200,14 +223,23 @@ class Create:
                                     xi_inf_sl=[63e6])
         """
         if plasticity == None:
-            return {composition: {'lattice': lattice,
-                                  'mechanical': {'output': output_list,
-                                                 'elastic': elasticity}}}
+            return {
+                composition: {
+                    "lattice": lattice,
+                    "mechanical": {"output": output_list, "elastic": elasticity},
+                }
+            }
         else:
-            return {composition: {'lattice': lattice,
-                                  'mechanical': {'output': output_list,
-                                                 'elastic': elasticity,
-                                                 'plastic': plasticity}}}
+            return {
+                composition: {
+                    "lattice": lattice,
+                    "mechanical": {
+                        "output": output_list,
+                        "elastic": elasticity,
+                        "plastic": plasticity,
+                    },
+                }
+            }
 
     @staticmethod
     def elasticity(**kwargs):
@@ -236,18 +268,18 @@ class Create:
         has_h = False
         vals = {}
         for key, value in kwargs.items():
-            if 'h_0_sl_sl' in key:
+            if "h_0_sl_sl" in key:
                 has_h0 = True
-                vals['h_0_sl-sl'] = value
-            if 'h_sl_sl' in key:
+                vals["h_0_sl-sl"] = value
+            if "h_sl_sl" in key:
                 has_h = True
-                vals['h_sl-sl'] = value
+                vals["h_sl-sl"] = value
         if has_h0:
-            kwargs['h_0_sl-sl'] = vals['h_0_sl-sl']
-            del kwargs['h_0_sl_sl']
+            kwargs["h_0_sl-sl"] = vals["h_0_sl-sl"]
+            del kwargs["h_0_sl_sl"]
         if has_h:
-            kwargs['h_sl-sl'] = vals['h_sl-sl']
-            del kwargs['h_sl_sl']
+            kwargs["h_sl-sl"] = vals["h_sl-sl"]
+            del kwargs["h_sl_sl"]
         return kwargs
 
     @staticmethod
