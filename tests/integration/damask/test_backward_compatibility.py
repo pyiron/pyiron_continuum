@@ -4,7 +4,7 @@ import os
 from damask import Rotation
 
 
-class TestSphinx(unittest.TestCase):
+class TestDamask(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
