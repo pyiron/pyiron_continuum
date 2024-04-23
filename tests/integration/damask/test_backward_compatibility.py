@@ -3,7 +3,7 @@ from pyiron_continuum import Project
 import os
 
 
-class TestSphinx(unittest.TestCase):
+class TestDamask(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
