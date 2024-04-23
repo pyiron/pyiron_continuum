@@ -9,6 +9,7 @@ class TestDamask(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project("DAMASK_CHECK_ALL")
+        cls.project.remove_jobs(recursive=True, silently=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -167,7 +168,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, grid_dim=16, num_grains=4
+            box_size=1.0e-5, spatial_discretization=16, num_grains=4
         )
         job.grid = grid
         load_step = [
