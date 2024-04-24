@@ -31,4 +31,28 @@ jobs:
         mamba env update --name test --file .ci_support/environment-notebooks-fenics.yml
     - name: Tests
       shell: bash -l {0}
-      run: python -m unittest discover tests/integration
+      run: python -m unittest discover tests/integration/fenics_tests
+  build_damask:
+    if: |
+      github.event_name == 'push' ||
+      ( github.event_name == 'pull_request'  && contains(github.event.pull_request.labels.*.name, 'integration' ))
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2.2.0
+      with:
+        python-version: "3.11"
+        mamba-version: "*"
+        miniforge-variant: Mambaforge
+        channels: conda-forge
+        channel-priority: strict
+        auto-update-conda: true
+        environment-file: .ci_support/environment.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        pip install --no-deps .
+        mamba env update --name test --file .ci_support/environment-notebooks-damask.yml
+    - name: Tests
+      shell: bash -l {0}
+      run: python -m unittest discover tests/integration/damask
