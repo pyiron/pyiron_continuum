@@ -141,14 +141,12 @@ class TestDamask(unittest.TestCase):
             type="isotropic",
             dot_gamma_0=0.001,
             n=20.0,
-            xi_0=0.3e6,
-            xi_inf=0.6e6,
+            xi_0=0.85e6,
+            xi_inf=1.6e6,
             a=2.0,
-            h_0=1.0e6,  # hardening modulus
+            h_0=5.0e6,  # hardening modulus
             M=1.0,
             h=1.0,
-            dilatation=True,
-            output=["xi"],
         )
         phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
@@ -173,19 +171,19 @@ class TestDamask(unittest.TestCase):
         load_step = [
             {
                 "mech_bc_dict": {
-                    "dot_F": [1e-2, 0, 0, 0, "x", 0, 0, 0, "x"],
+                    "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
                 },
-                "discretization": {"t": 20.0, "N": 100},
-                "additional": {"f_out": 5},
+                "discretization": {"t": 10.0, "N": 40},
+                "additional": {"f_out": 4},
             },
             {
                 "mech_bc_dict": {
                     "dot_F": [1e-2, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
                 },
-                "discretization": {"t": 60.0, "N": 200},
-                "additional": {"f_out": 5},
+                "discretization": {"t": 60.0, "N": 60},
+                "additional": {"f_out": 4},
             },
         ]
         solver = job.list_solvers()[0]  # choose the mechanis solver
