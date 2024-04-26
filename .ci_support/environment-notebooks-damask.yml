@@ -20,6 +20,6 @@ dependencies:
   - scikit-image =0.22.0
   - papermill
   - jupyter
-  - fenics-dolfinx
-  - mpich
-  - pyvista
+  - fenics-dolfinx =0.7.3
+  - mpich =4.2.1
+  - pyvista =0.43.5
