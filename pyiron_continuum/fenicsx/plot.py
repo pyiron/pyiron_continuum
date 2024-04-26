@@ -1,15 +1,14 @@
 from pyiron_base import ImportAlarm
 with ImportAlarm(
-        'fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and `matplotlib` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+        "fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and"
+        " `matplotlib` modules (and their dependencies) specified as extra"
+        " requirements. Please install it and try again."
 ) as fenics_alarm:
     import dolfinx as DFX
-    import gmsh
     import pyvista
-    from dolfinx.plot import vtk_mesh
-    import matplotlib.pyplot as plt
 
 pyvista.start_xvfb()
+
 
 class PlotMesh():
     def __init__(self):
@@ -21,6 +20,7 @@ class PlotMesh():
         grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
         p.add_mesh(grid, show_edges=True)
         return p.show()
+
 
 class PlotDeformed():
     def __init__(self):
@@ -40,7 +40,5 @@ class PlotDeformed():
         grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
         p = pyvista.Plotter()
         grid["u"] = uh.x.array.reshape((geometry.shape[0], 3))
-        #actor_0 = p.add_mesh(grid, style="wireframe", color="k")
-        warped = grid.warp_by_vector("u", factor=factor)
-        actor_1 = p.add_mesh(warped, show_edges=True)
+        # actor_0 = p.add_mesh(grid, style="wireframe", color="k")
         return p.show()
