@@ -35,6 +35,11 @@ class TestDamask(unittest.TestCase):
             },
         ]
 
+    def _get_grid(self, sd=16, n=4):
+        return self.project.continuum.damask.Grid.via_voronoi_tessellation(
+            box_size=1.0e-5, spatial_discretization=sd, num_grains=n
+        )
+
     def _get_homogenization(self):
         return self.project.continuum.damask.Homogenization(
             method="SX",
@@ -89,10 +94,7 @@ class TestDamask(unittest.TestCase):
             [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
-        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=16, num_grains=grains
-        )
-        job.grid = grid
+        job.grid = self._get_grid(n=grains)
         solver = job.list_solvers()[0]
         job.loading = self.project.continuum.damask.Loading(
             solver=solver, load_steps=self._get_load_step(dotF=1.0e-3)
@@ -118,10 +120,7 @@ class TestDamask(unittest.TestCase):
             [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
-        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=16, num_grains=grains
-        )
-        job.grid = grid
+        job.grid = self._get_grid(n=grains)
         load_step = [
             {
                 "mech_bc_dict": {
@@ -179,10 +178,7 @@ class TestDamask(unittest.TestCase):
             [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
-        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=16, num_grains=grains
-        )
-        job.grid = grid
+        job.grid = self._get_grid()
         solver = job.list_solvers()[0]  # choose the mechanis solver
         job.loading = self.project.continuum.damask.Loading(
             solver=solver, load_steps=self._get_load_step()
@@ -201,10 +197,7 @@ class TestDamask(unittest.TestCase):
             [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
-        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=4, num_grains=grains
-        )
-        job.grid = grid
+        job.grid = self._get_grid(4, grains)
         reduction_height = 0.05
         reduction_speed = 5.0e-2
         reduction_outputs = 250
