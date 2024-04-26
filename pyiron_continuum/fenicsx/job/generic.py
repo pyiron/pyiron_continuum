@@ -19,8 +19,8 @@ from pyiron_base import GenericJob, DataContainer
 from os.path import join
 import warnings
 import numpy as np
-from mod_pyiron_continuum.fenicsx.factory import GeometryFactory, MeshFactory, SpaceFactory #, BoundaryConditionFactory
-from mod_pyiron_continuum.fenicsx.plot import PlotMesh, PlotDeformed
+from pyiron_continuum.fenicsx.factory import GeometryFactory, MeshFactory, SpaceFactory #, BoundaryConditionFactory
+from pyiron_continuum.fenicsx.plot import PlotMesh, PlotDeformed
 
 class Fenicsx(GenericJob):
 
