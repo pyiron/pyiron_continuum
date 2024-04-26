@@ -15,7 +15,7 @@ class TestDamask(unittest.TestCase):
     def tearDownClass(cls):
         cls.project.remove(enable=True)
 
-    def _get_load_step(self):
+    def _get_load_step(self, dotF=1.0e-2):
         return [
             {
                 "mech_bc_dict": {
@@ -27,7 +27,7 @@ class TestDamask(unittest.TestCase):
             },
             {
                 "mech_bc_dict": {
-                    "dot_F": [1e-2, 0, 0, 0, "x", 0, 0, 0, "x"],
+                    "dot_F": [dotF, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
                 },
                 "discretization": {"t": 60.0, "N": 60},
@@ -92,27 +92,9 @@ class TestDamask(unittest.TestCase):
             box_size=1.0e-5, spatial_discretization=16, num_grains=grains
         )
         job.grid = grid
-        load_step = [
-            {
-                "mech_bc_dict": {
-                    "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
-                    "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
-                },
-                "discretization": {"t": 10.0, "N": 40},
-                "additional": {"f_out": 4},
-            },
-            {
-                "mech_bc_dict": {
-                    "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
-                    "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
-                },
-                "discretization": {"t": 60.0, "N": 60},
-                "additional": {"f_out": 4},
-            },
-        ]
         solver = job.list_solvers()[0]
         job.loading = self.project.continuum.damask.Loading(
-            solver=solver, load_steps=load_step
+            solver=solver, load_steps=self._get_load_step(dotF=1.0e-3)
         )
         job.run()
         job.plot_stress_strain(component="zz")
@@ -194,10 +176,9 @@ class TestDamask(unittest.TestCase):
             box_size=1.0e-5, spatial_discretization=16, num_grains=4
         )
         job.grid = grid
-        load_step = self._get_load_ste()
         solver = job.list_solvers()[0]  # choose the mechanis solver
         job.loading = self.project.continuum.damask.Loading(
-            solver=solver, load_steps=load_step
+            solver=solver, load_steps=self._get_load_step()
         )
         job.run()  # running your job, if you want the parallelization you can modify your 'pyiron/damask/bin/run_damask_3.0.0.sh file'
 
