@@ -106,14 +106,11 @@ class TestDamask(unittest.TestCase):
     def test_linear_elastic(self):
         job = self.project.create.job.DAMASK("linear_elastic")
         grains = 8
-        elasticity = self.project.continuum.damask.Elasticity(
-            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-        )
         phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
             lattice="cF",
             output_list=["F", "P", "F_e"],
-            elasticity=elasticity,
+            elasticity=self._get_elasticity(),
             plasticity=None,
         )
         rotation = self.project.continuum.damask.Rotation(shape=grains)
