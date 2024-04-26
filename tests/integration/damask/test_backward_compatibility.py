@@ -15,7 +15,7 @@ class TestDamask(unittest.TestCase):
     def tearDownClass(cls):
         cls.project.remove(enable=True)
 
-    def _get_load_step(self, dotF=1.0e-2):
+    def _get_load_step(self):
         return [
             {
                 "mech_bc_dict": {
@@ -27,7 +27,7 @@ class TestDamask(unittest.TestCase):
             },
             {
                 "mech_bc_dict": {
-                    "dot_F": [dotF, 0, 0, 0, "x", 0, 0, 0, "x"],
+                    "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
                 },
                 "discretization": {"t": 60.0, "N": 60},
@@ -97,7 +97,7 @@ class TestDamask(unittest.TestCase):
         job.grid = self._get_grid(n=grains)
         solver = job.list_solvers()[0]
         job.loading = self.project.continuum.damask.Loading(
-            solver=solver, load_steps=self._get_load_step(dotF=1.0e-3)
+            solver=solver, load_steps=self._get_load_step()
         )
         job.run()
         job.plot_stress_strain(component="zz")
