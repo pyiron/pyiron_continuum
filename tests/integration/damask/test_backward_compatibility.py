@@ -16,7 +16,8 @@ class TestDamask(unittest.TestCase):
         cls.project.remove(enable=True)
 
     def _get_load_step(self):
-        return [{
+        return [
+            {
                 "mech_bc_dict": {
                     "dot_F": [1e-3, 0, 0, 0, "x", 0, 0, 0, "x"],
                     "P": ["x", "x", "x", "x", 0, "x", "x", "x", 0],
@@ -43,7 +44,7 @@ class TestDamask(unittest.TestCase):
             self.project.continuum.damask.Homogenization(
                 method="SX",
                 parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-            )
+            ),
         )
 
     def get_plasticity_phenopowerlaw(self):
