@@ -35,16 +35,19 @@ class TestDamask(unittest.TestCase):
             },
         ]
 
+    def _get_homogenization(self):
+        return self.project.continuum.damask.Homogenization(
+            method="SX",
+            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
+        ),
+
     def test_creator(self):
         self.assertEqual(
             self.project.create.DAMASK.homogenization(
                 method="SX",
                 parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
             ),
-            self.project.continuum.damask.Homogenization(
-                method="SX",
-                parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-            ),
+            self._get_homogenization(),
         )
 
     def get_plasticity_phenopowerlaw(self):
@@ -74,10 +77,6 @@ class TestDamask(unittest.TestCase):
     def test_damask_tutorial(self):
         grains = 8
         job = self.project.create.job.DAMASK("tutorial")
-        homogenization = self.project.continuum.damask.Homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
         elasticity = self.project.continuum.damask.Elasticity(
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
@@ -85,7 +84,7 @@ class TestDamask(unittest.TestCase):
         phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         material = self.project.continuum.damask.Material(
-            [rotation], ["Aluminum"], phase, homogenization
+            [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
@@ -116,12 +115,8 @@ class TestDamask(unittest.TestCase):
             plasticity=None,
         )
         rotation = self.project.continuum.damask.Rotation(shape=grains)
-        homogenization = self.project.continuum.damask.Homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
         material = self.project.continuum.damask.Material(
-            [rotation], ["Aluminum"], phase, homogenization
+            [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
@@ -164,12 +159,8 @@ class TestDamask(unittest.TestCase):
         )
         phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(Rotation.from_random, 4)
-        homogenization = self.project.continuum.damask.Homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
         material = self.project.continuum.damask.Material(
-            [rotation], ["Aluminum"], phase, homogenization
+            [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
@@ -191,12 +182,8 @@ class TestDamask(unittest.TestCase):
         plasticity = self.get_plasticity_phenopowerlaw()
         phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
-        homogenization = self.project.continuum.damask.Homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
         material = self.project.continuum.damask.Material(
-            [rotation], ["Aluminum"], phase, homogenization
+            [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
@@ -220,12 +207,8 @@ class TestDamask(unittest.TestCase):
         grains = 4
         phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
-        homogenization = self.project.continuum.damask.Homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
         material = self.project.continuum.damask.Material(
-            [rotation], ["Aluminum"], phase, homogenization
+            [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
