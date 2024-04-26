@@ -158,10 +158,7 @@ class TestDamask(unittest.TestCase):
             [rotation], ["Aluminum"], phase, self._get_homogenization()
         )
         job.material = material
-        grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=16, num_grains=4
-        )
-        job.grid = grid
+        job.grid = self._get_grid()
         solver = job.list_solvers()[0]  # choose the mechanis solver
         job.loading = self.project.continuum.damask.Loading(
             solver=solver, load_steps=self._get_load_step()
