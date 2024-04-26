@@ -17,7 +17,6 @@ class TestDamask(unittest.TestCase):
 
     def test_damask_tutorial(self):
         grains = 8
-        grids = 16
         job = self.project.create.job.DAMASK("tutorial")
         homogenization = self.project.create.DAMASK.homogenization(
             method="SX",
@@ -56,7 +55,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=grids, num_grains=grains
+            box_size=1.0e-5, spatial_discretization=16, num_grains=grains
         )
         job.grid = grid
         load_step = [
@@ -90,7 +89,6 @@ class TestDamask(unittest.TestCase):
     def test_linear_elastic(self):
         job = self.project.create.job.DAMASK("linear_elastic")
         grains = 8
-        grids = 16
         elasticity = self.project.continuum.damask.Elasticity(
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
@@ -111,7 +109,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=grids, num_grains=grains
+            box_size=1.0e-5, spatial_discretization=16, num_grains=grains
         )
         job.grid = grid
         load_step = [
@@ -195,7 +193,6 @@ class TestDamask(unittest.TestCase):
     def test_elastoplasticity_powerlaw(self):
         job = self.project.create.job.DAMASK("elastoplasticity_powerlaw")
         grains = 4
-        grids = 16
         elasticity = self.project.continuum.damask.Elasticity(
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
@@ -229,7 +226,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=grids, num_grains=grains
+            box_size=1.0e-5, spatial_discretization=16, num_grains=grains
         )
         job.grid = grid
         load_step = [
@@ -277,7 +274,6 @@ class TestDamask(unittest.TestCase):
             xi_inf_sl=[63.0e6],
         )
         grains = 4
-        grids = 4
         phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
             lattice="cF",
@@ -295,7 +291,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         grid = self.project.continuum.damask.Grid.via_voronoi_tessellation(
-            box_size=1.0e-5, spatial_discretization=grids, num_grains=grains
+            box_size=1.0e-5, spatial_discretization=4, num_grains=grains
         )
         job.grid = grid
         reduction_height = 0.05
