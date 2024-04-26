@@ -65,6 +65,11 @@ class TestDamask(unittest.TestCase):
             xi_inf_sl=[63.0e6],
         )
 
+    def _get_elasticity(self):
+        return self.project.continuum.damask.Elasticity(
+            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+        )
+
     def get_phase_aluminum(self, elasticity, plasticity):
         return self.project.continuum.damask.Phase(
             composition="Aluminum",
@@ -77,11 +82,8 @@ class TestDamask(unittest.TestCase):
     def test_damask_tutorial(self):
         grains = 8
         job = self.project.create.job.DAMASK("tutorial")
-        elasticity = self.project.continuum.damask.Elasticity(
-            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-        )
         plasticity = self.get_plasticity_phenopowerlaw()
-        phase = self.get_phase_aluminum(elasticity, plasticity)
+        phase = self.get_phase_aluminum(self._get_elasticity(), plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         material = self.project.continuum.damask.Material(
             [rotation], ["Aluminum"], phase, self._get_homogenization()
@@ -143,9 +145,6 @@ class TestDamask(unittest.TestCase):
 
     def test_elastoplasticity_isotropic(self):
         job = self.project.create.job.DAMASK("elastoplasticity_isotropic")
-        elasticity = self.project.continuum.damask.Elasticity(
-            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-        )
         plasticity = self.project.continuum.damask.Plasticity(
             type="isotropic",
             dot_gamma_0=0.001,
@@ -157,7 +156,7 @@ class TestDamask(unittest.TestCase):
             M=1.0,
             h=1.0,
         )
-        phase = self.get_phase_aluminum(elasticity, plasticity)
+        phase = self.get_phase_aluminum(self._get_elasticity(), plasticity)
         rotation = self.project.continuum.damask.Rotation(Rotation.from_random, 4)
         material = self.project.continuum.damask.Material(
             [rotation], ["Aluminum"], phase, self._get_homogenization()
@@ -171,16 +170,13 @@ class TestDamask(unittest.TestCase):
         job.loading = self.project.continuum.damask.Loading(
             solver=solver, load_steps=self._get_load_step()
         )
-        job.run()  # running your job, if you want the parallelization you can modify your 'pyiron/damask/bin/run_damask_3.0.0.sh file'
+        job.run()
 
     def test_elastoplasticity_powerlaw(self):
         job = self.project.create.job.DAMASK("elastoplasticity_powerlaw")
         grains = 4
-        elasticity = self.project.continuum.damask.Elasticity(
-            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-        )
         plasticity = self.get_plasticity_phenopowerlaw()
-        phase = self.get_phase_aluminum(elasticity, plasticity)
+        phase = self.get_phase_aluminum(self._get_elasticity(), plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         material = self.project.continuum.damask.Material(
             [rotation], ["Aluminum"], phase, self._get_homogenization()
@@ -194,18 +190,15 @@ class TestDamask(unittest.TestCase):
         job.loading = self.project.continuum.damask.Loading(
             solver=solver, load_steps=self._get_load_step()
         )
-        job.run()  # running your job, if you want the parallelization you can modify your 'pyiron/damask/bin/run_damask_3.0.0.sh file'
+        job.run()
         job.plot_stress_strain(component="zz")
         job.plot_stress_strain(von_mises=True)
 
     def test_multiple_rolling(self):
         job = self.project.create.job.ROLLING("multiple_rolling")
-        elasticity = self.project.continuum.damask.Elasticity(
-            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-        )
         plasticity = self.get_plasticity_phenopowerlaw()
         grains = 4
-        phase = self.get_phase_aluminum(elasticity, plasticity)
+        phase = self.get_phase_aluminum(self._get_elasticity(), plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         material = self.project.continuum.damask.Material(
             [rotation], ["Aluminum"], phase, self._get_homogenization()
