@@ -219,46 +219,20 @@ class TestDamask(unittest.TestCase):
         )
         job.postProcess()  # do the postprocess
         job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
-        reduction_height = 0.1
         reduction_speed = 4.5e-2
-        reduction_outputs = 300
         regrid_flag = True
-        job.executeRolling(
-            reduction_height,
-            reduction_speed,
-            reduction_outputs,
-            regrid_flag,
-            damask_exe,
-        )
-        job.postProcess()  # do the postprocess
-        job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
-        reduction_height = 0.1
-        reduction_speed = 4.5e-2
-        reduction_outputs = 350
-        regrid_flag = True
-        job.executeRolling(
-            reduction_height,
-            reduction_speed,
-            reduction_outputs,
-            regrid_flag,
-            damask_exe,
-        )
-        job.postProcess()  # do the postprocess
-        job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
-        reduction_height = 0.12
-        reduction_speed = 4.25e-2
-        reduction_outputs = 300
-        regrid_flag = True  # enable the regridding
-        job.executeRolling(
-            reduction_height,
-            reduction_speed,
-            reduction_outputs,
-            regrid_flag,
-            damask_exe,
-        )
-        job.postProcess()  # do the postprocess
-        job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
-        print(job.ResultsFile)
+        for reduction_height, reduction_outputs in zip(
+            [0.1, 0.1, 0.12], [300, 350, 300]
+        ):
+            job.executeRolling(
+                reduction_height,
+                reduction_speed,
+                reduction_outputs,
+                regrid_flag,
+                damask_exe,
+            )
+            job.postProcess()  # do the postprocess
+            job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
 
 
 if __name__ == "__main__":
