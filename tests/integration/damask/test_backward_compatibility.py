@@ -42,6 +42,15 @@ class TestDamask(unittest.TestCase):
             xi_inf_sl=[63.0e6],
         )
 
+    def get_phase_aluminum(self, elasticity, plasticity):
+        return self.project.continuum.damask.Phase(
+            composition="Aluminum",
+            lattice="cF",
+            output_list=["F", "P", "F_e", "F_p", "L_p", "O"],
+            elasticity=elasticity,
+            plasticity=plasticity,
+        )
+
     def test_damask_tutorial(self):
         grains = 8
         job = self.project.create.job.DAMASK("tutorial")
@@ -53,13 +62,7 @@ class TestDamask(unittest.TestCase):
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
         plasticity = self.get_plasticity_phenopowerlaw()
-        phase = self.project.continuum.damask.Phase(
-            composition="Aluminum",
-            lattice="cF",
-            output_list=["F", "P", "F_e", "F_p", "L_p", "O"],
-            elasticity=elasticity,
-            plasticity=plasticity,
-        )
+        phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         material = self.project.continuum.damask.Material(
             [rotation], ["Aluminum"], phase, homogenization
@@ -157,13 +160,7 @@ class TestDamask(unittest.TestCase):
             M=1.0,
             h=1.0,
         )
-        phase = self.project.continuum.damask.Phase(
-            composition="Aluminum",
-            lattice="cF",
-            output_list=["F", "P", "F_e", "F_p", "L_p", "O"],
-            elasticity=elasticity,
-            plasticity=plasticity,
-        )
+        phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(Rotation.from_random, 4)
         homogenization = self.project.continuum.damask.Homogenization(
             method="SX",
@@ -208,13 +205,7 @@ class TestDamask(unittest.TestCase):
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
         plasticity = self.get_plasticity_phenopowerlaw()
-        phase = self.project.continuum.damask.Phase(
-            composition="Aluminum",
-            lattice="cF",
-            output_list=["F", "P", "F_e", "F_p", "L_p", "O"],
-            elasticity=elasticity,
-            plasticity=plasticity,
-        )
+        phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         homogenization = self.project.continuum.damask.Homogenization(
             method="SX",
@@ -261,13 +252,7 @@ class TestDamask(unittest.TestCase):
         )
         plasticity = self.get_plasticity_phenopowerlaw()
         grains = 4
-        phase = self.project.continuum.damask.Phase(
-            composition="Aluminum",
-            lattice="cF",
-            output_list=["F", "P", "F_e", "F_p", "L_p", "O"],
-            elasticity=elasticity,
-            plasticity=plasticity,
-        )
+        phase = self.get_phase_aluminum(elasticity, plasticity)
         rotation = self.project.continuum.damask.Rotation(shape=grains)
         homogenization = self.project.continuum.damask.Homogenization(
             method="SX",
