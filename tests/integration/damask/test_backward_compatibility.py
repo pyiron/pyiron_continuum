@@ -27,17 +27,8 @@ class TestDamask(unittest.TestCase):
             )
         )
 
-    def test_damask_tutorial(self):
-        grains = 8
-        job = self.project.create.job.DAMASK("tutorial")
-        homogenization = self.project.continuum.damask.Homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
-        elasticity = self.project.continuum.damask.Elasticity(
-            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-        )
-        plasticity = self.project.continuum.damask.Plasticity(
+    def get_plasticity_phenopowerlaw(self):
+        return self.project.continuum.damask.Plasticity(
             type="phenopowerlaw",
             N_sl=[12],
             a_sl=[2.25],
@@ -50,6 +41,18 @@ class TestDamask(unittest.TestCase):
             xi_0_sl=[31.0e6],
             xi_inf_sl=[63.0e6],
         )
+
+    def test_damask_tutorial(self):
+        grains = 8
+        job = self.project.create.job.DAMASK("tutorial")
+        homogenization = self.project.continuum.damask.Homogenization(
+            method="SX",
+            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
+        )
+        elasticity = self.project.continuum.damask.Elasticity(
+            type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+        )
+        plasticity = self.get_plasticity_phenopowerlaw()
         phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
             lattice="cF",
@@ -204,19 +207,7 @@ class TestDamask(unittest.TestCase):
         elasticity = self.project.continuum.damask.Elasticity(
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
-        plasticity = self.project.continuum.damask.Plasticity(
-            type="phenopowerlaw",
-            N_sl=[12],
-            a_sl=[2.25],
-            atol_xi=1.0,
-            dot_gamma_0_sl=[0.001],
-            h_0_sl_sl=[75.0e6],
-            h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4, 1.4],
-            n_sl=[20],
-            output=["xi_sl"],
-            xi_0_sl=[31.0e6],
-            xi_inf_sl=[63.0e6],
-        )
+        plasticity = self.get_plasticity_phenopowerlaw()
         phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
             lattice="cF",
@@ -268,19 +259,7 @@ class TestDamask(unittest.TestCase):
         elasticity = self.project.continuum.damask.Elasticity(
             type="Hooke", C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
         )
-        plasticity = self.project.continuum.damask.Plasticity(
-            type="phenopowerlaw",
-            N_sl=[12],
-            a_sl=[2.25],
-            atol_xi=1.0,
-            dot_gamma_0_sl=[0.001],
-            h_0_sl_sl=[75.0e6],
-            h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4, 1.4],
-            n_sl=[20],
-            output=["xi_sl"],
-            xi_0_sl=[31.0e6],
-            xi_inf_sl=[63.0e6],
-        )
+        plasticity = self.get_plasticity_phenopowerlaw()
         grains = 4
         phase = self.project.continuum.damask.Phase(
             composition="Aluminum",
