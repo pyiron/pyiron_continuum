@@ -1,8 +1,9 @@
 from pyiron_base import ImportAlarm
+
 with ImportAlarm(
-        "fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and"
-        " `matplotlib` modules (and their dependencies) specified as extra"
-        "requirements. Please install it and try again."
+    "fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and"
+    " `matplotlib` modules (and their dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as fenics_alarm:
     # from dolfinx import mesh, fem, plot, io, default_scalar_type
     # from dolfinx.fem.petsc import LinearProblem
@@ -13,7 +14,11 @@ with ImportAlarm(
 from pyiron_base import GenericJob, DataContainer
 import warnings
 import numpy as np
-from pyiron_continuum.fenicsx.factory import GeometryFactory, MeshFactory, SpaceFactory  # , BoundaryConditionFactory
+from pyiron_continuum.fenicsx.factory import (
+    GeometryFactory,
+    MeshFactory,
+    SpaceFactory,
+)  # , BoundaryConditionFactory
 from pyiron_continuum.fenicsx.plot import PlotMesh, PlotDeformed
 
 
@@ -22,10 +27,12 @@ class Fenicsx(GenericJob):
     def __init__(self, project, job_name):
         """Create a new Fenics type job"""
         super(Fenicsx, self).__init__(project, job_name)
-        warnings.warn("Currently, the c++ dolfin functions used by fenicsx are not stored in the HDF5 file."
-                      " This includes the domains, boundary condition, spatial functions."
-                      " Therefore, it is not possible to reload the job properly, from HDF5 file."
-                      " It would be safe to remove the Fenics jobs, after defining the project.")
+        warnings.warn(
+            "Currently, the c++ dolfin functions used by fenicsx are not stored in the HDF5 file."
+            " This includes the domains, boundary condition, spatial functions."
+            " Therefore, it is not possible to reload the job properly, from HDF5 file."
+            " It would be safe to remove the Fenics jobs, after defining the project."
+        )
         self._python_only_job = True
         self.create = Creator(self)
         self.plot = Plot(self)
@@ -37,7 +44,7 @@ class Fenicsx(GenericJob):
         self.V = None
         self.bcs = []
 
-        self.output = DataContainer(table_name='output')
+        self.output = DataContainer(table_name="output")
         self.output.solution = []
 
         self.u = None
@@ -60,7 +67,9 @@ class Fenicsx(GenericJob):
         boundary_dofs = DFX.fem.locate_dofs_geometrical(v, func)
         return DFX.fem.dirichletbc(DFX.default_scalar_type(value), boundary_dofs, v)
 
-    def make_dirichletBC_vectorfunctionspace_3D(self, v, func, value_x, value_y, value_z):
+    def make_dirichletBC_vectorfunctionspace_3D(
+        self, v, func, value_x, value_y, value_z
+    ):
         boundary_dofs = DFX.fem.locate_dofs_geometrical(v, func)
         u_D = np.array([value_x, value_y, value_z], dtype=DFX.default_scalar_type)
         return DFX.fem.dirichletbc(u_D, boundary_dofs, v)
@@ -75,7 +84,9 @@ class Fenicsx(GenericJob):
         return DFX.fem.Constant(dmn, DFX.default_scalar_type(value))
 
     def Constant_vector_3D(self, dmn, value_x, value_y, value_z):
-        return DFX.fem.Constant(dmn, DFX.default_scalar_type((value_x, value_y, value_z)))
+        return DFX.fem.Constant(
+            dmn, DFX.default_scalar_type((value_x, value_y, value_z))
+        )
 
     def Expression(self, *args, **kwargs):
         return ufl.exp(*args, **kwargs)
@@ -88,7 +99,12 @@ class Fenicsx(GenericJob):
         self.v = ufl.TestFunction(self.V)
         self.a = ufl.dot(ufl.grad(self.u), ufl.grad(self.v)) * ufl.dx
         self.L = self.p * self.v * ufl.dx
-        problem = LinearProblem(self.a, self.L, bcs=self.bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+        problem = LinearProblem(
+            self.a,
+            self.L,
+            bcs=self.bcs,
+            petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+        )
         self.uh = problem.solve()
         return self.uh
 
@@ -108,7 +124,9 @@ class Fenicsx(GenericJob):
         return ufl.sym(ufl.grad(u))
 
     def sigma(self, u):
-        return self.lambda_ * ufl.nabla_div(u) * ufl.Identity(len(u)) + 2 * self.mu * self.epsilon(u)
+        return self.lambda_ * ufl.nabla_div(u) * ufl.Identity(
+            len(u)
+        ) + 2 * self.mu * self.epsilon(u)
 
     def solveLinearElastic(self):
         ds = ufl.Measure("ds", domain=self.mesh)
@@ -116,7 +134,12 @@ class Fenicsx(GenericJob):
         self.v = ufl.TestFunction(self.V)
         self.a = ufl.inner(self.sigma(self.u), self.epsilon(self.v)) * ufl.dx
         self.L = ufl.dot(self.f, self.v) * ufl.dx + ufl.dot(self.T, self.v) * ds
-        problem = LinearProblem(self.a, self.L, bcs=self.bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+        problem = LinearProblem(
+            self.a,
+            self.L,
+            bcs=self.bcs,
+            petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+        )
         self.uh = problem.solve()
         return self.uh
 

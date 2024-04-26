@@ -1,8 +1,9 @@
 from pyiron_base import ImportAlarm
+
 with ImportAlarm(
-        "fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and"
-        " `matplotlib` modules (and their dependencies) specified as extra"
-        " requirements. Please install it and try again."
+    "fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and"
+    " `matplotlib` modules (and their dependencies) specified as extra"
+    " requirements. Please install it and try again."
 ) as fenics_alarm:
     import dolfinx as DFX
     import pyvista
@@ -10,7 +11,7 @@ with ImportAlarm(
 pyvista.start_xvfb()
 
 
-class PlotMesh():
+class PlotMesh:
     def __init__(self):
         super().__init__()
 
@@ -22,7 +23,7 @@ class PlotMesh():
         return p.show()
 
 
-class PlotDeformed():
+class PlotDeformed:
     def __init__(self):
         super().__init__()
 
