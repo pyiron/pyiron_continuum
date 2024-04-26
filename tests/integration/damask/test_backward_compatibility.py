@@ -41,11 +41,9 @@ class TestDamask(unittest.TestCase):
         )
 
     def _get_homogenization(self):
-        return (
-            self.project.continuum.damask.Homogenization(
-                method="SX",
-                parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-            ),
+        return self.project.continuum.damask.Homogenization(
+            method="SX",
+            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
         )
 
     def test_creator(self):
