@@ -15,13 +15,21 @@ class TestDamask(unittest.TestCase):
     def tearDownClass(cls):
         cls.project.remove(enable=True)
 
+    def test_creator(self):
+        self.assertEqual(
+            self.project.create.DAMASK.homogenization(
+                method="SX",
+                parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
+            ),
+            self.project.continuum.damask.Homogenization(
+                method="SX",
+                parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
+            )
+        )
+
     def test_damask_tutorial(self):
         grains = 8
         job = self.project.create.job.DAMASK("tutorial")
-        homogenization = self.project.create.DAMASK.homogenization(
-            method="SX",
-            parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
-        )
         homogenization = self.project.continuum.damask.Homogenization(
             method="SX",
             parameters={"N_constituents": 1, "mechanical": {"type": "pass"}},
