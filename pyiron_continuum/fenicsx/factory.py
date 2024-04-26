@@ -5,13 +5,12 @@ with ImportAlarm(
 ) as fenics_alarm:
     import dolfinx as DFX
     import gmsh
-    import ufl
     from mpi4py import MPI
     from dolfinx.io import gmshio
 from pyiron_base import PyironFactory
-import numpy as np
 
 gmsh.initialize()
+
 
 class GeometryFactory(PyironFactory):
     def __init__(self):
@@ -31,7 +30,6 @@ class GeometryFactory(PyironFactory):
 
     def cut(self, dimensions, geom1, geom2):
         return gmsh.model.occ.cut([(dimensions, geom1)], [(dimensions, geom2)])
-
 
 
 class MeshFactory(PyironFactory):
@@ -67,17 +65,17 @@ class SpaceFactory(PyironFactory):
         return DFX.fem.VectorFunctionSpace(mesh, (elementType, elementDegree))
 
 
-#class BoundaryConditionFactory(PyironFactory):
-#    def __init__(self, job):
-#        self._job = job
-#
-#    def DirichletBC_functionspace(self, func, V, value):
-#        boundary_dofs = DFX.fem.locate_dofs_geometrical(V, func)
-#        bc = DFX.fem.dirichletbc(DFX.default_scalar_type(value), boundary_dofs, V)
-#        return bc
+# class BoundaryConditionFactory(PyironFactory):
+#     def __init__(self, job):
+#         self._job = job
 
-#    def DirichletBC_vectorfunctionspace(self, func, V, value_x, value_y, value_z):
-#        boundary_dofs = DFX.fem.locate_dofs_geometrical(V, func)
-#        u_D = np.array([value_x, value_y, value_z], dtype=DFX.default_scalar_type)
-#        bc = DFX.fem.dirichletbc(u_D, boundary_dofs, V)
-#        return bc
+#     def DirichletBC_functionspace(self, func, V, value):
+#         boundary_dofs = DFX.fem.locate_dofs_geometrical(V, func)
+#         bc = DFX.fem.dirichletbc(DFX.default_scalar_type(value), boundary_dofs, V)
+#         return bc
+
+#     def DirichletBC_vectorfunctionspace(self, func, V, value_x, value_y, value_z):
+#         boundary_dofs = DFX.fem.locate_dofs_geometrical(V, func)
+#         u_D = np.array([value_x, value_y, value_z], dtype=DFX.default_scalar_type)
+#         bc = DFX.fem.dirichletbc(u_D, boundary_dofs, V)
+#         return bc
