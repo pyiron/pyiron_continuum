@@ -1,26 +1,21 @@
 from pyiron_base import ImportAlarm
 with ImportAlarm(
-        'fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and `matplotlib` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+        "fenics functionality requires the `dolfinx`, `gmsh`, `pyvista` and"
+        " `matplotlib` modules (and their dependencies) specified as extra"
+        "requirements. Please install it and try again."
 ) as fenics_alarm:
-    #from dolfinx import mesh, fem, plot, io, default_scalar_type
-    #from dolfinx.fem.petsc import LinearProblem
+    # from dolfinx import mesh, fem, plot, io, default_scalar_type
+    # from dolfinx.fem.petsc import LinearProblem
     import dolfinx as DFX
-    from mpi4py import MPI
     import ufl
-    import gmsh as GMSH
-    import pyvista
-    from dolfinx.plot import vtk_mesh
     from dolfinx.fem.petsc import LinearProblem
-    import matplotlib.pyplot as plt
 
-import sympy
 from pyiron_base import GenericJob, DataContainer
-from os.path import join
 import warnings
 import numpy as np
-from pyiron_continuum.fenicsx.factory import GeometryFactory, MeshFactory, SpaceFactory #, BoundaryConditionFactory
+from pyiron_continuum.fenicsx.factory import GeometryFactory, MeshFactory, SpaceFactory  # , BoundaryConditionFactory
 from pyiron_continuum.fenicsx.plot import PlotMesh, PlotDeformed
+
 
 class Fenicsx(GenericJob):
 
@@ -103,8 +98,8 @@ class Fenicsx(GenericJob):
     def set_traction(self, T):
         self.T = T
 
-    def set_lambda(self, l):
-        self.lambda_ = l
+    def set_lambda(self, ll):
+        self.lambda_ = ll
 
     def set_mu(self, mu):
         self.mu = mu
@@ -125,7 +120,7 @@ class Fenicsx(GenericJob):
         self.uh = problem.solve()
         return self.uh
 
-    #def Constant()
+    # def Constant()
 
 
 class Creator:
@@ -134,7 +129,7 @@ class Creator:
         self._geom = GeometryFactory()
         self._domain = MeshFactory()
         self._V = SpaceFactory()
-        #self._bc = BoundaryConditionFactory(job)
+        # self._bc = BoundaryConditionFactory(job)
 
     @property
     def geom(self):
@@ -160,9 +155,10 @@ class Creator:
         self._mesh, self._cell_markers, self._facet_markers = dm
         return self._facet_markers
 
-    #@property
-    #def bc(self):
-        #return self._bc
+    # @property
+    # def bc(self):
+    #     return self._bc
+
 
 class Plot:
     def __init__(self, job):
@@ -176,9 +172,3 @@ class Plot:
 
     def plot_deformed_vectorfunctionspace(self, V1, uh, factor):
         return PlotDeformed.plotDefomed_vectorfunctionspae(V1, uh, factor)
-
-
-
-
-
-
