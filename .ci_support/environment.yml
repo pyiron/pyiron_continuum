@@ -10,3 +10,6 @@ dependencies:
 - scipy =1.13.0
 - sympy =1.12
 - python-blosc2
+- fenics-dolfinx =0.7.3
+- mpich =4.2.1
+- pyvista =0.43.5
