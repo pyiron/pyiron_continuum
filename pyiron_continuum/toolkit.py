@@ -160,7 +160,7 @@ class DAMASK:
                 If string is given, it looks for the method within
                 `damask.Rotation` via `getattr`.
         """
-        return DAMASKCreator.rotation(method=method, *args, **kwargs)
+        return DAMASKCreator.rotation(method, *args, **kwargs)
 
 
 class Schroedinger:
