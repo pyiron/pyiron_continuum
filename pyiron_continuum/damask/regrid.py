@@ -110,7 +110,6 @@ def write_RegriddedHDF5(
     """
     Write out the new hdf5 file based on the regridded geometry and deformation info
     """
-    isElastic = False
     os.chdir(f"{work_dir}")
     fNameResults_0 = f"{geom_name}_{load_name}_material.hdf5"
     fNameRestart_0 = f"{geom_name}_{load_name}_material_restart.hdf5"
@@ -123,24 +122,11 @@ def write_RegriddedHDF5(
         print("removing the existing restart file.")
         os.remove(fNameRestart_rg)
 
-    fName_rgHistory = "regridding.hdf5"
-    isRgHistoryExist = os.path.isfile(fName_rgHistory)
-
     with h5py.File(fNameRestart_0, "r") as fRestart_0, h5py.File(
         fNameResults_0, "r"
     ) as fResults_0, h5py.File(fNameRestart_rg, "w") as fRestart_rg:
 
-        isRgHistoryExist = False
-
-        if not isRgHistoryExist:
-            map_0toRg_phaseBased = fResults_0["cell_to/phase"][:, 0][map_0to_rg]
-        else:
-            with h5py.File(fName_rgHistory, "r") as fRgHistory_0:
-                historyRg_idx = np.array(fRgHistory_0["map"]).astype(int)[-1]
-                historyRg_map_0toRg_phaseBased = np.array(
-                    fRgHistory_0["phase"][str(historyRg_idx)]
-                )
-            map_0toRg_phaseBased = historyRg_map_0toRg_phaseBased[map_0to_rg]
+        map_0toRg_phaseBased = fResults_0["cell_to/phase"][:, 0][map_0to_rg]
 
         ### for phase
         for phase in fRestart_0["/phase"]:
@@ -162,11 +148,7 @@ def write_RegriddedHDF5(
                 elif dataset == "F_p":
                     data_rg = R_e_0[map_0to1_phase]
                 elif dataset == "F":
-                    data_rg = (
-                        np.broadcast_to(np.eye(3), (len(map_0to1_phase), 3, 3))
-                        if not isElastic
-                        else V_e_0[map_0to1_phase]
-                    )
+                    data_rg = np.broadcast_to(np.eye(3), (len(map_0to1_phase), 3, 3))
                 else:
                     data_0 = fRestart_0[path][()]
                     data_rg = data_0[map_0to1_phase, ...]
@@ -190,29 +172,16 @@ def write_RegriddedHDF5(
             ]:
                 data_rg = fRestart_0[path]
             elif dataset in ["F_aim", "F_aim_lastInc"]:
-                data_rg = (
-                    np.eye(3)
-                    if not isElastic
-                    else scipy.linalg.sqrtm(
-                        np.einsum("lij,lkj->ik", F_e_0, F_e_0) / len(F_e_0)
-                    )
-                )  # MD: order correct?
+                data_rg = np.eye(3)
             elif dataset in ["T", "T_lastInc"]:
                 shape = fRestart_0[path].shape[3:]
                 data_0 = fRestart_0[path][()].reshape((-1,) + shape)
                 data_rg = data_0[map_0to_rg, ...].reshape(tuple(cells_rg[::-1]) + shape)
             elif dataset in ["F", "F_lastInc"]:
-                if isElastic:
-                    shape = fRestart_0[path].shape[3:]
-                    data_0 = fRestart_0[path][()].reshape((-1,) + shape)
-                    data_rg = data_0[map_0to_rg, ...].reshape(
-                        tuple(cells_rg[::-1]) + shape
-                    )
-                else:
-                    shape = fRestart_0[path].shape[3:]
-                    data_rg = np.broadcast_to(
-                        np.eye(3), (len(map_0to_rg), 3, 3)
-                    ).reshape(tuple(cells_rg[::-1]) + shape)
+                shape = fRestart_0[path].shape[3:]
+                data_rg = np.broadcast_to(
+                    np.eye(3), (len(map_0to_rg), 3, 3)
+                ).reshape(tuple(cells_rg[::-1]) + shape)
             else:
                 print("Warning: There is restart variables that cannot be handled!")
 
@@ -231,44 +200,21 @@ def write_RegriddedHDF5(
             map_0toRg_phaseBased["entry"] = NewCellIndex
             return map_0toRg_phaseBased
 
-        if not isRgHistoryExist:
-            os.chdir(f"{work_dir}")
-            with h5py.File("regridding.hdf5", "w") as fRgHistory_0:
-                path = "/map/0"
-                fRgHistory_0.create_dataset(path, data=map_0to_rg)
-                path = "/phase/0"
-                # for phase in fRestart_0['/phase']:
-                #     ll = len(map_0toRg_phaseBased[map_0toRg_phaseBased['label']==phase.encode()]['entry'])
-                # strange this doesn't work!
-                #     # map_0toRg_phaseBased[map_0toRg_phaseBased['label']==phase.encode()]['entry'][:] = range(ll)
-                #     map_0toRg_phaseBased['entry'] = range(ll)
+        os.chdir(f"{work_dir}")
+        with h5py.File("regridding.hdf5", "w") as fRgHistory_0:
+            path = "/map/0"
+            fRgHistory_0.create_dataset(path, data=map_0to_rg)
+            path = "/phase/0"
+            # for phase in fRestart_0['/phase']:
+            #     ll = len(map_0toRg_phaseBased[map_0toRg_phaseBased['label']==phase.encode()]['entry'])
+            # strange this doesn't work!
+            #     # map_0toRg_phaseBased[map_0toRg_phaseBased['label']==phase.encode()]['entry'][:] = range(ll)
+            #     map_0toRg_phaseBased['entry'] = range(ll)
 
-                map_0toRg_phaseBased = reset_cellIndex(map_0toRg_phaseBased, fRestart_0)
+            map_0toRg_phaseBased = reset_cellIndex(map_0toRg_phaseBased, fRestart_0)
 
-                fRgHistory_0.create_dataset(path, data=map_0toRg_phaseBased)
-                print("A regridding history file is created.")
-        else:
-            with h5py.File("regridding.hdf5", "a") as fRgHistory_0:
-                previousHistory = np.array(fRgHistory_0[f"/map/{historyRg_idx}"])
-                if np.all(previousHistory == map_0to_rg):
-                    print(
-                        "# WARNING: The regridding map is similar to the previous map!"
-                    )
-                path = f"/map/{historyRg_idx + 1}"
-                fRgHistory_0.create_dataset(path, data=map_0to_rg)
-                path = f"/phase/{historyRg_idx + 1}"
-
-                # for phase in fRestart_0['/phase']:
-                #     ll = len(map_0toRg_phaseBased[map_0toRg_phaseBased['label']==phase.encode()]['entry'])
-                #     # map_0toRg_phaseBased[map_0toRg_phaseBased['label']==phase.encode()]['entry'] = range(ll)
-                #     map_0toRg_phaseBased['entry'] = range(ll)
-
-                map_0toRg_phaseBased = reset_cellIndex(map_0toRg_phaseBased, fRestart_0)
-
-                fRgHistory_0.create_dataset(path, data=map_0toRg_phaseBased)
-                print(
-                    f"The regridding history file is extended (index = {historyRg_idx + 1})."
-                )
+            fRgHistory_0.create_dataset(path, data=map_0toRg_phaseBased)
+            print("A regridding history file is created.")
     os.chdir(f"{work_dir}")
     args = f"cp {geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5 {regrid_geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5"
     subprocess.run(args, shell=True, capture_output=True)
