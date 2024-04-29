@@ -56,4 +56,4 @@ jobs:
         mamba env update --name test --file .ci_support/environment-notebooks-damask.yml
     - name: Tests
       shell: bash -l {0}
-      run: python -m unittest discover tests/integration/damask
+      run: python -m unittest discover tests/integration/damask tests/integration/feicsx
