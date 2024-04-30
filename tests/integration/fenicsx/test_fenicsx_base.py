@@ -15,7 +15,7 @@ class TestDamask(unittest.TestCase):
         cls.project.remove(enable=True)
 
     def test_load(self):
-        job = self.project.create.job.Fenicsx("test")
+        _ = self.project.create.job.Fenicsx("test")
 
 
 
