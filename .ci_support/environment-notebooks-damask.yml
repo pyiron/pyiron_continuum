@@ -21,4 +21,4 @@ dependencies:
   - fenics-dolfinx =0.8.0
   - mpich =4.2.1
   - pyvista =0.43.6
-  - gmsh =4.12.2
+  - python-gmsh =4.12.2
