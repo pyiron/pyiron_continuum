@@ -58,7 +58,7 @@ class SpaceFactory(PyironFactory):
     def functionspace(self, mesh, elementType, elementDegree):
         elementType = elementType or "Lagrange"
         elementDegree = elementDegree or 1
-        return DFX.fem.FunctionSpace(mesh, (elementType, elementDegree))
+        return DFX.fem.functionspace(mesh, (elementType, elementDegree))
 
     def vectorfunctionspace(self, mesh, elementType, elementDegree):
         elementType = elementType or "Lagrange"
