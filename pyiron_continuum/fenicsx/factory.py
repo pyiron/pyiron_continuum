@@ -63,7 +63,7 @@ class SpaceFactory(PyironFactory):
     def vectorfunctionspace(self, mesh, elementType, elementDegree):
         elementType = elementType or "Lagrange"
         elementDegree = elementDegree or 1
-        return DFX.fem.VectorFunctionSpace(mesh, (elementType, elementDegree))
+        return DFX.fem.functionspace(mesh, (elementType, elementDegree, (mesh.geometry.dim,)))
 
 
 # class BoundaryConditionFactory(PyironFactory):
