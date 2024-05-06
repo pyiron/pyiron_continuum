@@ -30,4 +30,4 @@ jobs:
         mamba env update --name test --file .ci_support/environment-notebooks.yml
     - name: Tests
       shell: bash -l {0}
-      run: ./.ci_support/build_notebooks_damask.sh
+      run: ./.ci_support/build_notebooks.sh
