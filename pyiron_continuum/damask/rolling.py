@@ -72,7 +72,9 @@ class ROLLING(DAMASK):
 
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
             self.load_case["loadstep"].append(
-                self.get_loadstep(self.get_dot_F(reduction_speed), reduction_time, reduction_outputs)
+                self.get_loadstep(
+                    self.get_dot_F(reduction_speed), reduction_time, reduction_outputs
+                )
             )
             filename = "load"
             self._loadfilename = filename
@@ -97,7 +99,9 @@ class ROLLING(DAMASK):
         else:
             # for multiple rolling test
             self.load_case["loadstep"].append(
-                self.get_loadstep(self.get_dot_F(reduction_speed), reduction_time, reduction_outputs)
+                self.get_loadstep(
+                    self.get_dot_F(reduction_speed), reduction_time, reduction_outputs
+                )
             )
             load_name = "load_rolling%d" % (self.RollingInstance)
             self.load_name_old = self.load_name
@@ -126,7 +130,7 @@ class ROLLING(DAMASK):
 
     @staticmethod
     def get_dot_F(reduction_speed):
-        return  [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
+        return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
 
     @staticmethod
     def get_loadstep(dot_F, reduction_time, reduction_outputs, P=None):
