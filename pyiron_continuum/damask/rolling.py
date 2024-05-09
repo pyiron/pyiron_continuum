@@ -34,9 +34,11 @@ class ROLLING(DAMASK):
         )
 
         self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
-        dotF = [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * self._rolling_speed]]
-        P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
-        self.load_case["loadstep"].append(self.get_loadstep(P, dotF, time, self._increments * rolltimes))
+        self.load_case["loadstep"].append(
+            self.get_loadstep(
+                self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
+            )
+        )
         self._loadfilename = filename
         self._loading = self.load_case
         file_path = os.path.join(self.working_directory, filename + ".yaml")
@@ -72,9 +74,9 @@ class ROLLING(DAMASK):
 
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
             reduction_time = reduction_height / reduction_speed
-            dotF = [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
-            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
-            self.load_case["loadstep"].append(self.get_loadstep(P, dotF, reduction_time, reduction_outputs))
+            self.load_case["loadstep"].append(
+                self.get_loadstep(self.get_dot_F(reduction_speed), reduction_time, reduction_outputs)
+            )
             filename = "load"
             self._loadfilename = filename
             self._loading = self.load_case
@@ -99,9 +101,9 @@ class ROLLING(DAMASK):
             # for multiple rolling test
             self.RollingInstance += 1
             reduction_time = reduction_height / reduction_speed
-            dotF = [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
-            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
-            self.load_case["loadstep"].append(self.get_loadstep(P, dotF, reduction_time, reduction_outputs))
+            self.load_case["loadstep"].append(
+                self.get_loadstep(self.get_dot_F(reduction_speed), reduction_time, reduction_outputs)
+            )
             load_name = "load_rolling%d" % (self.RollingInstance)
             self.load_name_old = self.load_name
             self.load_name = load_name
@@ -142,7 +144,13 @@ class ROLLING(DAMASK):
             self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
 
     @staticmethod
-    def get_loadstep(P, dot_F, reduction_time, reduction_outputs):
+    def get_dot_F(reduction_speed):
+        return  [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
+
+    @staticmethod
+    def get_loadstep(dot_F, reduction_time, reduction_outputs, P=None):
+        if P is None:
+            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
         return {
             "boundary_conditions": {"mechanical": {"P": P, "dot_F": dot_F}},
             "discretization": {"t": reduction_time, "N": reduction_outputs},
