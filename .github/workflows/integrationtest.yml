@@ -11,7 +11,11 @@ on:
     branches: [ main ]
 
 jobs:
-  build_fencis:
+  build_damask:
+    if: |
+      github.event_name == 'push' ||
+      ( github.event_name == 'pull_request'  && contains(github.event.pull_request.labels.*.name, 'integration' ))
+      
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -28,7 +32,7 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install --no-deps .
-        mamba env update --name test --file .ci_support/environment-notebooks-fenics.yml
+        mamba env update --name test --file .ci_support/environment-notebooks.yml
     - name: Tests
       shell: bash -l {0}
-      run: python -m unittest discover tests/integration
+      run: python -m unittest discover tests/integration/damask tests/integration/fenicsx

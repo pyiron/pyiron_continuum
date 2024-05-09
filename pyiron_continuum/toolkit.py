@@ -29,10 +29,10 @@ class JobFactory(JobFactoryCore):
     @property
     def _job_class_dict(self) -> dict:
         return {
-            'Fenics': Fenics,
-            'FenicsLinearElastic': FenicsLinearElastic,
+            "Fenics": Fenics,
+            "FenicsLinearElastic": FenicsLinearElastic,
             # 'DAMASK': DAMASK,
-            'TISE': TISE,
+            "TISE": TISE,
         }
 
 
@@ -122,7 +122,9 @@ class DAMASK:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
-        return DAMASKCreator.phase(composition, lattice, output_list, elasticity, plasticity)
+        return DAMASKCreator.phase(
+            composition, lattice, output_list, elasticity, plasticity
+        )
 
     @staticmethod
     def Elasticity(**kwargs):
@@ -158,7 +160,8 @@ class DAMASK:
                 If string is given, it looks for the method within
                 `damask.Rotation` via `getattr`.
         """
-        return DAMASKCreator.rotation(method=method, *args, **kwargs)
+        return DAMASKCreator.rotation(method, *args, **kwargs)
+
 
 class Schroedinger:
     @property

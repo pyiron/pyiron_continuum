@@ -3,23 +3,22 @@ channels:
 dependencies:
   - ase =3.22.1
   - coveralls
-  - coverage
   - codacy-coverage
-  - damask-mesh =3.0.0b
-  - damask-grid =3.0.0b
   - damask =3.0.0b
-  - fenics =2019.1.0
-  - fenics =2019.1.0=*_42
-  - mshr =2019.1.0=*_9
-  - k3d =2.16.1
-  - matplotlib =3.8.0
-  - numpy =1.26.3
-  - pyiron =0.5.0
-  - pyiron-data =0.0.26
+  - damask-grid =3.0.0b
+  - damask-mesh =3.0.0b
+  - k3d
+  - matplotlib =3.8.4
+  - numpy =1.26.4
+  - pyiron =0.5.2
+  - pyiron-data =0.0.29
   - python-damask =3.0.0b
-  - pyvista =0.42.3
-  - scipy =1.11.4
-  - seaborn =0.13.1
-  - scikit-image =0.22.0
+  - scipy =1.13.0
+  - seaborn =0.13.2
+  - scikit-image =0.20.0
   - papermill
   - jupyter
+  - fenics-dolfinx =0.8.0
+  - mpich =4.2.1
+  - pyvista =0.43.6
+  - python-gmsh =4.12.2
