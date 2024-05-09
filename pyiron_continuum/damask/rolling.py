@@ -23,8 +23,7 @@ class ROLLING(DAMASK):
     def __init__(self, project, job_name):
         """Create a new DAMASK type job for rolling"""
         super().__init__(project=project, job_name=job_name)
-        self.IsFirstRolling = True
-        self.RollingInstance = 0
+        self.RollingInstance = 1
 
     def loading_discretization(self, rolltimes, filename):
         time = (
@@ -54,10 +53,9 @@ class ROLLING(DAMASK):
         regrid=False,
         damask_exe="",
     ):
-        if self.IsFirstRolling:
+        reduction_time = reduction_height / reduction_speed
+        if self.RollingInstance == 1:
             # for the first rolling step, no regridding is required
-            self.RollingInstance = 1
-            self.IsFirstRolling = False
             self.ResultsFile = []
 
             print("working dir:", self.working_directory)
@@ -73,7 +71,6 @@ class ROLLING(DAMASK):
             self._write_geometry()
 
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
-            reduction_time = reduction_height / reduction_speed
             self.load_case["loadstep"].append(
                 self.get_loadstep(self.get_dot_F(reduction_speed), reduction_time, reduction_outputs)
             )
@@ -99,8 +96,6 @@ class ROLLING(DAMASK):
             self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
         else:
             # for multiple rolling test
-            self.RollingInstance += 1
-            reduction_time = reduction_height / reduction_speed
             self.load_case["loadstep"].append(
                 self.get_loadstep(self.get_dot_F(reduction_speed), reduction_time, reduction_outputs)
             )
@@ -115,33 +110,19 @@ class ROLLING(DAMASK):
                 self.regridding(1.025)
                 self.load_name = load_name
                 self.geom_name = self.regrid_geom_name
-                if len(damask_exe) < 11:
-                    args = (
-                        f"DAMASK_grid -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log"
-                        % (self.RollingInstance)
-                    )
-                else:
-                    args = (
-                        f"{damask_exe} -g {self.regrid_geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log"
-                        % (self.RollingInstance)
-                    )
-            else:
-                if len(damask_exe) < 11:
-                    args = (
-                        f"DAMASK_grid -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log"
-                        % (self.RollingInstance)
-                    )
-                else:
-                    args = (
-                        f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log"
-                        % (self.RollingInstance)
-                    )
+            if len(damask_exe) < 11:
+                damask_exe = "DAMASK_grid"
+            args = (
+                f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log"
+                % (self.RollingInstance)
+            )
             print("Start the rolling-%d test ..." % (self.RollingInstance))
             print("CMD=", args)
             os.chdir(self.working_directory)
             subprocess.run(args, shell=True, capture_output=True)
             print("Rolling-%d test is done !" % (self.RollingInstance))
             self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
+        self.RollingInstance += 1
 
     @staticmethod
     def get_dot_F(reduction_speed):
