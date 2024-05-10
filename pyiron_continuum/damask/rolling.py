@@ -190,18 +190,6 @@ class ROLLING(DAMASK):
             size_rg,
         )
 
-    def savecurrentloading(self):
-        """
-        save the old loading configuration before restart
-        """
-        self._loading_old = self.load_case
-
-    def updateloading(self):
-        """
-        save the old loading configuration before restart
-        """
-        self._write_loading()
-
     ########################################################################
     ### for openphase
     ########################################################################
