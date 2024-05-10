@@ -98,7 +98,6 @@ class ROLLING(DAMASK):
             self.load_case.save(self._join_path("load.yaml"))
             print(self.load_case)
 
-            self.load_name = "load"
             self._execute_damask(self.input.damask_exe, "FirstRolling")
         else:
             # for multiple rolling test
@@ -107,16 +106,23 @@ class ROLLING(DAMASK):
                     self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
                 )
             )
-            load_name = "load_rolling%d" % (self.input.RollingInstance)
-            self.load_name_old = self.load_name
-            self.load_name = load_name
-            self.load_case.save(self._join_path(load_name + ".yaml"))
+            self.load_case.save(self._join_path(self._load_name + ".yaml"))
             if self.input.regrid:
-                self.load_name = self.load_name_old
                 self.regridding(1.025)
-                self.load_name = load_name
             self._execute_damask(self.input.damask_exe, f"Rolling-{self.input.RollingInstance}")
         self.input.RollingInstance += 1
+
+    @property
+    def _load_name(self):
+        if self.input.RollingInstance == 1:
+            return "load"
+        return "load_rolling%d" % (self.input.RollingInstance)
+
+    @property
+    def _load_name_old(self):
+        if self.input.RollingInstance == 2:
+            return "load"
+        return "load_rolling%d" % (self.input.RollingInstance - 1)
 
     @property
     def geom_name(self):
@@ -128,14 +134,14 @@ class ROLLING(DAMASK):
         if len(damask_exe) < 11:
             damask_exe = "DAMASK_grid"
         args = (
-            f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > {log_name}.log"
+            f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {log_name}.log"
         )
         print("Start the rolling-%d test ..." % (self.input.RollingInstance))
         print("CMD=", args)
         os.chdir(self.working_directory)
         subprocess.run(args, shell=True, capture_output=True)
         print(f"{log_name} test is done !")
-        self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
+        self.ResultsFile.append(f"{self.geom_name}_{self._load_name}_material.hdf5")
 
     @staticmethod
     def get_dot_F(reduction_speed):
@@ -153,7 +159,7 @@ class ROLLING(DAMASK):
         }
 
     def postProcess(self):
-        self._load_results(f"{self.geom_name}_{self.load_name}_material.hdf5")
+        self._load_results(self.ResultsFile[-1])
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
         plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
@@ -164,7 +170,7 @@ class ROLLING(DAMASK):
         map_0to_rg, cells_rg, size_rg, increment_title = rgg.regrid_Geom(
             self.working_directory,
             self.geom_name,
-            self.load_name,
+            self._load_name_old,
             seed_scale=scale,
             increment="last",
         )
