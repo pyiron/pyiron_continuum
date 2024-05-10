@@ -24,7 +24,7 @@ class ROLLING(DAMASK):
         self.input.reduction_outputs = None
         self.input.regrid = False
         self.input.damask_exe = "DAMASK_grid"
-        self.input.RollingInstance = 1
+        self.input.rolling_instance = 1
         self.regrid_geom_name = None
         self.input.regrid_scale = 1.025
         self.output.ResultsFile = []
@@ -95,7 +95,7 @@ class ROLLING(DAMASK):
         self._execute_rolling()
 
     def write_input(self):
-        if self.input.RollingInstance == 1:
+        if self.input.rolling_instance == 1:
             super().write_input()
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.load_case["loadstep"].append(
@@ -104,31 +104,31 @@ class ROLLING(DAMASK):
             )
         )
         self.load_case.save(self._join_path(self._load_name + ".yaml"))
-        if self.input.regrid and self.input.RollingInstance > 1:
+        if self.input.regrid and self.input.rolling_instance > 1:
             self.regridding(self.input.regrid_scale)
 
     # To be replaced by run_static
     def run_static(self):
         super().run_static()
-        self.input.RollingInstance += 1
+        self.input.rolling_instance += 1
 
     @property
     def _log_name(self):
-        if self.input.RollingInstance == 1:
+        if self.input.rolling_instance == 1:
             return "FirstRolling"
-        return f"Rolling-{self.input.RollingInstance}"
+        return f"Rolling-{self.input.rolling_instance}"
 
     @property
     def _load_name(self):
-        if self.input.RollingInstance == 1:
+        if self.input.rolling_instance == 1:
             return "load"
-        return "load_rolling%d" % (self.input.RollingInstance)
+        return "load_rolling%d" % (self.input.rolling_instance)
 
     @property
     def _load_name_old(self):
-        if self.input.RollingInstance == 2:
+        if self.input.rolling_instance == 2:
             return "load"
-        return "load_rolling%d" % (self.input.RollingInstance - 1)
+        return "load_rolling%d" % (self.input.rolling_instance - 1)
 
     def validate_ready_to_run(self):
         self.executable = (
@@ -155,9 +155,6 @@ class ROLLING(DAMASK):
             "f_out": 5,
             "f_restart": 5,
         }
-
-    def postProcess(self):
-        pass
 
     def collect_output(self):
         self._load_results(self.output.ResultsFile[-1])
