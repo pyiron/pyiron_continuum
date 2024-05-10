@@ -196,7 +196,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         job.grid = self._get_grid(4, grains)
-        self.set_rolling(
+        job.set_rolling(
             reduction_height=0.05,
             reduction_speed=5.0e-2,
             reduction_outputs=250,

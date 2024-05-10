@@ -29,7 +29,7 @@ class ROLLING(DAMASK):
         self.output.results_file = []
         self.output.job_names = []
         self.executable = (
-            "DAMASK_grid -g damask.vti -l load.yaml -m material.yaml > rolling.log"
+            "DAMASK_grid -g damask.vti -l loading.yaml -m material.yaml > rolling.log"
         )
 
     def _join_path(self, path, return_str=True):
@@ -85,7 +85,7 @@ class ROLLING(DAMASK):
                 self.input.reduction_outputs,
             )
         )
-        self.load_case.save(self._join_path(self._load_name + ".yaml"))
+        self.load_case.save(self._join_path("loading.yaml"))
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
@@ -134,7 +134,7 @@ class ROLLING(DAMASK):
 
     def restart(self, job_name=None, job_type=None):
         new_job = super().restart(job_name=job_name, job_type=job_type)
-        new_job.input = self.input.copy()
+        new_job.storage.geinput = self.storage.input.copy()
         new_job.input.job_names = self.output.job_names
         # new_job.restart_file_list.append(self._join_path("load.yaml"))
         return new_job

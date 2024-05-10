@@ -264,7 +264,6 @@ class DAMASK(TemplateJob):
 
     def collect_output(self):
         self._load_results()
-        self.output.damask = self._results
 
     def _load_results(self, file_name="damask_loading_material.hdf5"):
         """
