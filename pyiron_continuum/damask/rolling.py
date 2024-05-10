@@ -25,6 +25,7 @@ class ROLLING(DAMASK):
         self.input.regrid = False
         self.input.executable_name = ""
         self.input.RollingInstance = 1
+        self.regrid_geom_name = None
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -78,7 +79,7 @@ class ROLLING(DAMASK):
 
     # To be replaced by run_static
     def _execute_rolling(self):
-        if self.RollingInstance == 1:
+        if self.input.RollingInstance == 1:
             # for the first rolling step, no regridding is required
             self.ResultsFile = []
 
@@ -89,8 +90,7 @@ class ROLLING(DAMASK):
                 if file_path.is_file():
                     file_path.unlink()
 
-            self._write_material()
-            self._write_geometry()
+            self.write_input()
 
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
             self.load_case["loadstep"].append(
@@ -113,7 +113,7 @@ class ROLLING(DAMASK):
                     self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
                 )
             )
-            load_name = "load_rolling%d" % (self.RollingInstance)
+            load_name = "load_rolling%d" % (self.input.RollingInstance)
             self.load_name_old = self.load_name
             self.load_name = load_name
             self._loading = self.load_case
@@ -122,12 +122,12 @@ class ROLLING(DAMASK):
                 self.load_name = self.load_name_old
                 self.regridding(1.025)
                 self.load_name = load_name
-            self._execute_damask(self.input.damask_exe, f"Rolling-{self.RollingInstance}")
-        self.RollingInstance += 1
+            self._execute_damask(self.input.damask_exe, f"Rolling-{self.input.RollingInstance}")
+        self.input.RollingInstance += 1
 
     @property
     def geom_name(self):
-        if self.input.regrid:
+        if self.input.regrid and self.regrid_geom_name is not None:
             return self.regrid_geom_name
         return "damask"
 
@@ -137,7 +137,7 @@ class ROLLING(DAMASK):
         args = (
             f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > {log_name}.log"
         )
-        print("Start the rolling-%d test ..." % (self.RollingInstance))
+        print("Start the rolling-%d test ..." % (self.input.RollingInstance))
         print("CMD=", args)
         os.chdir(self.working_directory)
         subprocess.run(args, shell=True, capture_output=True)
