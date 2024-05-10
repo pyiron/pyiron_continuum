@@ -28,7 +28,9 @@ class ROLLING(DAMASK):
         self.input.regrid_scale = 1.025
         self.output.results_file = []
         self.output.job_names = []
-        self.executable = "DAMASK_grid -g damask.vti -l load.yaml -m material.yaml > rolling.log"
+        self.executable = (
+            "DAMASK_grid -g damask.vti -l load.yaml -m material.yaml > rolling.log"
+        )
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -78,7 +80,9 @@ class ROLLING(DAMASK):
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.load_case["loadstep"].append(
             self.get_loadstep(
-                self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
+                self.get_dot_F(self.input.reduction_speed),
+                self.reduction_time,
+                self.input.reduction_outputs,
             )
         )
         self.load_case.save(self._join_path(self._load_name + ".yaml"))
