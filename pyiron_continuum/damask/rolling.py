@@ -1,16 +1,11 @@
-from ast import arg
-from random import vonmisesvariate
 import numpy as np
 import matplotlib.pyplot as plt
 
 import os
 from pathlib import Path
-import subprocess
-import warnings
 
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
-from damask import Result, YAML
 
 
 class ROLLING(DAMASK):
@@ -55,7 +50,8 @@ class ROLLING(DAMASK):
     def reduction_time(self):
         return self.input.reduction_height / self.input.reduction_speed
 
-    def set_rolling(self):
+    def set_rolling(
+        self,
         reduction_height=None,
         reduction_speed=None,
         reduction_outputs=None,
@@ -83,9 +79,6 @@ class ROLLING(DAMASK):
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
-    @property
-    def validate_ready_to_run(self):
-
     @staticmethod
     def get_dot_F(reduction_speed):
         return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
@@ -102,8 +95,8 @@ class ROLLING(DAMASK):
         }
 
     def collect_output(self):
-        self._load_results(self.output.results_file[-1])
         self.output.job_names.append(self.job_name)
+        super().collect_output()
         self.to_hdf()
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
