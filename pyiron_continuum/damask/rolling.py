@@ -26,6 +26,7 @@ class ROLLING(DAMASK):
         self.input.regrid = False
         self.input.job_names = []
         self.input.regrid_scale = 1.025
+        self.input.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.output.results_file = []
         self.output.job_names = []
         self.executable = (
@@ -45,14 +46,14 @@ class ROLLING(DAMASK):
             / (self._rolling_speed * self._number_passes)
         )
 
-        self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
-        self.load_case["loadstep"].append(
+        self.input.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
+        self.input.load_case["loadstep"].append(
             self.get_loadstep(
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
             )
         )
-        self.load_case.save(self._join_path(filename + ".yaml"))
-        print(self.load_case)
+        self.input.load_case.save(self._join_path(filename + ".yaml"))
+        print(self.input.load_case)
 
     @property
     def reduction_time(self):
@@ -76,16 +77,14 @@ class ROLLING(DAMASK):
 
     def write_input(self):
         super().write_input()
-        if len(self.input.job_names) == 0:
-            self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
-        self.load_case["loadstep"].append(
+        self.input.load_case["loadstep"].append(
             self.get_loadstep(
                 self.get_dot_F(self.input.reduction_speed),
                 self.reduction_time,
                 self.input.reduction_outputs,
             )
         )
-        self.load_case.save(self._join_path("loading.yaml"))
+        self.input.load_case.save(self._join_path("loading.yaml"))
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
