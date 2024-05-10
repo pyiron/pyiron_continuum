@@ -51,6 +51,10 @@ class ROLLING(DAMASK):
         # self.input.loading = self._loading
         print(self._loading)
 
+    @property
+    def reduction_time(self):
+        return self.input.reduction_height / self.input.reduction_speed
+
     def executeRolling(
         self,
         reduction_height=None,
@@ -70,13 +74,10 @@ class ROLLING(DAMASK):
             self.input.regrid = regrid
         if damask_exe is not None:
             self.input.damask_exe = damask_exe
-        self.run()
+        self._execute_rolling()
 
-    @property
-    def reduction_time(self):
-        return self.input.reduction_height / self.input.reduction_speed
-
-    def run_static(self, damask_exe=""):
+    # To be replaced by run_static
+    def _execute_rolling(self):
         if self.RollingInstance == 1:
             # for the first rolling step, no regridding is required
             self.ResultsFile = []
@@ -103,9 +104,8 @@ class ROLLING(DAMASK):
             self._loading.save(self._join_path(filename + ".yaml"))
             print(self._loading)
 
-            self.geom_name = "damask"
             self.load_name = "load"
-            self._execute_damask(damask_exe, "FirstRolling")
+            self._execute_damask(self.input.damask_exe, "FirstRolling")
         else:
             # for multiple rolling test
             self.load_case["loadstep"].append(
@@ -122,9 +122,14 @@ class ROLLING(DAMASK):
                 self.load_name = self.load_name_old
                 self.regridding(1.025)
                 self.load_name = load_name
-                self.geom_name = self.regrid_geom_name
-            self._execute_damask(damask_exe, f"Rolling-{self.RollingInstance}")
+            self._execute_damask(self.input.damask_exe, f"Rolling-{self.RollingInstance}")
         self.RollingInstance += 1
+
+    @property
+    def geom_name(self):
+        if self.input.regrid:
+            return self.regrid_geom_name
+        return "damask"
 
     def _execute_damask(self, damask_exe, log_name):
         if len(damask_exe) < 11:
