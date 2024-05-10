@@ -100,7 +100,7 @@ class ROLLING(DAMASK):
                     file_path.unlink()
 
         self.write_input()
-        self._execute_damask(self.input.damask_exe, self._log_name)
+        self._execute_damask(self.input.damask_exe)
         self.collect_output()
         self.input.RollingInstance += 1
 
