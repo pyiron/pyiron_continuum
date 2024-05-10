@@ -26,6 +26,7 @@ class ROLLING(DAMASK):
         self.input.executable_name = ""
         self.input.RollingInstance = 1
         self.regrid_geom_name = None
+        self.input.regrid_scale = 1.025
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -74,6 +75,19 @@ class ROLLING(DAMASK):
             self.input.damask_exe = damask_exe
         self._execute_rolling()
 
+    def write_input(self):
+        if self.input.RollingInstance == 1:
+            super().write_input()
+            self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
+        self.load_case["loadstep"].append(
+            self.get_loadstep(
+                self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
+            )
+        )
+        self.load_case.save(self._join_path(self._load_name + ".yaml"))
+        if self.input.regrid and self.input.RollingInstance > 1:
+            self.regridding(self.input.regrid_scale)
+
     # To be replaced by run_static
     def _execute_rolling(self):
         if self.input.RollingInstance == 1:
@@ -89,26 +103,10 @@ class ROLLING(DAMASK):
 
             self.write_input()
 
-            self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
-            self.load_case["loadstep"].append(
-                self.get_loadstep(
-                    self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
-                )
-            )
-            self.load_case.save(self._join_path("load.yaml"))
-            print(self.load_case)
-
             self._execute_damask(self.input.damask_exe, "FirstRolling")
         else:
             # for multiple rolling test
-            self.load_case["loadstep"].append(
-                self.get_loadstep(
-                    self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
-                )
-            )
-            self.load_case.save(self._join_path(self._load_name + ".yaml"))
-            if self.input.regrid:
-                self.regridding(1.025)
+            self.write_input()
             self._execute_damask(self.input.damask_exe, f"Rolling-{self.input.RollingInstance}")
         self.collect_output()
         self.input.RollingInstance += 1
