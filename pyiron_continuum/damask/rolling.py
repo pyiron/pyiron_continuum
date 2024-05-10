@@ -24,10 +24,12 @@ class ROLLING(DAMASK):
         self.input.reduction_outputs = None
         self.input.regrid = False
         self.input.damask_exe = "DAMASK_grid"
+        self.input.job_names = []
         self.input.rolling_instance = 1
         self.regrid_geom_name = None
         self.input.regrid_scale = 1.025
-        self.output.ResultsFile = []
+        self.output.results_file = []
+        self.output.job_names = []
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -157,7 +159,9 @@ class ROLLING(DAMASK):
         }
 
     def collect_output(self):
-        self._load_results(self.output.ResultsFile[-1])
+        self._load_results(self.output.results_file[-1])
+        self.output.job_names.append(self.job_name)
+        self.to_hdf()
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
         plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
@@ -181,6 +185,11 @@ class ROLLING(DAMASK):
             cells_rg,
             size_rg,
         )
+
+    def restart(self, job_name=None, job_type=None):
+        new_job = super().restart(job_name=job_name, job_type=job_type)
+        new_job.input.job_names = self.output.job_names
+        return new_job
 
     ########################################################################
     ### for openphase
