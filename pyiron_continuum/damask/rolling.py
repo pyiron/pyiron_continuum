@@ -1,5 +1,4 @@
 from ast import arg
-import os
 from random import vonmisesvariate
 import numpy as np
 import matplotlib.pyplot as plt
