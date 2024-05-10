@@ -85,16 +85,8 @@ class ROLLING(DAMASK):
 
             self.geom_name = "damask"
             self.load_name = "load"
+            self._execute_damask(damask_exe, "FirstRolling")
 
-            if len(damask_exe) < 11:
-                damask_exe = "DAMASK_grid"
-            args = f"{damask_exe} -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log"
-            print("Start the first rolling test ...")
-            os.chdir(self.working_directory)
-            print("CMD=", args)
-            subprocess.run(args, shell=True, capture_output=True)
-            print("First rolling test is done !")
-            self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
         else:
             # for multiple rolling test
             self.load_case["loadstep"].append(
@@ -113,19 +105,21 @@ class ROLLING(DAMASK):
                 self.regridding(1.025)
                 self.load_name = load_name
                 self.geom_name = self.regrid_geom_name
-            if len(damask_exe) < 11:
-                damask_exe = "DAMASK_grid"
-            args = (
-                f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > Rolling-%d.log"
-                % (self.RollingInstance)
-            )
-            print("Start the rolling-%d test ..." % (self.RollingInstance))
-            print("CMD=", args)
-            os.chdir(self.working_directory)
-            subprocess.run(args, shell=True, capture_output=True)
-            print("Rolling-%d test is done !" % (self.RollingInstance))
-            self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
+            self._execute_damask(damask_exe, f"Rolling-{self.RollingInstance}")
         self.RollingInstance += 1
+
+    def _execute_damask(self, damask_exe, log_name):
+        if len(damask_exe) < 11:
+            damask_exe = "DAMASK_grid"
+        args = (
+            f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > {log_name}.log"
+        )
+        print("Start the rolling-%d test ..." % (self.RollingInstance))
+        print("CMD=", args)
+        os.chdir(self.working_directory)
+        subprocess.run(args, shell=True, capture_output=True)
+        print(f"{log_name} test is done !")
+        self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
 
     @staticmethod
     def get_dot_F(reduction_speed):
