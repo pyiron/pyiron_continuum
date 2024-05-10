@@ -23,7 +23,7 @@ class ROLLING(DAMASK):
         self.input.reduction_speed = None
         self.input.reduction_outputs = None
         self.input.regrid = False
-        self.input.executable_name = ""
+        self.input.damask_exe = "DAMASK_grid"
         self.input.RollingInstance = 1
         self.regrid_geom_name = None
         self.input.regrid_scale = 1.025
@@ -108,18 +108,8 @@ class ROLLING(DAMASK):
             self.regridding(self.input.regrid_scale)
 
     # To be replaced by run_static
-    def _execute_rolling(self):
-        if self.input.RollingInstance == 1:
-            # Most useless five lines to be removed ASAP
-            print("working dir:", self.working_directory)
-            Path(self.working_directory).mkdir(parents=True, exist_ok=True)
-            for file_path in Path(self.working_directory).glob("*"):
-                if file_path.is_file():
-                    file_path.unlink()
-
-        self.write_input()
-        self._execute_damask(self.input.damask_exe)
-        self.collect_output()
+    def run_static(self):
+        super().run_static()
         self.input.RollingInstance += 1
 
     @property
@@ -140,24 +130,16 @@ class ROLLING(DAMASK):
             return "load"
         return "load_rolling%d" % (self.input.RollingInstance - 1)
 
+    def validate_ready_to_run(self):
+        self.executable = (
+            f"{self.input.damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
+        )
+
     @property
     def geom_name(self):
         if self.input.regrid and self.regrid_geom_name is not None:
             return self.regrid_geom_name
         return "damask"
-
-    def _execute_damask(self, damask_exe):
-        if len(damask_exe) < 11:
-            damask_exe = "DAMASK_grid"
-        args = (
-            f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
-        )
-        print("Start the rolling-%d test ..." % (self.input.RollingInstance))
-        print("CMD=", args)
-        os.chdir(self.working_directory)
-        subprocess.run(args, shell=True, capture_output=True)
-        print(f"{self._log_name} test is done !")
-        self.output.ResultsFile.append(f"{self.geom_name}_{self._load_name}_material.hdf5")
 
     @staticmethod
     def get_dot_F(reduction_speed):
