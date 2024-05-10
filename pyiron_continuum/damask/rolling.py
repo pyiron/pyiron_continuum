@@ -87,9 +87,8 @@ class ROLLING(DAMASK):
             self.load_name = "load"
 
             if len(damask_exe) < 11:
-                args = f"DAMASK_grid -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log"
-            else:
-                args = f"{damask_exe} -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log"
+                damask_exe = "DAMASK_grid"
+            args = f"{damask_exe} -g {self.geom_name}.vti -l load.yaml -m material.yaml > FirstRolling.log"
             print("Start the first rolling test ...")
             os.chdir(self.working_directory)
             print("CMD=", args)
