@@ -27,6 +27,7 @@ class ROLLING(DAMASK):
         self.input.RollingInstance = 1
         self.regrid_geom_name = None
         self.input.regrid_scale = 1.025
+        self.output.ResultsFile = []
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -91,9 +92,6 @@ class ROLLING(DAMASK):
     # To be replaced by run_static
     def _execute_rolling(self):
         if self.input.RollingInstance == 1:
-            # for the first rolling step, no regridding is required
-            self.ResultsFile = []
-
             # Most useless five lines to be removed ASAP
             print("working dir:", self.working_directory)
             Path(self.working_directory).mkdir(parents=True, exist_ok=True)
@@ -101,15 +99,16 @@ class ROLLING(DAMASK):
                 if file_path.is_file():
                     file_path.unlink()
 
-            self.write_input()
-
-            self._execute_damask(self.input.damask_exe, "FirstRolling")
-        else:
-            # for multiple rolling test
-            self.write_input()
-            self._execute_damask(self.input.damask_exe, f"Rolling-{self.input.RollingInstance}")
+        self.write_input()
+        self._execute_damask(self.input.damask_exe, self._log_name)
         self.collect_output()
         self.input.RollingInstance += 1
+
+    @property
+    def _log_name(self):
+        if self.input.RollingInstance == 1:
+            return "FirstRolling"
+        return f"Rolling-{self.input.RollingInstance}"
 
     @property
     def _load_name(self):
@@ -129,18 +128,18 @@ class ROLLING(DAMASK):
             return self.regrid_geom_name
         return "damask"
 
-    def _execute_damask(self, damask_exe, log_name):
+    def _execute_damask(self, damask_exe):
         if len(damask_exe) < 11:
             damask_exe = "DAMASK_grid"
         args = (
-            f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {log_name}.log"
+            f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
         )
         print("Start the rolling-%d test ..." % (self.input.RollingInstance))
         print("CMD=", args)
         os.chdir(self.working_directory)
         subprocess.run(args, shell=True, capture_output=True)
-        print(f"{log_name} test is done !")
-        self.ResultsFile.append(f"{self.geom_name}_{self._load_name}_material.hdf5")
+        print(f"{self._log_name} test is done !")
+        self.output.ResultsFile.append(f"{self.geom_name}_{self._load_name}_material.hdf5")
 
     @staticmethod
     def get_dot_F(reduction_speed):
@@ -158,7 +157,7 @@ class ROLLING(DAMASK):
         }
 
     def collect_output(self):
-        self._load_results(self.ResultsFile[-1])
+        self._load_results(self.output.ResultsFile[-1])
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
         plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
