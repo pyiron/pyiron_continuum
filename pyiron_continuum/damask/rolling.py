@@ -11,7 +11,6 @@ import warnings
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
 from damask import Result, YAML
-from pyiron_continuum.damask.factory import DamaskLoading
 
 
 class ROLLING(DAMASK):
