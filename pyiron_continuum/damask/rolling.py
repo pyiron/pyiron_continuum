@@ -159,11 +159,6 @@ class ROLLING(DAMASK):
     def collect_output(self):
         self._load_results(self.output.ResultsFile[-1])
 
-    @property
-    def ResultsFile(self):
-        warnings.warn("Use job.output.ResultsFile instead")
-        return self.output.ResultsFile
-
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
         plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
         plt.xlim([xmin, xmax])
