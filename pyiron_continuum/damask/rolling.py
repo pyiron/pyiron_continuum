@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 from pathlib import Path
 import subprocess
+import warnings
 
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
@@ -18,7 +19,15 @@ class ROLLING(DAMASK):
     def __init__(self, project, job_name):
         """Create a new DAMASK type job for rolling"""
         super().__init__(project=project, job_name=job_name)
-        self.RollingInstance = 1
+        self.input.reduction_height = None
+        self.input.reduction_speed = None
+        self.input.reduction_outputs = None
+        self.input.regrid = False
+        self.input.executable_name = ""
+        self.input.RollingInstance = 1
+        self.regrid_geom_name = None
+        self.input.regrid_scale = 1.025
+        self.output.ResultsFile = []
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -39,25 +48,50 @@ class ROLLING(DAMASK):
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
             )
         )
-        self._loadfilename = filename
-        self._loading = self.load_case
-        self._loading.save(self._join_path(filename + ".yaml"))
-        # self.input.loading = self._loading
-        print(self._loading)
+        self.load_case.save(self._join_path(filename + ".yaml"))
+        print(self.load_case)
+
+    @property
+    def reduction_time(self):
+        return self.input.reduction_height / self.input.reduction_speed
 
     def executeRolling(
         self,
-        reduction_height,
-        reduction_speed,
-        reduction_outputs,
-        regrid=False,
-        damask_exe="",
+        reduction_height=None,
+        reduction_speed=None,
+        reduction_outputs=None,
+        regrid=None,
+        damask_exe=None,
     ):
-        reduction_time = reduction_height / reduction_speed
-        if self.RollingInstance == 1:
-            # for the first rolling step, no regridding is required
-            self.ResultsFile = []
+        warnings.warn("`executeRolling` is deprecated; use `run`")
+        if reduction_height is not None:
+            self.input.reduction_height = reduction_height
+        if reduction_speed is not None:
+            self.input.reduction_speed = reduction_speed
+        if reduction_outputs is not None:
+            self.input.reduction_outputs = reduction_outputs
+        if regrid is not None:
+            self.input.regrid = regrid
+        if damask_exe is not None:
+            self.input.damask_exe = damask_exe
+        self._execute_rolling()
 
+    def write_input(self):
+        if self.input.RollingInstance == 1:
+            super().write_input()
+            self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
+        self.load_case["loadstep"].append(
+            self.get_loadstep(
+                self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
+            )
+        )
+        self.load_case.save(self._join_path(self._load_name + ".yaml"))
+        if self.input.regrid and self.input.RollingInstance > 1:
+            self.regridding(self.input.regrid_scale)
+
+    # To be replaced by run_static
+    def _execute_rolling(self):
+        if self.input.RollingInstance == 1:
             # Most useless five lines to be removed ASAP
             print("working dir:", self.working_directory)
             Path(self.working_directory).mkdir(parents=True, exist_ok=True)
@@ -65,57 +99,47 @@ class ROLLING(DAMASK):
                 if file_path.is_file():
                     file_path.unlink()
 
-            self._write_material()
-            self._write_geometry()
+        self.write_input()
+        self._execute_damask(self.input.damask_exe)
+        self.collect_output()
+        self.input.RollingInstance += 1
 
-            self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
-            self.load_case["loadstep"].append(
-                self.get_loadstep(
-                    self.get_dot_F(reduction_speed), reduction_time, reduction_outputs
-                )
-            )
-            filename = "load"
-            self._loadfilename = filename
-            self._loading = self.load_case
-            self._loading.save(self._join_path(filename + ".yaml"))
-            print(self._loading)
+    @property
+    def _log_name(self):
+        if self.input.RollingInstance == 1:
+            return "FirstRolling"
+        return f"Rolling-{self.input.RollingInstance}"
 
-            self.geom_name = "damask"
-            self.load_name = "load"
-            self._execute_damask(damask_exe, "FirstRolling")
+    @property
+    def _load_name(self):
+        if self.input.RollingInstance == 1:
+            return "load"
+        return "load_rolling%d" % (self.input.RollingInstance)
 
-        else:
-            # for multiple rolling test
-            self.load_case["loadstep"].append(
-                self.get_loadstep(
-                    self.get_dot_F(reduction_speed), reduction_time, reduction_outputs
-                )
-            )
-            load_name = "load_rolling%d" % (self.RollingInstance)
-            self.load_name_old = self.load_name
-            self.load_name = load_name
-            self._loading = self.load_case
-            self._loading.save(self._join_path(load_name + ".yaml"))
-            if regrid:
-                self.load_name = self.load_name_old
-                self.regridding(1.025)
-                self.load_name = load_name
-                self.geom_name = self.regrid_geom_name
-            self._execute_damask(damask_exe, f"Rolling-{self.RollingInstance}")
-        self.RollingInstance += 1
+    @property
+    def _load_name_old(self):
+        if self.input.RollingInstance == 2:
+            return "load"
+        return "load_rolling%d" % (self.input.RollingInstance - 1)
 
-    def _execute_damask(self, damask_exe, log_name):
+    @property
+    def geom_name(self):
+        if self.input.regrid and self.regrid_geom_name is not None:
+            return self.regrid_geom_name
+        return "damask"
+
+    def _execute_damask(self, damask_exe):
         if len(damask_exe) < 11:
             damask_exe = "DAMASK_grid"
         args = (
-            f"{damask_exe} -g {self.geom_name}.vti -l {self.load_name}.yaml -m material.yaml > {log_name}.log"
+            f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
         )
-        print("Start the rolling-%d test ..." % (self.RollingInstance))
+        print("Start the rolling-%d test ..." % (self.input.RollingInstance))
         print("CMD=", args)
         os.chdir(self.working_directory)
         subprocess.run(args, shell=True, capture_output=True)
-        print(f"{log_name} test is done !")
-        self.ResultsFile.append(f"{self.geom_name}_{self.load_name}_material.hdf5")
+        print(f"{self._log_name} test is done !")
+        self.output.ResultsFile.append(f"{self.geom_name}_{self._load_name}_material.hdf5")
 
     @staticmethod
     def get_dot_F(reduction_speed):
@@ -133,7 +157,15 @@ class ROLLING(DAMASK):
         }
 
     def postProcess(self):
-        self._load_results(f"{self.geom_name}_{self.load_name}_material.hdf5")
+        pass
+
+    def collect_output(self):
+        self._load_results(self.output.ResultsFile[-1])
+
+    @property
+    def ResultsFile(self):
+        warnings.warn("Use job.output.ResultsFile instead")
+        return self.output.ResultsFile
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
         plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
@@ -144,7 +176,7 @@ class ROLLING(DAMASK):
         map_0to_rg, cells_rg, size_rg, increment_title = rgg.regrid_Geom(
             self.working_directory,
             self.geom_name,
-            self.load_name,
+            self._load_name_old,
             seed_scale=scale,
             increment="last",
         )
@@ -157,18 +189,6 @@ class ROLLING(DAMASK):
             cells_rg,
             size_rg,
         )
-
-    def savecurrentloading(self):
-        """
-        save the old loading configuration before restart
-        """
-        self._loading_old = self._loading
-
-    def updateloading(self):
-        """
-        save the old loading configuration before restart
-        """
-        self._write_loading()
 
     ########################################################################
     ### for openphase

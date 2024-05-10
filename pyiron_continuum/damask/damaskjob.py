@@ -49,6 +49,7 @@ class DAMASK(TemplateJob):
         self.input.homogenization = None
         self.input.phase = None
         self.input.material = None
+        self.input.loading = None
 
     def set_elasticity(self, **kwargs):
         """
@@ -242,16 +243,19 @@ class DAMASK(TemplateJob):
         self._attempt_init_material()
 
     def _write_material(self):
-        file_path = os.path.join(self.working_directory, "material.yaml")
-        self.input.material.save(fname=file_path)
+        if self.input.material is not None:
+            file_path = os.path.join(self.working_directory, "material.yaml")
+            self.input.material.save(fname=file_path)
 
     def _write_loading(self):
-        file_path = os.path.join(self.working_directory, "loading.yaml")
-        self.input.loading.save(file_path)
+        if self.input.loading is not None:
+            file_path = os.path.join(self.working_directory, "loading.yaml")
+            self.input.loading.save(file_path)
 
     def _write_geometry(self):
-        file_path = os.path.join(self.working_directory, "damask")
-        self._geometry.save(file_path)
+        if self._geometry is not None:
+            file_path = os.path.join(self.working_directory, "damask")
+            self._geometry.save(file_path)
 
     def write_input(self):
         self._write_loading()
