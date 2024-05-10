@@ -3,8 +3,8 @@ from random import vonmisesvariate
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sys
 import os
+from pathlib import Path
 import subprocess
 
 from pyiron_continuum.damask.damaskjob import DAMASK
