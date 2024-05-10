@@ -3,7 +3,13 @@ import matplotlib.pyplot as plt
 
 import os
 from pathlib import Path
+from pyiron_base import ImportAlarm
 
+with ImportAlarm(
+    "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
+    "requirements. Please install it and try again."
+) as damask_alarm:
+    from damask import YAML
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
 
