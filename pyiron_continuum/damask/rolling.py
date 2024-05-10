@@ -1,21 +1,17 @@
 from ast import arg
-import os
 from random import vonmisesvariate
 import numpy as np
 import matplotlib.pyplot as plt
 
-import sys
 import os
+from pathlib import Path
 import subprocess
 import warnings
 
-dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, dir)
-
-from damaskjob import DAMASK
-import regrid as rgg
+from pyiron_continuum.damask.damaskjob import DAMASK
+import pyiron_continuum.damask.regrid as rgg
 from damask import Result, YAML
-from factory import DamaskLoading
+from pyiron_continuum.damask.factory import DamaskLoading
 
 
 class ROLLING(DAMASK):
@@ -30,6 +26,12 @@ class ROLLING(DAMASK):
         self.input.regrid = False
         self.input.executable_name = ""
         self.input.RollingInstance = 1
+
+    def _join_path(self, path, return_str=True):
+        file_path = Path(self.working_directory) / path
+        if not return_str:
+            file_path = str(file_path)
+        return file_path
 
     def loading_discretization(self, rolltimes, filename):
         time = (
@@ -46,8 +48,7 @@ class ROLLING(DAMASK):
         )
         self._loadfilename = filename
         self._loading = self.load_case
-        file_path = os.path.join(self.working_directory, filename + ".yaml")
-        self._loading.save(file_path)
+        self._loading.save(self._join_path(filename + ".yaml"))
         # self.input.loading = self._loading
         print(self._loading)
 
@@ -81,14 +82,12 @@ class ROLLING(DAMASK):
             # for the first rolling step, no regridding is required
             self.ResultsFile = []
 
+            # Most useless five lines to be removed ASAP
             print("working dir:", self.working_directory)
-            if not os.path.exists(self.working_directory):
-                os.makedirs(self.working_directory)
-
-            # clean all the results file
-            os.chdir(self.working_directory)
-            args = "rm -rf *.vti *.yaml *.hdf5 *.log *.C_ref *.sta"
-            subprocess.run(args, shell=True, capture_output=True)
+            Path(self.working_directory).mkdir(parents=True, exist_ok=True)
+            for file_path in Path(self.working_directory).glob("*"):
+                if file_path.is_file():
+                    file_path.unlink()
 
             self._write_material()
             self._write_geometry()
@@ -102,8 +101,7 @@ class ROLLING(DAMASK):
             filename = "load"
             self._loadfilename = filename
             self._loading = self.load_case
-            file_path = os.path.join(self.working_directory, filename + ".yaml")
-            self._loading.save(file_path)
+            self._loading.save(self._join_path(filename + ".yaml"))
             print(self._loading)
 
             self.geom_name = "damask"
@@ -120,8 +118,7 @@ class ROLLING(DAMASK):
             self.load_name_old = self.load_name
             self.load_name = load_name
             self._loading = self.load_case
-            file_path = os.path.join(self.working_directory, load_name + ".yaml")
-            self._loading.save(file_path)
+            self._loading.save(self._join_path(load_name + ".yaml"))
             if self.input.regrid:
                 self.load_name = self.load_name_old
                 self.regridding(1.025)
