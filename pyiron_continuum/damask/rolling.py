@@ -23,13 +23,11 @@ class ROLLING(DAMASK):
         self.input.reduction_speed = None
         self.input.reduction_outputs = None
         self.input.regrid = False
-        self.input.damask_exe = "DAMASK_grid"
         self.input.job_names = []
-        self.input.rolling_instance = 1
-        self.regrid_geom_name = None
         self.input.regrid_scale = 1.025
         self.output.results_file = []
         self.output.job_names = []
+        self.executable = "DAMASK_grid -g damask.vti -l load.yaml -m material.yaml > rolling.log"
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -97,8 +95,8 @@ class ROLLING(DAMASK):
         self._execute_rolling()
 
     def write_input(self):
-        if self.input.rolling_instance == 1:
-            super().write_input()
+        super().write_input()
+        if len(self.input.job_names) == 0:
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.load_case["loadstep"].append(
             self.get_loadstep(
@@ -106,42 +104,11 @@ class ROLLING(DAMASK):
             )
         )
         self.load_case.save(self._join_path(self._load_name + ".yaml"))
-        if self.input.regrid and self.input.rolling_instance > 1:
+        if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
-    # To be replaced by run_static
-    def run_static(self):
-        super().run_static()
-        self.input.rolling_instance += 1
-
     @property
-    def _log_name(self):
-        if self.input.rolling_instance == 1:
-            return "FirstRolling"
-        return f"Rolling-{self.input.rolling_instance}"
-
-    @property
-    def _load_name(self):
-        if self.input.rolling_instance == 1:
-            return "load"
-        return "load_rolling%d" % (self.input.rolling_instance)
-
-    @property
-    def _load_name_old(self):
-        if self.input.rolling_instance == 2:
-            return "load"
-        return "load_rolling%d" % (self.input.rolling_instance - 1)
-
     def validate_ready_to_run(self):
-        self.executable = (
-            f"{self.input.damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
-        )
-
-    @property
-    def geom_name(self):
-        if self.input.regrid and self.regrid_geom_name is not None:
-            return self.regrid_geom_name
-        return "damask"
 
     @staticmethod
     def get_dot_F(reduction_speed):
@@ -172,7 +139,7 @@ class ROLLING(DAMASK):
         map_0to_rg, cells_rg, size_rg, increment_title = rgg.regrid_Geom(
             self.working_directory,
             self.geom_name,
-            self._load_name_old,
+            self.restart_file_list[0],
             seed_scale=scale,
             increment="last",
         )
@@ -188,7 +155,9 @@ class ROLLING(DAMASK):
 
     def restart(self, job_name=None, job_type=None):
         new_job = super().restart(job_name=job_name, job_type=job_type)
+        new_job.input = self.input.copy()
         new_job.input.job_names = self.output.job_names
+        # new_job.restart_file_list.append(self._join_path("load.yaml"))
         return new_job
 
     ########################################################################

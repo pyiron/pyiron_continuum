@@ -12,7 +12,7 @@ def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment="last"
     It requires the previous geom.vti and result.hdf5
     """
     work_dir = Path(work_dir)
-    geom_0 = damask.GeomGrid.load(f"{geom_name}.vti")
+    geom_0 = damask.GeomGrid.load(str(work_dir / f"{geom_name}.vti"))
     cells_0 = geom_0.cells
     size_0 = geom_0.size
 
