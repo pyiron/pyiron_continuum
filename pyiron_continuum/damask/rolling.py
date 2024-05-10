@@ -156,6 +156,9 @@ class ROLLING(DAMASK):
             "f_restart": 5,
         }
 
+    def postProcess(self):
+        pass
+
     def collect_output(self):
         self._load_results(self.output.ResultsFile[-1])
 
