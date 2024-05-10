@@ -46,10 +46,8 @@ class ROLLING(DAMASK):
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
             )
         )
-        self._loading = self.load_case
-        self._loading.save(self._join_path(filename + ".yaml"))
-        # self.input.loading = self._loading
-        print(self._loading)
+        self.load_case.save(self._join_path(filename + ".yaml"))
+        print(self.load_case)
 
     @property
     def reduction_time(self):
@@ -97,9 +95,8 @@ class ROLLING(DAMASK):
                     self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
                 )
             )
-            self._loading = self.load_case
-            self._loading.save(self._join_path("load.yaml"))
-            print(self._loading)
+            self.load_case.save(self._join_path("load.yaml"))
+            print(self.load_case)
 
             self.load_name = "load"
             self._execute_damask(self.input.damask_exe, "FirstRolling")
@@ -113,8 +110,7 @@ class ROLLING(DAMASK):
             load_name = "load_rolling%d" % (self.input.RollingInstance)
             self.load_name_old = self.load_name
             self.load_name = load_name
-            self._loading = self.load_case
-            self._loading.save(self._join_path(load_name + ".yaml"))
+            self.load_case.save(self._join_path(load_name + ".yaml"))
             if self.input.regrid:
                 self.load_name = self.load_name_old
                 self.regridding(1.025)
@@ -186,7 +182,7 @@ class ROLLING(DAMASK):
         """
         save the old loading configuration before restart
         """
-        self._loading_old = self._loading
+        self._loading_old = self.load_case
 
     def updateloading(self):
         """
