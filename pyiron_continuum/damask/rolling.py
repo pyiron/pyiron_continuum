@@ -46,7 +46,6 @@ class ROLLING(DAMASK):
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
             )
         )
-        self._loadfilename = filename
         self._loading = self.load_case
         self._loading.save(self._join_path(filename + ".yaml"))
         # self.input.loading = self._loading
@@ -98,10 +97,8 @@ class ROLLING(DAMASK):
                     self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
                 )
             )
-            filename = "load"
-            self._loadfilename = filename
             self._loading = self.load_case
-            self._loading.save(self._join_path(filename + ".yaml"))
+            self._loading.save(self._join_path("load.yaml"))
             print(self._loading)
 
             self.load_name = "load"
