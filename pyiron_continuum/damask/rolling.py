@@ -55,6 +55,24 @@ class ROLLING(DAMASK):
     def reduction_time(self):
         return self.input.reduction_height / self.input.reduction_speed
 
+    def set_rolling(self):
+        reduction_height=None,
+        reduction_speed=None,
+        reduction_outputs=None,
+        regrid=None,
+        damask_exe=None,
+    ):
+        if reduction_height is not None:
+            self.input.reduction_height = reduction_height
+        if reduction_speed is not None:
+            self.input.reduction_speed = reduction_speed
+        if reduction_outputs is not None:
+            self.input.reduction_outputs = reduction_outputs
+        if regrid is not None:
+            self.input.regrid = regrid
+        if damask_exe is not None:
+            self.input.damask_exe = damask_exe
+
     def executeRolling(
         self,
         reduction_height=None,
