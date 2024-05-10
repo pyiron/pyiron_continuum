@@ -60,7 +60,6 @@ class ROLLING(DAMASK):
         reduction_speed=None,
         reduction_outputs=None,
         regrid=None,
-        damask_exe=None,
     ):
         if reduction_height is not None:
             self.input.reduction_height = reduction_height
@@ -70,8 +69,6 @@ class ROLLING(DAMASK):
             self.input.reduction_outputs = reduction_outputs
         if regrid is not None:
             self.input.regrid = regrid
-        if damask_exe is not None:
-            self.input.damask_exe = damask_exe
 
     def executeRolling(
         self,

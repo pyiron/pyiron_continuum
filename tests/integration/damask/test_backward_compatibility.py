@@ -198,14 +198,10 @@ class TestDamask(unittest.TestCase):
         reduction_height = 0.05
         reduction_speed = 5.0e-2
         reduction_outputs = 250
-        regrid_flag = False
-        damask_exe = ""  # using default DAMASK_grid solver from PATH
-        job.executeRolling(
-            reduction_height,
-            reduction_speed,
-            reduction_outputs,
-            regrid_flag,
-            damask_exe,
+        self.set_rolling(self):
+            reduction_height=None,
+            reduction_speed=None,
+            reduction_outputs=None,
         )
         job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
         reduction_speed = 4.5e-2
