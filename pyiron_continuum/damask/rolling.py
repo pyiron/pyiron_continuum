@@ -110,6 +110,7 @@ class ROLLING(DAMASK):
             if self.input.regrid:
                 self.regridding(1.025)
             self._execute_damask(self.input.damask_exe, f"Rolling-{self.input.RollingInstance}")
+        self.collect_output()
         self.input.RollingInstance += 1
 
     @property
@@ -158,7 +159,7 @@ class ROLLING(DAMASK):
             "f_restart": 5,
         }
 
-    def postProcess(self):
+    def collect_output(self):
         self._load_results(self.ResultsFile[-1])
 
     def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):

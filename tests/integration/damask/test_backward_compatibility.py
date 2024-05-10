@@ -207,7 +207,6 @@ class TestDamask(unittest.TestCase):
             regrid_flag,
             damask_exe,
         )
-        job.postProcess()  # do the postprocess
         job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
         reduction_speed = 4.5e-2
         regrid_flag = True
@@ -221,7 +220,6 @@ class TestDamask(unittest.TestCase):
                 regrid_flag,
                 damask_exe,
             )
-            job.postProcess()  # do the postprocess
             job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
 
 
