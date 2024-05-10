@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import h5py
 import numpy as np
 import scipy
@@ -11,6 +11,7 @@ def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment="last"
     Regrid the geometry
     It requires the previous geom.vti and result.hdf5
     """
+    work_dir = Path(work_dir)
     geom_0 = damask.GeomGrid.load(f"{geom_name}.vti")
     cells_0 = geom_0.cells
     size_0 = geom_0.size
@@ -28,8 +29,7 @@ def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment="last"
         (-1, gridCoords_point_initial_matrix.shape[-1]), order="F"
     )
 
-    os.chdir(f"{work_dir}")
-    d5Out = damask.Result(f"{work_dir}/{geom_name}_{load_name}_material.hdf5")
+    d5Out = damask.Result(str(work_dir / f"{geom_name}_{load_name}_material.hdf5"))
 
     if increment == "last":
         inc = int(d5Out.increments[-1])  # take the increment number
@@ -110,21 +110,21 @@ def write_RegriddedHDF5(
     """
     Write out the new hdf5 file based on the regridded geometry and deformation info
     """
-    os.chdir(f"{work_dir}")
-    fNameResults_0 = f"{geom_name}_{load_name}_material.hdf5"
-    fNameRestart_0 = f"{geom_name}_{load_name}_material_restart.hdf5"
+    work_dir = Path(work_dir)
+    fNameResults_0 = work_dir / f"{geom_name}_{load_name}_material.hdf5"
+    fNameRestart_0 = work_dir / f"{geom_name}_{load_name}_material_restart.hdf5"
     fNameRestart_rg = (
-        f"{geom_name}_regridded_{increment_title}_{load_name}_material_restart.hdf5"
+        work_dir / f"{geom_name}_regridded_{increment_title}_{load_name}_material_restart.hdf5"
     )
     print("geom_name=", geom_name)
     print("load_name=", load_name)
-    if os.path.exists(fNameRestart_rg):
+    if fNameRestart_rg.exists(fNameRestart_rg):
         print("removing the existing restart file.")
-        os.remove(fNameRestart_rg)
+        fNameRestart_rg.unlink()
 
-    with h5py.File(fNameRestart_0, "r") as fRestart_0, h5py.File(
-        fNameResults_0, "r"
-    ) as fResults_0, h5py.File(fNameRestart_rg, "w") as fRestart_rg:
+    with h5py.File(str(fNameRestart_0), "r") as fRestart_0, h5py.File(
+        str(fNameResults_0), "r"
+    ) as fResults_0, h5py.File(str(fNameRestart_rg), "w") as fRestart_rg:
 
         map_0toRg_phaseBased = fResults_0["cell_to/phase"][:, 0][map_0to_rg]
 
@@ -200,8 +200,7 @@ def write_RegriddedHDF5(
             map_0toRg_phaseBased["entry"] = NewCellIndex
             return map_0toRg_phaseBased
 
-        os.chdir(f"{work_dir}")
-        with h5py.File("regridding.hdf5", "w") as fRgHistory_0:
+        with h5py.File(str(work_dir / "regridding.hdf5"), "w") as fRgHistory_0:
             path = "/map/0"
             fRgHistory_0.create_dataset(path, data=map_0to_rg)
             path = "/phase/0"
@@ -215,7 +214,6 @@ def write_RegriddedHDF5(
 
             fRgHistory_0.create_dataset(path, data=map_0toRg_phaseBased)
             print("A regridding history file is created.")
-    os.chdir(f"{work_dir}")
-    args = f"cp {geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5 {regrid_geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5"
-    subprocess.run(args, shell=True, capture_output=True)
+    file_to_copy = work_dir / f"{geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5"
+    file_to_copy.with_name(f"{regrid_geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5")
     print("------------------------\nRegridding process is completed.")
