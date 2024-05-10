@@ -51,7 +51,6 @@ class ROLLING(DAMASK):
         reduction_speed,
         reduction_outputs,
         regrid=False,
-        loadfilename="load",
         damask_exe="",
     ):
         reduction_time = reduction_height / reduction_speed
@@ -77,9 +76,10 @@ class ROLLING(DAMASK):
                     self.get_dot_F(reduction_speed), reduction_time, reduction_outputs
                 )
             )
-            self._loadfilename = loadfilename
+            filename = "load"
+            self._loadfilename = filename
             self._loading = self.load_case
-            file_path = os.path.join(self.working_directory, loadfilename + ".yaml")
+            file_path = os.path.join(self.working_directory, filename + ".yaml")
             self._loading.save(file_path)
             print(self._loading)
 
