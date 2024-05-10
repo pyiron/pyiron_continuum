@@ -7,13 +7,10 @@ import sys
 import os
 import subprocess
 
-dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, dir)
-
-from damaskjob import DAMASK
-import regrid as rgg
+from pyiron_continuum.damask.damaskjob import DAMASK
+import pyiron_continuum.damask.regrid as rgg
 from damask import Result, YAML
-from factory import DamaskLoading
+from pyiron_continuum.damask.factory import DamaskLoading
 
 
 class ROLLING(DAMASK):

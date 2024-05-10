@@ -87,12 +87,12 @@ def write_RegriddedGeom(
     """
     Save the regridded geometry to a new vti file
     """
-    os.chdir(f"{work_dir}")
+    work_dir = Path(work_dir)
     grid_0 = damask.GeomGrid.load(geom_name + ".vti")
     material_rg = grid_0.material.flatten("F")[map_0to_rg].reshape(cells_rg, order="F")
     grid = damask.GeomGrid(
         material_rg, size_rg, grid_0.origin, comments=grid_0.comments
-    ).save(f"{geom_name}_regridded_{increment_title}.vti")
+    ).save(work_dir / f"{geom_name}_regridded_{increment_title}.vti")
     print(f"save regrid geometry to {geom_name}_regridded_{increment_title}.vti")
     regrid_geom_name = f"{geom_name}_regridded_{increment_title}"
     return grid, regrid_geom_name
