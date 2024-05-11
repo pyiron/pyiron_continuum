@@ -273,9 +273,7 @@ class DAMASK(TemplateJob):
         self.output.stress = _average(results.get("sigma"))
         self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
         self.output.stress_von_Mises = _average(results.get("sigma_vM"))
-        self.output.strain_von_Mises = _average(
-            results.get("epsilon_V^0.0(F)_vM")
-        )
+        self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
         self.to_hdf()
 
     def _load_results(self, file_name="damask_loading_material.hdf5"):
