@@ -40,7 +40,7 @@ class DAMASK(TemplateJob):
         """
         super(DAMASK, self).__init__(project, job_name)
         self._rotation = None
-        self._geometry = None
+        self.input.grid = None
         self._elements = None
         self._executable_activate()
         self.input.elasticity = None
@@ -197,7 +197,7 @@ class DAMASK(TemplateJob):
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
-            self._geometry = GridFactory.via_voronoi_tessellation(**kwargs)
+            self.input.grid = GridFactory.via_voronoi_tessellation(**kwargs)
         else:
             raise NotImplementedError(
                 "Currently only `voronoi_tessellation` is implemented"
@@ -209,14 +209,14 @@ class DAMASK(TemplateJob):
 
     @property
     def grid(self):
-        return self._geometry
+        return self.input.grid
 
     @grid.setter
     def grid(self, grid):
         warnings.warn(
             "Setting grid via project creator is deprecated. Use job.set_grid instead"
         )
-        self._geometry = grid
+        self.input.grid = grid
 
     @property
     def loading(self):
@@ -256,9 +256,9 @@ class DAMASK(TemplateJob):
             self.input.loading.save(file_path)
 
     def _write_geometry(self):
-        if self._geometry is not None:
+        if self.input.grid is not None:
             file_path = os.path.join(self.working_directory, "damask")
-            self._geometry.save(file_path)
+            self.input.grid.save(file_path)
 
     def write_input(self):
         self._write_loading()
