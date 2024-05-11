@@ -262,6 +262,7 @@ class DAMASK(TemplateJob):
         self._write_material()
 
     def collect_output(self):
+        self._load_results()
         self.to_hdf()
 
     def _load_results(self, file_name="damask_loading_material.hdf5"):
