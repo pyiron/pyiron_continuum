@@ -203,10 +203,6 @@ class DAMASK(TemplateJob):
                 "Currently only `voronoi_tessellation` is implemented"
             )
 
-    def to_dict(self):
-        job_dict = super().to_dict()
-        return job_dict
-
     @property
     def grid(self):
         return self.input.grid
