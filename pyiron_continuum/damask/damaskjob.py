@@ -266,15 +266,6 @@ class DAMASK(TemplateJob):
         self._write_material()
 
     def collect_output(self):
-
-        def _average(d):
-            return np.average(list(d.values()), axis=1)
-
-        results = self._load_results()
-        self.output.stress = _average(results.get("sigma"))
-        self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
-        self.output.stress_von_Mises = _average(results.get("sigma_vM"))
-        self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
         self.to_hdf()
 
     def _load_results(self, file_name="damask_loading_material.hdf5"):
@@ -285,11 +276,18 @@ class DAMASK(TemplateJob):
         """
         damask_hdf = os.path.join(self.working_directory, file_name)
 
+        def _average(d):
+            return np.average(list(d.values()), axis=1)
+
         results = Result(damask_hdf)
         results.add_stress_Cauchy()
         results.add_strain()
         results.add_equivalent_Mises("sigma")
         results.add_equivalent_Mises("epsilon_V^0.0(F)")
+        self.output.stress = _average(results.get("sigma"))
+        self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
+        self.output.stress_von_Mises = _average(results.get("sigma_vM"))
+        self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
         return results
 
     def writeresults2vtk(self, file_name="damask_loading_material.hdf5"):
