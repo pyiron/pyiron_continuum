@@ -39,7 +39,6 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._results = None
         self._rotation = None
         self._geometry = None
         self._elements = None
@@ -204,6 +203,10 @@ class DAMASK(TemplateJob):
                 "Currently only `voronoi_tessellation` is implemented"
             )
 
+    def to_dict(self):
+        job_dict = super().to_dict()
+        return job_dict
+
     @property
     def grid(self):
         return self._geometry
@@ -263,8 +266,18 @@ class DAMASK(TemplateJob):
         self._write_material()
 
     def collect_output(self):
-        self._load_results()
-        self.output.damask = self._results
+
+        def _average(d):
+            return np.average(list(d.values()), axis=1)
+
+        results = self._load_results()
+        self.output.stress = _average(results.get("sigma"))
+        self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
+        self.output.stress_von_Mises = _average(results.get("sigma_vM"))
+        self.output.strain_von_Mises = _average(
+            results.get("epsilon_V^0.0(F)_vM")
+        )
+        self.to_hdf()
 
     def _load_results(self, file_name="damask_loading_material.hdf5"):
         """
@@ -274,28 +287,19 @@ class DAMASK(TemplateJob):
         """
         damask_hdf = os.path.join(self.working_directory, file_name)
 
-        def _average(d):
-            return np.average(list(d.values()), axis=1)
+        results = Result(damask_hdf)
+        results.add_stress_Cauchy()
+        results.add_strain()
+        results.add_equivalent_Mises("sigma")
+        results.add_equivalent_Mises("epsilon_V^0.0(F)")
+        return results
 
-        self._results = Result(damask_hdf)
-        self._results.add_stress_Cauchy()
-        self._results.add_strain()
-        self._results.add_equivalent_Mises("sigma")
-        self._results.add_equivalent_Mises("epsilon_V^0.0(F)")
-        self.output.stress = _average(self._results.get("sigma"))
-        self.output.strain = _average(self._results.get("epsilon_V^0.0(F)"))
-        self.output.stress_von_Mises = _average(self._results.get("sigma_vM"))
-        self.output.strain_von_Mises = _average(
-            self._results.get("epsilon_V^0.0(F)_vM")
-        )
-
-    def writeresults2vtk(self):
+    def writeresults2vtk(self, file_name="damask_loading_material.hdf5"):
         """
         save results to vtk files
         """
-        if self._results is None:
-            raise ValueError("Results not loaded; call collect_output")
-        self._results.export_VTK(target_dir=self.working_directory)
+        results = self._load_results(file_name=file_name)
+        results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
     def list_solvers():
