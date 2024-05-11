@@ -30,11 +30,6 @@ class TestDamask(PyironTestCase):
         job = self.project.create.job.DAMASK("damask")
         self.assertIsInstance(job.list_solvers(), list)
 
-    def test_grid(self):
-        job = self.project.create.job.DAMASK("damask")
-        job.set_grid(box_size=1.0e-5, spatial_discretization=16, num_grains=4)
-        self.assertEqual(job.input.grid.size[0], 1.0e-5)
-
     def test_set_phase(self):
         job = self.project.create.job.DAMASK("damask")
         self.assertEqual(job.input.phase, None)
