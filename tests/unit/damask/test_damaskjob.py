@@ -7,7 +7,7 @@ from pyiron_base._tests import PyironTestCase
 from pyiron_continuum import Project
 
 
-class TestDecorators(PyironTestCase):
+class TestDamask(PyironTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -29,6 +29,11 @@ class TestDecorators(PyironTestCase):
     def test_list_solvers(self):
         job = self.project.create.job.DAMASK("damask")
         self.assertIsInstance(job.list_solvers(), list)
+
+    def test_grid(self):
+        job = self.project.create.job.DAMASK("damask")
+        job.set_grid(box_size=1.0e-5, spatial_discretization=16, num_grains=4)
+        self.assertEqual(job.input.grid.size[0], 1.0e-5)
 
     def test_set_phase(self):
         job = self.project.create.job.DAMASK("damask")
