@@ -136,6 +136,7 @@ class ROLLING(DAMASK):
         new_job.storage.geinput = self.storage.input.copy()
         new_job.input.job_names = self.output.job_names
         new_job.input.material = ConfigMaterial(**new_job.input.material)
+        new_job.input.load_case = YAML(**self.input.load_case)
         # new_job.restart_file_list.append(self._join_path("load.yaml"))
         return new_job
 
