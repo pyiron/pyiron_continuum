@@ -200,6 +200,7 @@ class TestDamask(unittest.TestCase):
             reduction_speed=5.0e-2,
             reduction_outputs=250,
         )
+        job.run()
         job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
         for reduction_height, reduction_outputs in zip(
             [0.1, 0.1, 0.12], [300, 350, 300]
