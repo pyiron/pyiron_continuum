@@ -27,6 +27,7 @@ class ROLLING(DAMASK):
         self.input.regrid = False
         self.input.job_names = []
         self.input.regrid_scale = 1.025
+        self.regrid_geom_name = None
         self.input.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.output.results_file = []
         self.output.job_names = []
