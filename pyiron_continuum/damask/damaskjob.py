@@ -203,10 +203,6 @@ class DAMASK(TemplateJob):
                 "Currently only `voronoi_tessellation` is implemented"
             )
 
-    def to_dict(self):
-        job_dict = super().to_dict()
-        return job_dict
-
     @property
     def grid(self):
         return self.input.grid
@@ -276,7 +272,7 @@ class DAMASK(TemplateJob):
         self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
         self.to_hdf()
 
-    def _load_results(self, file_name="damask_loading_material.hdf5"):
+    def _load_results(self, file_name="damask_loading_material.hdf5", run_all=True):
         """
         loads the results from damask hdf file
         Args:
@@ -284,7 +280,12 @@ class DAMASK(TemplateJob):
         """
         damask_hdf = os.path.join(self.working_directory, file_name)
 
+        def _average(d):
+            return np.average(list(d.values()), axis=1)
+
         results = Result(damask_hdf)
+        if not run_all:
+            return results
         results.add_stress_Cauchy()
         results.add_strain()
         results.add_equivalent_Mises("sigma")
@@ -295,7 +296,7 @@ class DAMASK(TemplateJob):
         """
         save results to vtk files
         """
-        results = self._load_results(file_name=file_name)
+        results = self._load_results(file_name=file_name, run_all=False)
         results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod

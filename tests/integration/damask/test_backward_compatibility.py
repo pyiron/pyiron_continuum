@@ -102,7 +102,6 @@ class TestDamask(unittest.TestCase):
         job.run()
         job.plot_stress_strain(component="zz")
         job.plot_stress_strain(von_mises=True)
-        job.output.damask.view(increments=80)
         self.assertEqual(job.output.stress.shape[1:], (3, 3))
 
     def test_linear_elastic(self):
