@@ -28,7 +28,7 @@ class Regrid:
     @property
     def size_0(self):
         """initial RVE size"""
-        return self.geom_0.size_0
+        return self.geom_0.size
 
     @cached_property
     def gridCoords_node_initial(self):
@@ -111,98 +111,6 @@ class Regrid:
             material_rg, self.size_rg, grid_0.origin, comments=grid_0.comments
         ).save(self.get_path(f"{self.geom_name}_regridded_{self.increment_title}.vti"))
         return grid
-
-
-def regrid_Geom(work_dir, geom_name, load_name, seed_scale=1.0, increment="last"):
-    """
-    Regrid the geometry
-    It requires the previous geom.vti and result.hdf5
-    """
-    work_dir = Path(work_dir)
-    geom_0 = damask.GeomGrid.load(str(work_dir / f"{geom_name}.vti"))
-    cells_0 = geom_0.cells
-    size_0 = geom_0.size
-
-    gridCoords_node_initial_matrix = damask.grid_filters.coordinates0_node(
-        cells_0, size_0
-    )
-    gridCoords_node_initial = gridCoords_node_initial_matrix.reshape(
-        (-1, gridCoords_node_initial_matrix.shape[-1]), order="F"
-    )
-    gridCoords_point_initial_matrix = damask.grid_filters.coordinates0_point(
-        cells_0, size_0
-    )
-    gridCoords_point_initial = gridCoords_point_initial_matrix.reshape(
-        (-1, gridCoords_point_initial_matrix.shape[-1]), order="F"
-    )
-
-    d5Out = damask.Result(str(work_dir / f"{geom_name}_{load_name}_material.hdf5"))
-
-    if increment == "last":
-        inc = int(d5Out.increments[-1])  # take the increment number
-        d5Out = d5Out.view(increments=inc)
-        increment_title = d5Out.increments[-1]
-    elif increment in d5Out.increments:
-        inc = int(increment)  # take the increment number
-        d5Out = d5Out.view(increments=inc)
-        increment_title = increment
-    else:
-        raise ValueError("The results for the increment is not availabble!")
-    # calculate the deformed coordinates
-    gridCoords_node_0 = gridCoords_node_initial + d5Out.get("u_n") - d5Out.origin
-    gridCoords_cell_0 = gridCoords_point_initial + d5Out.get("u_p") - d5Out.origin
-
-    print("------------------------")
-    print("Start to regrid the geometry ...")
-
-    cornersRVE_coords = np.diag(size_0)
-    cornersRVE_idx = [
-        np.argwhere(
-            np.isclose(gridCoords_node_initial, cornersRVE_coords[corner]).all(axis=1)
-        ).item()
-        for corner in range(3)
-    ]
-    size_rg = np.diag(gridCoords_node_0[cornersRVE_idx]) - gridCoords_node_0[0]
-    seedSize_rg = np.min(size_rg / np.array(cells_0))
-
-    regriddingSeedScale = seed_scale
-    if isinstance(regriddingSeedScale, float) or isinstance(regriddingSeedScale, int):
-        cells_rg = (regriddingSeedScale * np.round(size_rg / seedSize_rg)).astype(int)
-    elif isinstance(regriddingSeedScale, list):
-        cells_rg = np.array(regriddingSeedScale).astype(int)
-    else:
-        raise ValueError("The seed_scale for regridded RVE size is not acceptable.")
-
-    gridCoords_cell_rg = damask.grid_filters.coordinates0_point(
-        cells_rg, size_rg
-    ).reshape((-1, 3), order="F")
-    gridCoords_cell_0_Shifted = gridCoords_cell_0 % size_rg  # apply periodic shift
-    print("initial RVE size:\t", size_0)
-    print("regridded RVE size:\t", size_rg)
-    print("initial grid seeds:\t", cells_0)
-    print("regridded grid seeds:\t", cells_rg)
-    print("finding the nearest neighbors...")
-    tree = scipy.spatial.cKDTree(gridCoords_cell_0_Shifted, boxsize=size_rg)
-    map_0to_rg = tree.query(gridCoords_cell_rg)[1].flatten()
-    print("all the information are ready !")
-    return map_0to_rg, cells_rg, size_rg, increment_title
-
-
-def write_RegriddedGeom(
-    work_dir, geom_name, increment_title, map_0to_rg, cells_rg, size_rg
-):
-    """
-    Save the regridded geometry to a new vti file
-    """
-    work_dir = Path(work_dir)
-    grid_0 = damask.GeomGrid.load(geom_name + ".vti")
-    material_rg = grid_0.material.flatten("F")[map_0to_rg].reshape(cells_rg, order="F")
-    grid = damask.GeomGrid(
-        material_rg, size_rg, grid_0.origin, comments=grid_0.comments
-    ).save(work_dir / f"{geom_name}_regridded_{increment_title}.vti")
-    print(f"save regrid geometry to {geom_name}_regridded_{increment_title}.vti")
-    regrid_geom_name = f"{geom_name}_regridded_{increment_title}"
-    return grid, regrid_geom_name
 
 
 def write_RegriddedHDF5(
