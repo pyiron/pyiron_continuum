@@ -1,5 +1,3 @@
-from ast import arg
-from random import vonmisesvariate
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -10,7 +8,7 @@ import warnings
 
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
-from damask import Result, YAML
+from damask import YAML
 
 
 class ROLLING(DAMASK):
