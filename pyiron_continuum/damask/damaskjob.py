@@ -265,7 +265,7 @@ class DAMASK(TemplateJob):
         self._load_results()
         self.to_hdf()
 
-    def _load_results(self, file_name="damask_loading_material.hdf5"):
+    def _load_results(self, file_name="damask_loading_material.hdf5", run_all=True):
         """
         loads the results from damask hdf file
         Args:
@@ -277,6 +277,8 @@ class DAMASK(TemplateJob):
             return np.average(list(d.values()), axis=1)
 
         results = Result(damask_hdf)
+        if not run_all:
+            return results
         results.add_stress_Cauchy()
         results.add_strain()
         results.add_equivalent_Mises("sigma")
@@ -291,7 +293,7 @@ class DAMASK(TemplateJob):
         """
         save results to vtk files
         """
-        results = self._load_results(file_name=file_name)
+        results = self._load_results(file_name=file_name, run_all=False)
         results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
