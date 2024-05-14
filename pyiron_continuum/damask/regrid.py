@@ -3,7 +3,6 @@ import h5py
 import numpy as np
 import scipy
 import damask
-import subprocess
 from functools import cached_property
 
 
@@ -19,7 +18,7 @@ class Regrid:
 
     @cached_property
     def geom_0(self):
-        return damask.GeomGrid.load(self.get_path(f"{geom_name}.vti"))
+        return damask.GeomGrid.load(self.get_path(f"{self.geom_name}.vti"))
 
     @property
     def cells_0(self):
@@ -33,8 +32,8 @@ class Regrid:
 
     @cached_property
     def gridCoords_node_initial(self):
-    mat = damask.grid_filters.coordinates0_node(self.cells_0, size_0)
-    return mat.reshape((-1, mat.shape[-1]), order="F")
+        mat = damask.grid_filters.coordinates0_node(self.cells_0, self.size_0)
+        return mat.reshape((-1, mat.shape[-1]), order="F")
 
     @cached_property
     def gridCoords_point_initial(self):
@@ -43,7 +42,7 @@ class Regrid:
 
     @cached_property
     def d5Out(self):
-        d5Out = damask.Result(self.get_path(f"{geom_name}_{load_name}_material.hdf5"))
+        d5Out = damask.Result(self.get_path(f"{self.geom_name}_{self.load_name}_material.hdf5"))
         d5Out = d5Out.view(increments=int(d5Out.increments[-1]))
         return d5Out
 
@@ -98,11 +97,11 @@ class Regrid:
 
     @property
     def grid(self):
-        grid_0 = damask.GeomGrid.load(self.get_path(geom_name + ".vti"))
+        grid_0 = damask.GeomGrid.load(self.get_path(self.geom_name + ".vti"))
         material_rg = grid_0.material.flatten("F")[self.map_0to_rg].reshape(self.cells_rg, order="F")
         grid = damask.GeomGrid(
             material_rg, self.size_rg, grid_0.origin, comments=grid_0.comments
-        ).save(self.get_path(f"{geom_name}_regridded_{increment_title}.vti"))
+        ).save(self.get_path(f"{self.geom_name}_regridded_{self.increment_title}.vti"))
         return grid
 
 
