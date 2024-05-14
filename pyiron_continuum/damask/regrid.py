@@ -42,7 +42,9 @@ class Regrid:
 
     @cached_property
     def d5Out(self):
-        d5Out = damask.Result(self.get_path(f"{self.geom_name}_{self.load_name}_material.hdf5"))
+        d5Out = damask.Result(
+            self.get_path(f"{self.geom_name}_{self.load_name}_material.hdf5")
+        )
         d5Out = d5Out.view(increments=int(d5Out.increments[-1]))
         return d5Out
 
@@ -64,11 +66,15 @@ class Regrid:
         cornersRVE_coords = np.diag(self.size_0)
         cornersRVE_idx = [
             np.argwhere(
-                np.isclose(self.gridCoords_node_initial, cornersRVE_coords[corner]).all(axis=1)
+                np.isclose(self.gridCoords_node_initial, cornersRVE_coords[corner]).all(
+                    axis=1
+                )
             ).item()
             for corner in range(3)
         ]
-        return np.diag(self.gridCoords_node_0[cornersRVE_idx]) - self.gridCoords_node_0[0]
+        return (
+            np.diag(self.gridCoords_node_0[cornersRVE_idx]) - self.gridCoords_node_0[0]
+        )
 
     @property
     def cells_rg(self):
@@ -98,7 +104,9 @@ class Regrid:
     @property
     def grid(self):
         grid_0 = damask.GeomGrid.load(self.get_path(self.geom_name + ".vti"))
-        material_rg = grid_0.material.flatten("F")[self.map_0to_rg].reshape(self.cells_rg, order="F")
+        material_rg = grid_0.material.flatten("F")[self.map_0to_rg].reshape(
+            self.cells_rg, order="F"
+        )
         grid = damask.GeomGrid(
             material_rg, self.size_rg, grid_0.origin, comments=grid_0.comments
         ).save(self.get_path(f"{self.geom_name}_regridded_{self.increment_title}.vti"))
@@ -213,7 +221,8 @@ def write_RegriddedHDF5(
     fNameResults_0 = work_dir / f"{geom_name}_{load_name}_material.hdf5"
     fNameRestart_0 = work_dir / f"{geom_name}_{load_name}_material_restart.hdf5"
     fNameRestart_rg = (
-        work_dir / f"{geom_name}_regridded_{increment_title}_{load_name}_material_restart.hdf5"
+        work_dir
+        / f"{geom_name}_regridded_{increment_title}_{load_name}_material_restart.hdf5"
     )
     print("geom_name=", geom_name)
     print("load_name=", load_name)
@@ -278,9 +287,9 @@ def write_RegriddedHDF5(
                 data_rg = data_0[map_0to_rg, ...].reshape(tuple(cells_rg[::-1]) + shape)
             elif dataset in ["F", "F_lastInc"]:
                 shape = fRestart_0[path].shape[3:]
-                data_rg = np.broadcast_to(
-                    np.eye(3), (len(map_0to_rg), 3, 3)
-                ).reshape(tuple(cells_rg[::-1]) + shape)
+                data_rg = np.broadcast_to(np.eye(3), (len(map_0to_rg), 3, 3)).reshape(
+                    tuple(cells_rg[::-1]) + shape
+                )
             else:
                 print("Warning: There is restart variables that cannot be handled!")
 
@@ -313,6 +322,11 @@ def write_RegriddedHDF5(
 
             fRgHistory_0.create_dataset(path, data=map_0toRg_phaseBased)
             print("A regridding history file is created.")
-    file_to_copy = work_dir / f"{geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5"
-    file_to_copy.with_name(f"{regrid_geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5")
+    file_to_copy = (
+        work_dir
+        / f"{geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5"
+    )
+    file_to_copy.with_name(
+        f"{regrid_geom_name}_{load_name}_restart_regridded_{increment_title}_material.hdf5"
+    )
     print("------------------------\nRegridding process is completed.")
