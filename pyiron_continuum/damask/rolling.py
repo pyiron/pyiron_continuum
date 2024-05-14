@@ -89,6 +89,12 @@ class ROLLING(DAMASK):
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
+    @property
+    def geom_name(self):
+        if self.input.regrid and self.regrid_geom_name is not None:
+            return self.regrid_geom_name
+        return "damask"
+
     @staticmethod
     def get_dot_F(reduction_speed):
         return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
