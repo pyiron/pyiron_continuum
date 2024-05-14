@@ -12,6 +12,7 @@ with ImportAlarm(
     from damask import YAML, ConfigMaterial
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
+from damask import YAML
 
 
 class ROLLING(DAMASK):
@@ -114,22 +115,14 @@ class ROLLING(DAMASK):
         plt.ylim([ymin, ymax])
 
     def regridding(self, scale):
-        map_0to_rg, cells_rg, size_rg, increment_title = rgg.regrid_Geom(
+        regrid = rgg.Regrid(
             self.working_directory,
             self.geom_name,
             self.restart_file_list[0],
             seed_scale=scale,
-            increment="last",
         )
-
-        self.regrid_grid, self.regrid_geom_name = rgg.write_RegriddedGeom(
-            self.working_directory,
-            self.geom_name,
-            increment_title,
-            map_0to_rg,
-            cells_rg,
-            size_rg,
-        )
+        self.regrid_grid = regrid.grid
+        self.regrid_geom_name = regrid.regrid_geom_name
 
     def restart(self, job_name=None, job_type=None):
         new_job = super().restart(job_name=job_name, job_type=job_type)
