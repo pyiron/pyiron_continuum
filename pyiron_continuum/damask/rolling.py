@@ -173,7 +173,7 @@ class ROLLING(DAMASK):
         plt.ylim([ymin, ymax])
 
     def regridding(self, scale):
-        regrid = reg.Regrid(
+        regrid = rgg.Regrid(
             self.working_directory,
             self.geom_name,
             self._load_name_old,
