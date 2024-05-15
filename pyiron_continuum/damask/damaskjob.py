@@ -384,12 +384,10 @@ class DAMASK(TemplateJob):
     def regridding(self, scale):
         regrid = rgg.Regrid(
             self.working_directory,
-            self.geom_name,
             self.restart_file_list[0],
             seed_scale=scale,
         )
         self.regrid_grid = regrid.grid
-        self.regrid_geom_name = regrid.regrid_geom_name
 
     def restart(self, job_name=None, job_type=None):
         new_job = super().restart(job_name=job_name, job_type=job_type)

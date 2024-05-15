@@ -7,9 +7,8 @@ from functools import cached_property
 
 
 class Regrid:
-    def __init__(self, work_dir, geom_name, load_name, seed_scale=1.0):
+    def __init__(self, work_dir, load_name, seed_scale=1.0):
         self.work_dir = Path(work_dir)
-        self.geom_name = geom_name
         self.load_name = load_name
         self.seed_scale = seed_scale
 
@@ -18,7 +17,7 @@ class Regrid:
 
     @cached_property
     def geom_0(self):
-        return damask.GeomGrid.load(self.get_path(f"{self.geom_name}.vti"))
+        return damask.GeomGrid.load(self.get_path("damask.vti"))
 
     @property
     def cells_0(self):
@@ -97,17 +96,17 @@ class Regrid:
 
     @property
     def regrid_geom_name(self):
-        return f"{self.geom_name}_regridded_{self.increment_title}"
+        return f"damask_regridded_{self.increment_title}"
 
     @property
     def grid(self):
-        grid_0 = damask.GeomGrid.load(self.get_path(self.geom_name + ".vti"))
+        grid_0 = damask.GeomGrid.load(self.get_path("damask.vti"))
         material_rg = grid_0.material.flatten("F")[self.map_0to_rg].reshape(
             self.cells_rg, order="F"
         )
         grid = damask.GeomGrid(
             material_rg, self.size_rg, grid_0.origin, comments=grid_0.comments
-        ).save(self.get_path(f"{self.geom_name}_regridded_{self.increment_title}.vti"))
+        ).save(self.get_path(f"damask_regridded_{self.increment_title}.vti"))
         return grid
 
 

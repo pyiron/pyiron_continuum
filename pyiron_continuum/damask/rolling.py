@@ -23,7 +23,6 @@ class Rolling(DAMASK):
         self.input.regrid = False
         self.input.job_names = []
         self.input.regrid_scale = 1.025
-        self.regrid_geom_name = None
         self.input.loading = YAML(
             solver={"mechanical": "spectral_basic"}, loadstep=[]
         )
@@ -62,12 +61,6 @@ class Rolling(DAMASK):
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
-    @property
-    def geom_name(self):
-        if self.input.regrid and self.regrid_geom_name is not None:
-            return self.regrid_geom_name
-        return "damask"
-
     def collect_output(self):
         self.output.job_names.append(self.job_name)
         super().collect_output()
@@ -77,16 +70,6 @@ class Rolling(DAMASK):
         plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
         plt.xlim([xmin, xmax])
         plt.ylim([ymin, ymax])
-
-    def regridding(self, scale):
-        regrid = rgg.Regrid(
-            self.working_directory,
-            self.geom_name,
-            self.restart_file_list[0],
-            seed_scale=scale,
-        )
-        self.regrid_grid = regrid.grid
-        self.regrid_geom_name = regrid.regrid_geom_name
 
     ########################################################################
     ### for openphase
