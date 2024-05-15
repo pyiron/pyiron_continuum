@@ -15,8 +15,6 @@ import pyiron_continuum.damask.regrid as rgg
 
 
 class Rolling(DAMASK):
-    """ """
-
     def __init__(self, project, job_name):
         """Create a new DAMASK type job for rolling"""
         super().__init__(project=project, job_name=job_name)
