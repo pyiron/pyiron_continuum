@@ -42,9 +42,7 @@ class Regrid:
 
     @cached_property
     def d5Out(self):
-        d5Out = damask.Result(
-            self.get_path(f"{self.geom_name}_{self.load_name}_material.hdf5")
-        )
+        d5Out = damask.Result(self.load_name)
         d5Out = d5Out.view(increments=int(d5Out.increments[-1]))
         return d5Out
 

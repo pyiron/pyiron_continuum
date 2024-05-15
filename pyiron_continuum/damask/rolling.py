@@ -137,7 +137,7 @@ class ROLLING(DAMASK):
         new_job.input.job_names = self.output.job_names
         new_job.input.material = ConfigMaterial(**new_job.input.material)
         new_job.input.load_case = YAML(**self.input.load_case)
-        # new_job.restart_file_list.append(self._join_path("load.yaml"))
+        new_job.restart_file_list.append(self._join_path("damask_loading_material.hdf5"))
         return new_job
 
     ########################################################################
