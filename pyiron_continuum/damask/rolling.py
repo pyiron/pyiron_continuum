@@ -88,17 +88,6 @@ class Rolling(DAMASK):
         self.regrid_grid = regrid.grid
         self.regrid_geom_name = regrid.regrid_geom_name
 
-    def restart(self, job_name=None, job_type=None):
-        new_job = super().restart(job_name=job_name, job_type=job_type)
-        new_job.storage.input = self.storage.input.copy()
-        new_job.input.job_names = self.output.job_names
-        new_job.input.material = ConfigMaterial(**new_job.input.material)
-        new_job.input.loading = YAML(**self.input.loading)
-        new_job.restart_file_list.append(
-            self._join_path("damask_loading_material.hdf5")
-        )
-        return new_job
-
     ########################################################################
     ### for openphase
     ########################################################################

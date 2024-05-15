@@ -12,7 +12,7 @@ with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
     "requirements. Please install it and try again."
 ) as damask_alarm:
-    from damask import Result
+    from damask import Result, YAML, ConfigMaterial
 from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import numpy as np
 import matplotlib.pyplot as plt
@@ -379,3 +379,14 @@ class DAMASK(TemplateJob):
                 "or vonMises should be set to True"
             )
         return fig, ax
+
+    def restart(self, job_name=None, job_type=None):
+        new_job = super().restart(job_name=job_name, job_type=job_type)
+        new_job.storage.input = self.storage.input.copy()
+        new_job.input.job_names = self.output.job_names
+        new_job.input.material = ConfigMaterial(**new_job.input.material)
+        new_job.input.loading = YAML(**self.input.loading)
+        new_job.restart_file_list.append(
+            self._join_path("damask_loading_material.hdf5")
+        )
+        return new_job
