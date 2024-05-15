@@ -82,7 +82,9 @@ class ROLLING(DAMASK):
             self.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.load_case["loadstep"].append(
             self.get_loadstep(
-                self.get_dot_F(self.input.reduction_speed), self.reduction_time, self.input.reduction_outputs
+                self.get_dot_F(self.input.reduction_speed),
+                self.reduction_time,
+                self.input.reduction_outputs,
             )
         )
         self.load_case.save(self._join_path(self._load_name + ".yaml"))
@@ -131,15 +133,15 @@ class ROLLING(DAMASK):
     def _execute_damask(self, damask_exe):
         if len(damask_exe) < 11:
             damask_exe = "DAMASK_grid"
-        args = (
-            f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
-        )
+        args = f"{damask_exe} -g {self.geom_name}.vti -l {self._load_name}.yaml -m material.yaml > {self._log_name}.log"
         print("Start the rolling-%d test ..." % (self.input.RollingInstance))
         print("CMD=", args)
         os.chdir(self.working_directory)
         subprocess.run(args, shell=True, capture_output=True)
         print(f"{self._log_name} test is done !")
-        self.output.ResultsFile.append(f"{self.geom_name}_{self._load_name}_material.hdf5")
+        self.output.ResultsFile.append(
+            f"{self.geom_name}_{self._load_name}_material.hdf5"
+        )
 
     @staticmethod
     def get_dot_F(reduction_speed):

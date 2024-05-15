@@ -7,7 +7,7 @@ from pyiron_base._tests import PyironTestCase
 from pyiron_continuum import Project
 
 
-class TestDecorators(PyironTestCase):
+class TestDamask(PyironTestCase):
 
     @classmethod
     def setUpClass(cls):
