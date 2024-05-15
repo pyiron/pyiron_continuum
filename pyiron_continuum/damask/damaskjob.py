@@ -13,7 +13,11 @@ with ImportAlarm(
     "requirements. Please install it and try again."
 ) as damask_alarm:
     from damask import Result, YAML, ConfigMaterial
-from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory, LoadStep
+from pyiron_continuum.damask.factory import (
+    Create as DAMASKCreator,
+    GridFactory,
+    LoadStep,
+)
 import pyiron_continuum.damask.regrid as rgg
 import numpy as np
 import matplotlib.pyplot as plt

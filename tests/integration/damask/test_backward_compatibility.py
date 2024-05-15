@@ -195,6 +195,7 @@ class TestDamask(unittest.TestCase):
                 "discretization": {"t": reduction_time, "N": reduction_outputs},
                 "additional": {"f_out": 5, "f_restart": 5},
             }
+
         job_name = "multiple_rolling"
         job = self.project.create.job.Damask(job_name + "_0")
         plasticity = self.get_plasticity_phenopowerlaw()
@@ -211,7 +212,9 @@ class TestDamask(unittest.TestCase):
         reduction_outputs = 250
         job.set_loading(
             solver=job.list_solvers()[0],
-            load_steps=get_load_step(reduction_speed, reduction_height, reduction_outputs)
+            load_steps=get_load_step(
+                reduction_speed, reduction_height, reduction_outputs
+            ),
         )
         job.run()
         job.plot_stress_strain(von_mises=True)
@@ -223,7 +226,9 @@ class TestDamask(unittest.TestCase):
             new_job_name = "_".join(new_job_name)
             job = job.restart(job_name=new_job_name)
             job.append_loading(
-                load_steps=get_load_step(reduction_speed, reduction_height, reduction_outputs)
+                load_steps=get_load_step(
+                    reduction_speed, reduction_height, reduction_outputs
+                )
             )
             job.input.regrid = True
             job.run()
