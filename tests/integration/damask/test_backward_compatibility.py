@@ -201,7 +201,7 @@ class TestDamask(unittest.TestCase):
             reduction_outputs=250,
         )
         job.run()
-        job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
+        job.plot_stress_strain(von_mises=True)
         for reduction_height, reduction_outputs in zip(
             [0.1, 0.1, 0.12], [300, 350, 300]
         ):
@@ -216,7 +216,7 @@ class TestDamask(unittest.TestCase):
                 regrid=True,
             )
             job.run()
-            job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
+            job.plot_stress_strain(von_mises=True)
 
 
 if __name__ == "__main__":

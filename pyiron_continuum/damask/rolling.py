@@ -21,13 +21,11 @@ class Rolling(DAMASK):
         self.input.reduction_speed = None
         self.input.reduction_outputs = None
         self.input.regrid = False
-        self.input.job_names = []
         self.input.regrid_scale = 1.025
         self.input.loading = YAML(
             solver={"mechanical": "spectral_basic"}, loadstep=[]
         )
         self.output.results_file = []
-        self.output.job_names = []
 
     @property
     def reduction_time(self):
@@ -60,16 +58,6 @@ class Rolling(DAMASK):
         super().write_input()
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
-
-    def collect_output(self):
-        self.output.job_names.append(self.job_name)
-        super().collect_output()
-        self.to_hdf()
-
-    def plotStressStrainCurve(self, xmin, xmax, ymin, ymax):
-        plt.plot(self.output.strain_von_Mises, self.output.stress_von_Mises)
-        plt.xlim([xmin, xmax])
-        plt.ylim([ymin, ymax])
 
     ########################################################################
     ### for openphase
