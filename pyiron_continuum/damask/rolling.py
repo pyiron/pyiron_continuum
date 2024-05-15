@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import os
-from pathlib import Path
 from pyiron_base import ImportAlarm
 
 with ImportAlarm(

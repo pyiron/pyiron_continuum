@@ -16,6 +16,7 @@ with ImportAlarm(
 from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
