@@ -231,6 +231,21 @@ class DAMASK(TemplateJob):
         )
         self.input.loading = value
 
+    @staticmethod
+    def get_dot_F(reduction_speed):
+        return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
+
+    @staticmethod
+    def get_loadstep(dot_F, reduction_time, reduction_outputs, P=None):
+        if P is None:
+            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
+        return {
+            "boundary_conditions": {"mechanical": {"P": P, "dot_F": dot_F}},
+            "discretization": {"t": reduction_time, "N": reduction_outputs},
+            "f_out": 5,
+            "f_restart": 5,
+        }
+
     def set_loading(self, solver, load_steps):
         """
         Creates the required damask loading.
