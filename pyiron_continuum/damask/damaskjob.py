@@ -14,6 +14,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import Result, YAML, ConfigMaterial
 from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
+import pyiron_continuum.damask.regrid as rgg
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -379,6 +380,16 @@ class DAMASK(TemplateJob):
                 "or vonMises should be set to True"
             )
         return fig, ax
+
+    def regridding(self, scale):
+        regrid = rgg.Regrid(
+            self.working_directory,
+            self.geom_name,
+            self.restart_file_list[0],
+            seed_scale=scale,
+        )
+        self.regrid_grid = regrid.grid
+        self.regrid_geom_name = regrid.regrid_geom_name
 
     def restart(self, job_name=None, job_type=None):
         new_job = super().restart(job_name=job_name, job_type=job_type)
