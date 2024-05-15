@@ -14,7 +14,7 @@ from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
 
 
-class ROLLING(DAMASK):
+class Rolling(DAMASK):
     """ """
 
     def __init__(self, project, job_name):
