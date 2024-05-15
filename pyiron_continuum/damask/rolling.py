@@ -31,9 +31,6 @@ class ROLLING(DAMASK):
         self.input.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
         self.output.results_file = []
         self.output.job_names = []
-        self.executable = (
-            "DAMASK_grid -g damask.vti -l loading.yaml -m material.yaml > rolling.log"
-        )
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path

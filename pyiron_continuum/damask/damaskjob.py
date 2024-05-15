@@ -42,7 +42,7 @@ class DAMASK(TemplateJob):
         self._rotation = None
         self.input.grid = None
         self._elements = None
-        self._executable_activate()
+        self._executable_activate(codename="damask")
         self.input.elasticity = None
         self.input.plasticity = None
         self.input.homogenization = None
