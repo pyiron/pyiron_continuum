@@ -34,7 +34,7 @@ class ROLLING(DAMASK):
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
-        if not return_str:
+        if return_str:
             file_path = str(file_path)
         return file_path
 
