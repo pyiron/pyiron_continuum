@@ -31,12 +31,6 @@ class Rolling(DAMASK):
         self.output.results_file = []
         self.output.job_names = []
 
-    def _join_path(self, path, return_str=True):
-        file_path = Path(self.working_directory) / path
-        if return_str:
-            return str(file_path)
-        return file_path
-
     def loading_discretization(self, rolltimes, filename):
         time = (
             rolltimes
