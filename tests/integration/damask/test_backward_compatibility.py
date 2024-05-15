@@ -196,7 +196,7 @@ class TestDamask(unittest.TestCase):
                 "additional": {"f_out": 5, "f_restart": 5},
             }
         job_name = "multiple_rolling"
-        job = self.project.create.job.Rolling(job_name + "_0")
+        job = self.project.create.job.Damask(job_name + "_0")
         plasticity = self.get_plasticity_phenopowerlaw()
         grains = 4
         phase = self.get_phase_aluminum(self._get_elasticity(), plasticity)
