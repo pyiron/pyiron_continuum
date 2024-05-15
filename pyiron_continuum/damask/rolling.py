@@ -48,13 +48,6 @@ class Rolling(DAMASK):
             self.input.regrid = regrid
 
     def write_input(self):
-        self.input.loading["loadstep"].append(
-            self.get_loadstep(
-                self.get_dot_F(self.input.reduction_speed),
-                self.reduction_time,
-                self.input.reduction_outputs,
-            )
-        )
         super().write_input()
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)

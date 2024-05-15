@@ -51,6 +51,8 @@ class DAMASK(TemplateJob):
         self.input.material = None
         self.input.loading = None
         self.input.job_names = []
+        self.input.regrid = False
+        self.input.regrid_scale = 1.025
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -262,7 +264,11 @@ class DAMASK(TemplateJob):
                 'additional': {'f_out': 4}
         """
         self.input.loading = DAMASKCreator.loading(solver=solver, load_steps=load_steps)
-        self._attempt_init_material()
+
+    def append_loading(self, load_steps):
+        if not isinstance(load_steps, list):
+            load_steps = [load_steps]
+        self.input.loading["loadstep"].extend(load_steps)
 
     def _write_material(self):
         if self.input.material is not None:
@@ -280,6 +286,8 @@ class DAMASK(TemplateJob):
         self._write_loading()
         self._write_geometry()
         self._write_material()
+        if self.input.regrid and len(self.input.job_names) > 0:
+            self.regridding(self.input.regrid_scale)
 
     def collect_output(self):
         def _average(d):
