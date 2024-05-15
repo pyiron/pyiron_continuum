@@ -14,9 +14,9 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import Result
 from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
-import os
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -49,6 +49,12 @@ class DAMASK(TemplateJob):
         self.input.phase = None
         self.input.material = None
         self.input.loading = None
+
+    def _join_path(self, path, return_str=True):
+        file_path = Path(self.working_directory) / path
+        if return_str:
+            return str(file_path)
+        return file_path
 
     def set_elasticity(self, **kwargs):
         """
@@ -225,6 +231,21 @@ class DAMASK(TemplateJob):
         )
         self.input.loading = value
 
+    @staticmethod
+    def get_dot_F(reduction_speed):
+        return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
+
+    @staticmethod
+    def get_loadstep(dot_F, reduction_time, reduction_outputs, P=None):
+        if P is None:
+            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
+        return {
+            "boundary_conditions": {"mechanical": {"P": P, "dot_F": dot_F}},
+            "discretization": {"t": reduction_time, "N": reduction_outputs},
+            "f_out": 5,
+            "f_restart": 5,
+        }
+
     def set_loading(self, solver, load_steps):
         """
         Creates the required damask loading.
@@ -243,18 +264,15 @@ class DAMASK(TemplateJob):
 
     def _write_material(self):
         if self.input.material is not None:
-            file_path = os.path.join(self.working_directory, "material.yaml")
-            self.input.material.save(fname=file_path)
+            self.input.material.save(self._join_path("material.yaml"))
 
     def _write_loading(self):
         if self.input.loading is not None:
-            file_path = os.path.join(self.working_directory, "loading.yaml")
-            self.input.loading.save(file_path)
+            self.input.loading.save(self._join_path("loading.yaml"))
 
     def _write_geometry(self):
         if self.input.grid is not None:
-            file_path = os.path.join(self.working_directory, "damask")
-            self.input.grid.save(file_path)
+            self.input.grid.save(self._join_path("damask"))
 
     def write_input(self):
         self._write_loading()
@@ -278,12 +296,11 @@ class DAMASK(TemplateJob):
         Args:
             file_name(str): path to the hdf file
         """
-        damask_hdf = os.path.join(self.working_directory, file_name)
 
         def _average(d):
             return np.average(list(d.values()), axis=1)
 
-        results = Result(damask_hdf)
+        results = Result(self._join_path(file_name))
         if not run_all:
             return results
         results.add_stress_Cauchy()

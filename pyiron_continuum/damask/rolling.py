@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import os
-from pathlib import Path
 from pyiron_base import ImportAlarm
 
 with ImportAlarm(
@@ -31,30 +30,6 @@ class Rolling(DAMASK):
         self.output.results_file = []
         self.output.job_names = []
 
-    def _join_path(self, path, return_str=True):
-        file_path = Path(self.working_directory) / path
-        if return_str:
-            return str(file_path)
-        return file_path
-
-    def loading_discretization(self, rolltimes, filename):
-        time = (
-            rolltimes
-            * self._height_reduction
-            / (self._rolling_speed * self._number_passes)
-        )
-
-        self.input.loading = YAML(
-            solver={"mechanical": "spectral_basic"}, loadstep=[]
-        )
-        self.input.loading["loadstep"].append(
-            self.get_loadstep(
-                self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
-            )
-        )
-        self.input.loading.save(self._join_path(filename + ".yaml"))
-        print(self.input.loading)
-
     @property
     def reduction_time(self):
         return self.input.reduction_height / self.input.reduction_speed
@@ -76,7 +51,6 @@ class Rolling(DAMASK):
             self.input.regrid = regrid
 
     def write_input(self):
-        super().write_input()
         self.input.loading["loadstep"].append(
             self.get_loadstep(
                 self.get_dot_F(self.input.reduction_speed),
@@ -84,7 +58,7 @@ class Rolling(DAMASK):
                 self.input.reduction_outputs,
             )
         )
-        self.input.loading.save(self._join_path("loading.yaml"))
+        super().write_input()
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
@@ -93,21 +67,6 @@ class Rolling(DAMASK):
         if self.input.regrid and self.regrid_geom_name is not None:
             return self.regrid_geom_name
         return "damask"
-
-    @staticmethod
-    def get_dot_F(reduction_speed):
-        return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
-
-    @staticmethod
-    def get_loadstep(dot_F, reduction_time, reduction_outputs, P=None):
-        if P is None:
-            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
-        return {
-            "boundary_conditions": {"mechanical": {"P": P, "dot_F": dot_F}},
-            "discretization": {"t": reduction_time, "N": reduction_outputs},
-            "f_out": 5,
-            "f_restart": 5,
-        }
 
     def collect_output(self):
         self.output.job_names.append(self.job_name)
