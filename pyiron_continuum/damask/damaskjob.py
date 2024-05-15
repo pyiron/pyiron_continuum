@@ -13,7 +13,7 @@ with ImportAlarm(
     "requirements. Please install it and try again."
 ) as damask_alarm:
     from damask import Result, YAML, ConfigMaterial
-from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
+from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory, LoadStep
 import pyiron_continuum.damask.regrid as rgg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -268,7 +268,16 @@ class DAMASK(TemplateJob):
     def append_loading(self, load_steps):
         if not isinstance(load_steps, list):
             load_steps = [load_steps]
-        self.input.loading["loadstep"].extend(load_steps)
+        self.input.loading["loadstep"].extend(
+            [
+                LoadStep(
+                    mech_bc_dict=load_step["mech_bc_dict"],
+                    discretization=load_step["discretization"],
+                    additional_parameters_dict=load_step["additional"],
+                )
+                for load_step in load_steps
+            ]
+        )
 
     def _write_material(self):
         if self.input.material is not None:

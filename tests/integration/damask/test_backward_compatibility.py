@@ -206,7 +206,7 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         job.grid = self._get_grid(4, grains)
-        jreduction_height = 0.05
+        reduction_height = 0.05
         reduction_speed = 5.0e-2
         reduction_outputs = 250
         job.set_loading(
@@ -222,8 +222,7 @@ class TestDamask(unittest.TestCase):
             new_job_name = new_job_name[:-1] + [str(int(new_job_name[-1]) + 1)]
             new_job_name = "_".join(new_job_name)
             job = job.restart(job_name=new_job_name)
-            job.set_loading(
-                solver=job.list_solvers()[0],
+            job.append_loading(
                 load_steps=get_load_step(reduction_speed, reduction_height, reduction_outputs)
             )
             job.input.regrid = True
