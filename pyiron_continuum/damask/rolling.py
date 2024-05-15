@@ -27,7 +27,9 @@ class ROLLING(DAMASK):
         self.input.job_names = []
         self.input.regrid_scale = 1.025
         self.regrid_geom_name = None
-        self.input.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
+        self.input.load_case = YAML(
+            solver={"mechanical": "spectral_basic"}, loadstep=[]
+        )
         self.output.results_file = []
         self.output.job_names = []
 
@@ -44,7 +46,9 @@ class ROLLING(DAMASK):
             / (self._rolling_speed * self._number_passes)
         )
 
-        self.input.load_case = YAML(solver={"mechanical": "spectral_basic"}, loadstep=[])
+        self.input.load_case = YAML(
+            solver={"mechanical": "spectral_basic"}, loadstep=[]
+        )
         self.input.load_case["loadstep"].append(
             self.get_loadstep(
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
@@ -133,7 +137,9 @@ class ROLLING(DAMASK):
         new_job.input.job_names = self.output.job_names
         new_job.input.material = ConfigMaterial(**new_job.input.material)
         new_job.input.load_case = YAML(**self.input.load_case)
-        new_job.restart_file_list.append(self._join_path("damask_loading_material.hdf5"))
+        new_job.restart_file_list.append(
+            self._join_path("damask_loading_material.hdf5")
+        )
         return new_job
 
     ########################################################################
