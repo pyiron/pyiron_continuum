@@ -12,7 +12,6 @@ with ImportAlarm(
     from damask import YAML, ConfigMaterial
 from pyiron_continuum.damask.damaskjob import DAMASK
 import pyiron_continuum.damask.regrid as rgg
-from damask import YAML
 
 
 class ROLLING(DAMASK):
