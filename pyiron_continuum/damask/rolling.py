@@ -27,7 +27,7 @@ class ROLLING(DAMASK):
         self.input.job_names = []
         self.input.regrid_scale = 1.025
         self.regrid_geom_name = None
-        self.input.load_case = YAML(
+        self.input.loading = YAML(
             solver={"mechanical": "spectral_basic"}, loadstep=[]
         )
         self.output.results_file = []
@@ -46,16 +46,16 @@ class ROLLING(DAMASK):
             / (self._rolling_speed * self._number_passes)
         )
 
-        self.input.load_case = YAML(
+        self.input.loading = YAML(
             solver={"mechanical": "spectral_basic"}, loadstep=[]
         )
-        self.input.load_case["loadstep"].append(
+        self.input.loading["loadstep"].append(
             self.get_loadstep(
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
             )
         )
-        self.input.load_case.save(self._join_path(filename + ".yaml"))
-        print(self.input.load_case)
+        self.input.loading.save(self._join_path(filename + ".yaml"))
+        print(self.input.loading)
 
     @property
     def reduction_time(self):
@@ -79,14 +79,14 @@ class ROLLING(DAMASK):
 
     def write_input(self):
         super().write_input()
-        self.input.load_case["loadstep"].append(
+        self.input.loading["loadstep"].append(
             self.get_loadstep(
                 self.get_dot_F(self.input.reduction_speed),
                 self.reduction_time,
                 self.input.reduction_outputs,
             )
         )
-        self.input.load_case.save(self._join_path("loading.yaml"))
+        self.input.loading.save(self._join_path("loading.yaml"))
         if self.input.regrid and len(self.input.job_names) > 0:
             self.regridding(self.input.regrid_scale)
 
@@ -136,7 +136,7 @@ class ROLLING(DAMASK):
         new_job.storage.input = self.storage.input.copy()
         new_job.input.job_names = self.output.job_names
         new_job.input.material = ConfigMaterial(**new_job.input.material)
-        new_job.input.load_case = YAML(**self.input.load_case)
+        new_job.input.loading = YAML(**self.input.loading)
         new_job.restart_file_list.append(
             self._join_path("damask_loading_material.hdf5")
         )
