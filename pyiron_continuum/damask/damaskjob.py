@@ -42,7 +42,7 @@ class DAMASK(TemplateJob):
         self._rotation = None
         self.input.grid = None
         self._elements = None
-        self._executable_activate()
+        self._executable_activate(codename="damask")
         self.input.elasticity = None
         self.input.plasticity = None
         self.input.homogenization = None
@@ -262,7 +262,14 @@ class DAMASK(TemplateJob):
         self._write_material()
 
     def collect_output(self):
-        self._load_results()
+        def _average(d):
+            return np.average(list(d.values()), axis=1)
+
+        results = self._load_results()
+        self.output.stress = _average(results.get("sigma"))
+        self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
+        self.output.stress_von_Mises = _average(results.get("sigma_vM"))
+        self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
         self.to_hdf()
 
     def _load_results(self, file_name="damask_loading_material.hdf5", run_all=True):
@@ -283,10 +290,6 @@ class DAMASK(TemplateJob):
         results.add_strain()
         results.add_equivalent_Mises("sigma")
         results.add_equivalent_Mises("epsilon_V^0.0(F)")
-        self.output.stress = _average(results.get("sigma"))
-        self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
-        self.output.stress_von_Mises = _average(results.get("sigma_vM"))
-        self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
         return results
 
     def writeresults2vtk(self, file_name="damask_loading_material.hdf5"):

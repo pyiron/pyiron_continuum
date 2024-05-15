@@ -184,7 +184,8 @@ class TestDamask(unittest.TestCase):
         job.plot_stress_strain(von_mises=True)
 
     def test_multiple_rolling(self):
-        job = self.project.create.job.ROLLING("multiple_rolling")
+        job_name = "multiple_rolling"
+        job = self.project.create.job.Rolling(job_name + "_0")
         plasticity = self.get_plasticity_phenopowerlaw()
         grains = 4
         phase = self.get_phase_aluminum(self._get_elasticity(), plasticity)
@@ -194,31 +195,27 @@ class TestDamask(unittest.TestCase):
         )
         job.material = material
         job.grid = self._get_grid(4, grains)
-        reduction_height = 0.05
-        reduction_speed = 5.0e-2
-        reduction_outputs = 250
-        regrid_flag = False
-        damask_exe = ""  # using default DAMASK_grid solver from PATH
-        job.executeRolling(
-            reduction_height,
-            reduction_speed,
-            reduction_outputs,
-            regrid_flag,
-            damask_exe,
+        job.set_rolling(
+            reduction_height=0.05,
+            reduction_speed=5.0e-2,
+            reduction_outputs=250,
         )
+        job.run()
         job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
-        reduction_speed = 4.5e-2
-        regrid_flag = True
         for reduction_height, reduction_outputs in zip(
             [0.1, 0.1, 0.12], [300, 350, 300]
         ):
-            job.executeRolling(
-                reduction_height,
-                reduction_speed,
-                reduction_outputs,
-                regrid_flag,
-                damask_exe,
+            new_job_name = job.job_name.split("_")
+            new_job_name = new_job_name[:-1] + [str(int(new_job_name[-1]) + 1)]
+            new_job_name = "_".join(new_job_name)
+            job = job.restart(job_name=new_job_name)
+            job.set_rolling(
+                reduction_height=reduction_height,
+                reduction_speed=4.5e-2,
+                reduction_outputs=reduction_outputs,
+                regrid=True,
             )
+            job.run()
             job.plotStressStrainCurve(0.0, 0.60, 0.0, 1.7e8)  # xmin,xmax, ymin,ymax
 
 
