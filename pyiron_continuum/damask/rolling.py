@@ -46,8 +46,6 @@ class Rolling(DAMASK):
                 self.get_dot_F(self._rollling_speed), time, self._increments * rolltimes
             )
         )
-        self.input.loading.save(self._join_path(filename + ".yaml"))
-        print(self.input.loading)
 
     @property
     def reduction_time(self):
