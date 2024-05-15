@@ -39,9 +39,8 @@ class DAMASK(TemplateJob):
             job_name(str): the name of the job
         """
         super(DAMASK, self).__init__(project, job_name)
-        self._results = None
         self._rotation = None
-        self._geometry = None
+        self.input.grid = None
         self._elements = None
         self._executable_activate()
         self.input.elasticity = None
@@ -198,7 +197,7 @@ class DAMASK(TemplateJob):
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
-            self._geometry = GridFactory.via_voronoi_tessellation(**kwargs)
+            self.input.grid = GridFactory.via_voronoi_tessellation(**kwargs)
         else:
             raise NotImplementedError(
                 "Currently only `voronoi_tessellation` is implemented"
@@ -206,14 +205,14 @@ class DAMASK(TemplateJob):
 
     @property
     def grid(self):
-        return self._geometry
+        return self.input.grid
 
     @grid.setter
     def grid(self, grid):
         warnings.warn(
             "Setting grid via project creator is deprecated. Use job.set_grid instead"
         )
-        self._geometry = grid
+        self.input.grid = grid
 
     @property
     def loading(self):
@@ -253,9 +252,9 @@ class DAMASK(TemplateJob):
             self.input.loading.save(file_path)
 
     def _write_geometry(self):
-        if self._geometry is not None:
+        if self.input.grid is not None:
             file_path = os.path.join(self.working_directory, "damask")
-            self._geometry.save(file_path)
+            self.input.grid.save(file_path)
 
     def write_input(self):
         self._write_loading()
@@ -264,9 +263,9 @@ class DAMASK(TemplateJob):
 
     def collect_output(self):
         self._load_results()
-        self.output.damask = self._results
+        self.to_hdf()
 
-    def _load_results(self, file_name="damask_loading_material.hdf5"):
+    def _load_results(self, file_name="damask_loading_material.hdf5", run_all=True):
         """
         loads the results from damask hdf file
         Args:
@@ -277,25 +276,25 @@ class DAMASK(TemplateJob):
         def _average(d):
             return np.average(list(d.values()), axis=1)
 
-        self._results = Result(damask_hdf)
-        self._results.add_stress_Cauchy()
-        self._results.add_strain()
-        self._results.add_equivalent_Mises("sigma")
-        self._results.add_equivalent_Mises("epsilon_V^0.0(F)")
-        self.output.stress = _average(self._results.get("sigma"))
-        self.output.strain = _average(self._results.get("epsilon_V^0.0(F)"))
-        self.output.stress_von_Mises = _average(self._results.get("sigma_vM"))
-        self.output.strain_von_Mises = _average(
-            self._results.get("epsilon_V^0.0(F)_vM")
-        )
+        results = Result(damask_hdf)
+        if not run_all:
+            return results
+        results.add_stress_Cauchy()
+        results.add_strain()
+        results.add_equivalent_Mises("sigma")
+        results.add_equivalent_Mises("epsilon_V^0.0(F)")
+        self.output.stress = _average(results.get("sigma"))
+        self.output.strain = _average(results.get("epsilon_V^0.0(F)"))
+        self.output.stress_von_Mises = _average(results.get("sigma_vM"))
+        self.output.strain_von_Mises = _average(results.get("epsilon_V^0.0(F)_vM"))
+        return results
 
-    def writeresults2vtk(self):
+    def writeresults2vtk(self, file_name="damask_loading_material.hdf5"):
         """
         save results to vtk files
         """
-        if self._results is None:
-            raise ValueError("Results not loaded; call collect_output")
-        self._results.export_VTK(target_dir=self.working_directory)
+        results = self._load_results(file_name=file_name, run_all=False)
+        results.export_VTK(target_dir=self.working_directory)
 
     @staticmethod
     def list_solvers():
