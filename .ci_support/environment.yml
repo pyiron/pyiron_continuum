@@ -7,6 +7,7 @@ dependencies:
 - matplotlib =3.8.4
 - numpy =1.26.4
 - pyiron =0.5.2
+- pyiron_base =0.8.3
 - scipy =1.13.0
 - sympy =1.12
 - python-blosc2
