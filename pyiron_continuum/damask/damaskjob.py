@@ -239,21 +239,6 @@ class DAMASK(TemplateJob):
         )
         self.input.loading = value
 
-    @staticmethod
-    def get_dot_F(reduction_speed):
-        return [["x", 0, 0], [0, 0, 0], [0, 0, -1.0 * reduction_speed]]
-
-    @staticmethod
-    def get_loadstep(dot_F, reduction_time, reduction_outputs, P=None):
-        if P is None:
-            P = [[0, "x", "x"], ["x", "x", "x"], ["x", "x", "x"]]
-        return {
-            "boundary_conditions": {"mechanical": {"P": P, "dot_F": dot_F}},
-            "discretization": {"t": reduction_time, "N": reduction_outputs},
-            "f_out": 5,
-            "f_restart": 5,
-        }
-
     def set_loading(self, solver, load_steps):
         """
         Creates the required damask loading.
@@ -296,11 +281,13 @@ class DAMASK(TemplateJob):
             self.input.grid.save(self._join_path("damask"))
 
     def write_input(self):
+        if self.input.regrid and len(self.input.job_names) > 0:
+            self.input.grid = rgg.Regrid(
+                self.input.grid, self.restart_file_list[0], self.input.regrid_scale
+            ).grid
         self._write_loading()
         self._write_geometry()
         self._write_material()
-        if self.input.regrid and len(self.input.job_names) > 0:
-            self.regridding(self.input.regrid_scale)
 
     def collect_output(self):
         def _average(d):
@@ -402,14 +389,6 @@ class DAMASK(TemplateJob):
                 "or vonMises should be set to True"
             )
         return fig, ax
-
-    def regridding(self, scale):
-        regrid = rgg.Regrid(
-            self.working_directory,
-            self.restart_file_list[0],
-            seed_scale=scale,
-        )
-        self.regrid_grid = regrid.grid
 
     def restart(self, job_name=None, job_type=None):
         new_job = super().restart(job_name=job_name, job_type=job_type)
