@@ -8,8 +8,10 @@ from pyiron_continuum.elasticity.eschelby import Eschelby
 from pyiron_continuum.elasticity import tools
 
 __author__ = "Sam Waseda"
-__copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH "
+    "- Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sam Waseda"
 __email__ = "waseda@mpie.de"
@@ -23,10 +25,11 @@ def value_or_none(func):
             return None
         else:
             return func(self)
+
     return f
 
 
-point_defect_explanation = '''
+point_defect_explanation = """
 According to the definition of the Green's function (cf. docstring of `get_greens_function`):
 
 .. math:
@@ -69,7 +72,7 @@ job.calc_minimize()
 job.run()
 dipole_tensor = -job.structure.get_volume()*job['output/generic/pressures'][-1]
 ```
-'''
+"""
 
 
 class LinearElasticity:
@@ -112,6 +115,7 @@ class LinearElasticity:
     >>> medium.get_dislocation_force(stress_one, [0, 1, 0], partial_two)
 
     """
+
     def __init__(self, elastic_tensor, orientation=None):
         """
         Args:
@@ -151,7 +155,7 @@ class LinearElasticity:
 
     @property
     def _is_rotated(self):
-        return np.isclose(np.einsum('ii->', self.orientation), 3)
+        return np.isclose(np.einsum("ii->", self.orientation), 3)
 
     @property
     def elastic_tensor(self):
@@ -164,13 +168,13 @@ class LinearElasticity:
             self._update()
         if self._elastic_tensor is not None and not self._is_rotated:
             return np.einsum(
-                'Ii,Jj,Kk,Ll,ijkl->IJKL',
+                "Ii,Jj,Kk,Ll,ijkl->IJKL",
                 self.orientation,
                 self.orientation,
                 self.orientation,
                 self.orientation,
                 self._elastic_tensor,
-                optimize=True
+                optimize=True,
             )
         return self._elastic_tensor
 
@@ -179,7 +183,9 @@ class LinearElasticity:
         if C is not None:
             C = np.asarray(C)
             if C.shape != (6, 6) and C.shape != (3, 3, 3, 3) and C.shape != (3,):
-                raise ValueError('Elastic tensor must be a (6,6), (3,3,3,3) or (3,)  array')
+                raise ValueError(
+                    "Elastic tensor must be a (6,6), (3,3,3,3) or (3,)  array"
+                )
             if C.shape == (3,):
                 C = tools.coeff_to_voigt(C)
             if C.shape == (6, 6):
@@ -188,8 +194,10 @@ class LinearElasticity:
 
     def _update(self):
         S = np.zeros((6, 6))
-        S[:3, :3] = (np.eye(3)-self.poissons_ratio*(1-np.eye(3)))/self.youngs_modulus
-        S[3:, 3:] = np.eye(3)/self.shear_modulus
+        S[:3, :3] = (
+            np.eye(3) - self.poissons_ratio * (1 - np.eye(3))
+        ) / self.youngs_modulus
+        S[3:, 3:] = np.eye(3) / self.shear_modulus
         self.elastic_tensor = np.linalg.inv(S)
 
     @property
@@ -214,7 +222,12 @@ class LinearElasticity:
         analytical form of the Green's function is used for the calculation of strain and
         displacement fields.
         """
-        return 2*(1+self.poissons_ratio.mean())*self.shear_modulus.mean()/self.youngs_modulus.mean()
+        return (
+            2
+            * (1 + self.poissons_ratio.mean())
+            * self.shear_modulus.mean()
+            / self.youngs_modulus.mean()
+        )
 
     @property
     def isotropy_tolerance(self):
@@ -227,12 +240,12 @@ class LinearElasticity:
     @isotropy_tolerance.setter
     def isotropy_tolerance(self, value):
         if value < 0:
-            raise ValueError('`isotropy_tolerance` must be a positive float')
+            raise ValueError("`isotropy_tolerance` must be a positive float")
         self._isotropy_tolerance = value
 
     @property
     def _is_isotropic(self):
-        return np.absolute(self.zener_ratio-1) < self.isotropy_tolerance
+        return np.absolute(self.zener_ratio - 1) < self.isotropy_tolerance
 
     @property
     def shear_modulus(self):
@@ -240,7 +253,7 @@ class LinearElasticity:
         Returns:
             ((3,)-array): yz-, xz-, xy-components of shear modulus
         """
-        return 1/self.compliance_matrix[3:, 3:].diagonal()
+        return 1 / self.compliance_matrix[3:, 3:].diagonal()
 
     @property
     def bulk_modulus(self):
@@ -248,7 +261,7 @@ class LinearElasticity:
         Returns:
             (float): Bulk modulus
         """
-        return 3*(1-2*self.poissons_ratio.mean())/self.youngs_modulus.mean()
+        return 3 * (1 - 2 * self.poissons_ratio.mean()) / self.youngs_modulus.mean()
 
     @property
     def poissons_ratio(self):
@@ -256,7 +269,7 @@ class LinearElasticity:
         Returns:
             ((3,)-array): yz-, xz-, xy-components of Poisson's ratio
         """
-        nu = -self.compliance_matrix[:3, :3]*self.youngs_modulus
+        nu = -self.compliance_matrix[:3, :3] * self.youngs_modulus
         return np.array([nu[1, 2], nu[0, 2], nu[0, 1]])
 
     @property
@@ -265,7 +278,7 @@ class LinearElasticity:
         Returns:
             ((3,)-array): xx-, yy-, zz-components of Young's modulus
         """
-        return 1/self.compliance_matrix[:3, :3].diagonal()
+        return 1 / self.compliance_matrix[:3, :3].diagonal()
 
     def get_greens_function(
         self,
@@ -299,20 +312,16 @@ class LinearElasticity:
         """
         if isotropic or self._is_isotropic:
             C = Isotropic(
-                self.poissons_ratio.mean(),
-                self.shear_modulus.mean(),
-                optimize=optimize
+                self.poissons_ratio.mean(), self.shear_modulus.mean(), optimize=optimize
             )
         else:
-            C = Anisotropic(
-                self.elastic_tensor, n_mesh=n_mesh, optimize=optimize
-            )
+            C = Anisotropic(self.elastic_tensor, n_mesh=n_mesh, optimize=optimize)
         return C.get_greens_function(
             r=positions,
             derivative=derivative,
             fourier=fourier,
             check_unique=check_unique,
-            save_memory=save_memory
+            save_memory=save_memory,
         )
 
     get_greens_function.__doc__ += Green.__doc__
@@ -352,7 +361,7 @@ class LinearElasticity:
             check_unique=check_unique,
             save_memory=save_memory,
         )
-        return -np.einsum('...ijk,...jk->...i', g_tmp, dipole_tensor)
+        return -np.einsum("...ijk,...jk->...i", g_tmp, dipole_tensor)
 
     get_point_defect_displacement.__doc__ += point_defect_explanation
 
@@ -364,7 +373,7 @@ class LinearElasticity:
         isotropic=False,
         optimize=True,
         check_unique=False,
-        save_memory=False
+        save_memory=False,
     ):
         """
         Strain field around a point defect using the Green's function method
@@ -390,10 +399,10 @@ class LinearElasticity:
             isotropic=isotropic,
             optimize=optimize,
             check_unique=check_unique,
-            save_memory=save_memory
+            save_memory=save_memory,
         )
-        v = -np.einsum('...ijkl,...kl->...ij', g_tmp, dipole_tensor)
-        return 0.5*(v+np.einsum('...ij->...ji', v))
+        v = -np.einsum("...ijkl,...kl->...ij", g_tmp, dipole_tensor)
+        return 0.5 * (v + np.einsum("...ij->...ji", v))
 
     get_point_defect_strain.__doc__ += point_defect_explanation
 
@@ -420,9 +429,9 @@ class LinearElasticity:
             dipole_tensor=dipole_tensor,
             n_mesh=n_mesh,
             isotropic=isotropic,
-            optimize=optimize
+            optimize=optimize,
         )
-        return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
+        return np.einsum("ijkl,...kl->...ij", self.elastic_tensor, strain)
 
     get_point_defect_stress.__doc__ += point_defect_explanation
 
@@ -449,9 +458,9 @@ class LinearElasticity:
             dipole_tensor=dipole_tensor,
             n_mesh=n_mesh,
             isotropic=isotropic,
-            optimize=optimize
+            optimize=optimize,
         )
-        return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
+        return np.einsum("ijkl,...kl,...ij->...", self.elastic_tensor, strain, strain)
 
     get_point_defect_energy_density.__doc__ += point_defect_explanation
 
@@ -501,7 +510,7 @@ class LinearElasticity:
             ((n, 3, 3)-array): Stress field (z-axis coincides with the dislocation line)
         """
         strain = self.get_dislocation_strain(positions, burgers_vector)
-        return np.einsum('ijkl,...kl->...ij', self.elastic_tensor, strain)
+        return np.einsum("ijkl,...kl->...ij", self.elastic_tensor, strain)
 
     def get_dislocation_energy_density(self, positions, burgers_vector):
         """
@@ -517,7 +526,7 @@ class LinearElasticity:
             ((n,)-array): Energy density field
         """
         strain = self.get_dislocation_strain(positions, burgers_vector)
-        return np.einsum('ijkl,...kl,...ij->...', self.elastic_tensor, strain, strain)
+        return np.einsum("ijkl,...kl,...ij->...", self.elastic_tensor, strain, strain)
 
     def get_dislocation_energy(self, burgers_vector, r_min, r_max, mesh=100):
         """
@@ -551,13 +560,16 @@ class LinearElasticity:
         done carefully.
         """
         if r_min <= 0:
-            raise ValueError('r_min must be a positive float')
-        theta_range = np.linspace(0, 2*np.pi, 100, endpoint=False)
-        r = np.stack((np.cos(theta_range), np.sin(theta_range)), axis=-1)*r_min
+            raise ValueError("r_min must be a positive float")
+        theta_range = np.linspace(0, 2 * np.pi, 100, endpoint=False)
+        r = np.stack((np.cos(theta_range), np.sin(theta_range)), axis=-1) * r_min
         strain = self.get_dislocation_strain(r, burgers_vector=burgers_vector)
-        return np.einsum(
-            'ijkl,nkl,nij->', self.elastic_tensor, strain, strain
-        )/np.diff(theta_range)[0]*r_min**2*np.log(r_max/r_min)
+        return (
+            np.einsum("ijkl,nkl,nij->", self.elastic_tensor, strain, strain)
+            / np.diff(theta_range)[0]
+            * r_min**2
+            * np.log(r_max / r_min)
+        )
 
     @staticmethod
     def get_dislocation_force(stress, glide_plane, burgers_vector):
@@ -572,5 +584,7 @@ class LinearElasticity:
         Returns:
             ((3,)-array): Force per unit length acting on the dislocation.
         """
-        g = np.asarray(glide_plane)/np.linalg.norm(glide_plane)
-        return np.einsum('i,ij,j,k->k', g, stress, burgers_vector, np.cross(g, [0, 0, 1]))
+        g = np.asarray(glide_plane) / np.linalg.norm(glide_plane)
+        return np.einsum(
+            "i,ij,j,k->k", g, stress, burgers_vector, np.cross(g, [0, 0, 1])
+        )
