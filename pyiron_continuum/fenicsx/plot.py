@@ -47,7 +47,7 @@ class PlotDeformed:
         grid["u"] = uh.x.array.reshape((geometry.shape[0], geometry.shape[1]))
         warped = grid.warp_by_vector("u", factor=factor)
         # actor_0 = p.add_mesh(grid, style="wireframe", color="k")
-        actor_1 = p.add_mesh(warped, show_edges=True)
+        _ = p.add_mesh(warped, show_edges=True)
         return p.show()
 
 
