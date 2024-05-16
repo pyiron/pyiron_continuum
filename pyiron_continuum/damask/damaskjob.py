@@ -12,8 +12,13 @@ with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
     "requirements. Please install it and try again."
 ) as damask_alarm:
-    from damask import Result
-from pyiron_continuum.damask.factory import Create as DAMASKCreator, GridFactory
+    from damask import Result, YAML, ConfigMaterial
+from pyiron_continuum.damask.factory import (
+    Create as DAMASKCreator,
+    GridFactory,
+    LoadStep,
+)
+import pyiron_continuum.damask.regrid as rgg
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -49,6 +54,9 @@ class DAMASK(TemplateJob):
         self.input.phase = None
         self.input.material = None
         self.input.loading = None
+        self.input.job_names = []
+        self.input.regrid = False
+        self.input.regrid_scale = 1.025
 
     def _join_path(self, path, return_str=True):
         file_path = Path(self.working_directory) / path
@@ -260,7 +268,20 @@ class DAMASK(TemplateJob):
                 'additional': {'f_out': 4}
         """
         self.input.loading = DAMASKCreator.loading(solver=solver, load_steps=load_steps)
-        self._attempt_init_material()
+
+    def append_loading(self, load_steps):
+        if not isinstance(load_steps, list):
+            load_steps = [load_steps]
+        self.input.loading["loadstep"].extend(
+            [
+                LoadStep(
+                    mech_bc_dict=load_step["mech_bc_dict"],
+                    discretization=load_step["discretization"],
+                    additional_parameters_dict=load_step["additional"],
+                )
+                for load_step in load_steps
+            ]
+        )
 
     def _write_material(self):
         if self.input.material is not None:
@@ -278,6 +299,8 @@ class DAMASK(TemplateJob):
         self._write_loading()
         self._write_geometry()
         self._write_material()
+        if self.input.regrid and len(self.input.job_names) > 0:
+            self.regridding(self.input.regrid_scale)
 
     def collect_output(self):
         def _average(d):
@@ -379,3 +402,22 @@ class DAMASK(TemplateJob):
                 "or vonMises should be set to True"
             )
         return fig, ax
+
+    def regridding(self, scale):
+        regrid = rgg.Regrid(
+            self.working_directory,
+            self.restart_file_list[0],
+            seed_scale=scale,
+        )
+        self.regrid_grid = regrid.grid
+
+    def restart(self, job_name=None, job_type=None):
+        new_job = super().restart(job_name=job_name, job_type=job_type)
+        new_job.storage.input = self.storage.input.copy()
+        new_job.input.material = ConfigMaterial(**new_job.input.material)
+        new_job.input.loading = YAML(**self.input.loading)
+        new_job.input.job_names.append(self.job_name)
+        new_job.restart_file_list.append(
+            self._join_path("damask_loading_material.hdf5")
+        )
+        return new_job
