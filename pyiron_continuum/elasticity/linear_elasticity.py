@@ -297,7 +297,7 @@ class LinearElasticity:
             optimize (bool): cf. `optimize` in `numpy.einsum`
 
         Returns:
-            ((n,3)-array): Green's function values for the given positions
+            ((n,3,3)-array): Green's function values for the given positions
         """
         if isotropic or self._is_isotropic:
             C = Isotropic(

@@ -97,6 +97,13 @@ class TestElasticity(unittest.TestCase):
         medium = LinearElasticity(create_random_C())
         self.assertGreater(medium.bulk_modulus, 0)
 
+    def test_greens_function(self):
+        medium = LinearElasticity(create_random_C(isotropic=True))
+        self.assertAlmostEqual(
+            medium.get_greens_function([1, 1, 1], isotropic=True)[0, 0],
+            medium.get_greens_function([1, 1, 1], isotropic=False)[0, 0]
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
