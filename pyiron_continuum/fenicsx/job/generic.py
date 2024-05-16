@@ -19,7 +19,8 @@ from pyiron_continuum.fenicsx.factory import (
     MeshFactory,
     SpaceFactory,
 )  # , BoundaryConditionFactory
-from pyiron_continuum.fenicsx.plot import PlotMesh, PlotDeformed
+from pyiron_continuum.fenicsx.plot import PlotMesh, PlotDeformed, PlotStresses
+from pyiron_continuum.fenicsx.plot import PlotLoad, PlotValuesFunction
 
 
 class Fenicsx(GenericJob):
@@ -191,7 +192,21 @@ class Plot:
         return PlotMesh.plotMesh(V1)
 
     def plot_deformed_functionspace(self, V1, uh, factor):
-        return PlotDeformed.plotDefomed_functionspae(V1, uh, factor)
+        return PlotDeformed.plotDefomed_functionspace(V1, uh, factor)
 
     def plot_deformed_vectorfunctionspace(self, V1, uh, factor):
-        return PlotDeformed.plotDefomed_vectorfunctionspae(V1, uh, factor)
+        return PlotDeformed.plotDefomed_vectorfunctionspace(V1, uh, factor)
+
+    def plot_stresses_vonMises(self, mesh, V1, uh, lambda_, mu, factor):
+        return PlotStresses.plotStresses_vonMises(
+            mesh, V1, uh, lambda_, mu, factor)
+
+    def plot_load_scalar(self, mesh, load, factor):
+        return PlotLoad.plotLoad_scalar(mesh, load, factor)
+
+    def getValues_deflection(self, mesh, uh, points):
+        return PlotValuesFunction.getValues_Deflection(mesh, uh, points)
+
+    def getValues_pressure(self, mesh, load, points):
+        return PlotValuesFunction.getValues_Pressure(mesh, load, points)
+

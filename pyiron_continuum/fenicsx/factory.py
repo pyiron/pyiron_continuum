@@ -50,6 +50,9 @@ class MeshFactory(PyironFactory):
         mesh_comm = MPI.COMM_WORLD
         return gmshio.model_to_mesh(gmsh.model, mesh_comm, gmsh_model_rank, gdim=gdim)
 
+    def clear_gmsh(self):
+        return gmsh.clear()
+
 
 class SpaceFactory(PyironFactory):
     def __init__(self):
