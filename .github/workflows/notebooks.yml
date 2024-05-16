@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build_damask:
+  build:
     if: |
       github.event_name == 'push' ||
       ( github.event_name == 'pull_request'  && contains(github.event.pull_request.labels.*.name, 'integration' ))
