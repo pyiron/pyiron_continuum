@@ -178,16 +178,15 @@ class LinearElasticity:
 
     @elastic_tensor.setter
     def elastic_tensor(self, C):
-        if C is not None:
-            C = np.asarray(C)
-            if C.shape != (6, 6) and C.shape != (3, 3, 3, 3) and C.shape != (3,):
-                raise ValueError(
-                    "Elastic tensor must be a (6,6), (3,3,3,3) or (3,)  array"
-                )
-            if C.shape == (3,):
-                C = tools.coeff_to_voigt(C)
-            if C.shape == (6, 6):
-                C = tools.C_from_voigt(C)
+        C = np.asarray(C)
+        if C.shape != (6, 6) and C.shape != (3, 3, 3, 3) and C.shape != (3,):
+            raise ValueError(
+                "Elastic tensor must be a (6,6), (3,3,3,3) or (3,)  array"
+            )
+        if C.shape == (3,):
+            C = tools.coeff_to_voigt(C)
+        if C.shape == (6, 6):
+            C = tools.C_from_voigt(C)
         self._elastic_tensor = C
 
     @property
