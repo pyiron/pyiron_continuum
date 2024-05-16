@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pyiron/actions/build-notebooks@main
+      - uses: pyiron/actions/build-notebooks@actions-3.1.0
         with:
           python-version: '3.11'
           env-files: .ci_support/environment-notebooks.yml
