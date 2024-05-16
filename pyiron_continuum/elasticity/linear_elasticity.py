@@ -164,9 +164,7 @@ class LinearElasticity:
         full form, always the full tensor (i.e. (3,3,3,3)-array) is returned. For Voigt
         notation, use `elastic_tensor_voigt`
         """
-        if self._elastic_tensor is None:
-            self._update()
-        if self._elastic_tensor is not None and not self._is_rotated:
+        if not self._is_rotated:
             return np.einsum(
                 "Ii,Jj,Kk,Ll,ijkl->IJKL",
                 self.orientation,
@@ -191,14 +189,6 @@ class LinearElasticity:
             if C.shape == (6, 6):
                 C = tools.C_from_voigt(C)
         self._elastic_tensor = C
-
-    def _update(self):
-        S = np.zeros((6, 6))
-        S[:3, :3] = (
-            np.eye(3) - self.poissons_ratio * (1 - np.eye(3))
-        ) / self.youngs_modulus
-        S[3:, 3:] = np.eye(3) / self.shear_modulus
-        self.elastic_tensor = np.linalg.inv(S)
 
     @property
     @value_or_none
