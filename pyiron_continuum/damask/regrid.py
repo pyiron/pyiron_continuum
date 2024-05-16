@@ -30,12 +30,12 @@ class Regrid:
         return self.geom_0.size
 
     @cached_property
-    def gridCoords_node_initial(self):
+    def grid_coords_node_initial(self):
         mat = damask.grid_filters.coordinates0_node(self.cells_0, self.size_0)
         return mat.reshape((-1, mat.shape[-1]), order="F")
 
     @cached_property
-    def gridCoords_point_initial(self):
+    def grid_coords_point_initial(self):
         mat = damask.grid_filters.coordinates0_point(self.cells_0, self.size_0)
         return mat.reshape((-1, mat.shape[-1]), order="F")
 
@@ -50,12 +50,12 @@ class Regrid:
         return self.d5Out.increments[-1]
 
     @property
-    def gridCoords_node_0(self):
-        return self.gridCoords_node_initial + self.d5Out.get("u_n") - self.d5Out.origin
+    def grid_coords_node_0(self):
+        return self.grid_coords_node_initial + self.d5Out.get("u_n") - self.d5Out.origin
 
     @property
-    def gridCoords_cell_0(self):
-        return self.gridCoords_point_initial + self.d5Out.get("u_p") - self.d5Out.origin
+    def grid_coords_cell_0(self):
+        return self.grid_coords_point_initial + self.d5Out.get("u_p") - self.d5Out.origin
 
     @property
     def size_rg(self):
@@ -63,14 +63,14 @@ class Regrid:
         cornersRVE_coords = np.diag(self.size_0)
         cornersRVE_idx = [
             np.argwhere(
-                np.isclose(self.gridCoords_node_initial, cornersRVE_coords[corner]).all(
+                np.isclose(self.grid_coords_node_initial, cornersRVE_coords[corner]).all(
                     axis=1
                 )
             ).item()
             for corner in range(3)
         ]
         return (
-            np.diag(self.gridCoords_node_0[cornersRVE_idx]) - self.gridCoords_node_0[0]
+            np.diag(self.grid_coords_node_0[cornersRVE_idx]) - self.grid_coords_node_0[0]
         )
 
     @property
@@ -90,8 +90,8 @@ class Regrid:
             self.cells_rg, self.size_rg
         ).reshape((-1, 3), order="F")
         # apply periodic shift
-        gridCoords_cell_0_Shifted = self.gridCoords_cell_0 % self.size_rg
-        tree = scipy.spatial.cKDTree(gridCoords_cell_0_Shifted, boxsize=self.size_rg)
+        grid_coords_cell_0_Shifted = self.grid_coords_cell_0 % self.size_rg
+        tree = scipy.spatial.cKDTree(grid_coords_cell_0_Shifted, boxsize=self.size_rg)
         return tree.query(gridCoords_cell_rg)[1].flatten()
 
     @property
