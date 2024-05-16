@@ -6,26 +6,12 @@ on:
   pull_request:
 
 jobs:
-  build:
-    if: |
-      github.event_name == 'push' ||
-      ( github.event_name == 'pull_request'  && contains(github.event.pull_request.labels.*.name, 'integration' ))
+  build-notebooks:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2.2.0
-      with:
-        python-version: "3.11"
-        mamba-version: "*"
-        miniforge-variant: Mambaforge
-        channels: conda-forge
-        channel-priority: strict
-        auto-update-conda: true  
-        environment-file: .ci_support/environment-notebooks.yml
-    - name: Setup
-      shell: bash -l {0}
-      run: |
-        pip install --no-deps .
-    - name: Tests
-      shell: bash -l {0}
-      run: ./.ci_support/build_notebooks.sh
+      - uses: actions/checkout@v4
+      - uses: pyiron/actions/build-notebooks@main
+        with:
+          python-version: '3.11'
+          env-files: .ci_support/environment-notebooks.yml
+          exclusion-file: .ci_support/exclude
