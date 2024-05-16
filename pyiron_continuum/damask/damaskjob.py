@@ -282,9 +282,9 @@ class DAMASK(TemplateJob):
 
     def write_input(self):
         if self.input.regrid and len(self.input.job_names) > 0:
-        self.input.grid = rgg.Regrid(
-            self.input.grid, self.restart_file_list[0], self.input.regrid_scale
-        )
+            self.input.grid = rgg.Regrid(
+                self.input.grid, self.restart_file_list[0], self.input.regrid_scale
+            ).grid
         self._write_loading()
         self._write_geometry()
         self._write_material()
