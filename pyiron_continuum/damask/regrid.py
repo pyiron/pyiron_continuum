@@ -7,17 +7,10 @@ from functools import cached_property
 
 
 class Regrid:
-    def __init__(self, work_dir, load_name, seed_scale=1.0):
-        self.work_dir = Path(work_dir)
+    def __init__(self, grid, load_name, seed_scale=1.0):
+        self.geom_0 = grid
         self.load_name = load_name
         self.seed_scale = seed_scale
-
-    def get_path(self, file_name):
-        return str(self.work_dir / file_name)
-
-    @cached_property
-    def geom_0(self):
-        return damask.GeomGrid.load(self.get_path("damask.vti"))
 
     @property
     def cells_0(self):
@@ -103,10 +96,9 @@ class Regrid:
         material_rg = self.geom_0.material.flatten("F")[self.map_0to_rg].reshape(
             self.cells_rg, order="F"
         )
-        grid = damask.GeomGrid(
+        return damask.GeomGrid(
             material_rg, self.size_rg, self.geom_0.origin, comments=self.geom_0.comments
-        ).save(self.get_path(f"damask_regridded_{self.increment_title}.vti"))
-        return grid
+        )
 
 
 def write_RegriddedHDF5(
