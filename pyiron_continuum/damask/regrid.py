@@ -100,12 +100,11 @@ class Regrid:
 
     @property
     def grid(self):
-        grid_0 = damask.GeomGrid.load(self.get_path("damask.vti"))
-        material_rg = grid_0.material.flatten("F")[self.map_0to_rg].reshape(
+        material_rg = self.geom_0.material.flatten("F")[self.map_0to_rg].reshape(
             self.cells_rg, order="F"
         )
         grid = damask.GeomGrid(
-            material_rg, self.size_rg, grid_0.origin, comments=grid_0.comments
+            material_rg, self.size_rg, self.geom_0.origin, comments=self.geom_0.comments
         ).save(self.get_path(f"damask_regridded_{self.increment_title}.vti"))
         return grid
 
