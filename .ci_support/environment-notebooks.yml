@@ -21,3 +21,6 @@ dependencies:
   - mpich =4.2.1
   - pyvista =0.43.6
   - python-gmsh =4.12.2
+  - trame =3.6.0
+  - trame-vtk =2.8.8
+  - trame-vuetify =2.5.0
