@@ -17,5 +17,5 @@ jobs:
       - uses: pyiron/actions/build-notebooks@actions-3.1.0
         with:
           python-version: '3.11'
-          env-files: .ci_support/environment-notebooks.yml
+          env-files: .ci_support/environment-notebooks-integration.yml
           exclusion-file: .ci_support/exclude
