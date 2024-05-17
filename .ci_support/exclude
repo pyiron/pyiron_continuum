@@ -1,3 +1,3 @@
-fenics_membrane_under_gaussian_load.ipynb
-fenics_tutorial.ipynb
-fenics_linear_elasticity_exercises.ipynb
+fenics/membrane_under_gaussian_load.ipynb
+fenics/tutorial.ipynb
+fenics/linear_elasticity_exercises.ipynb
