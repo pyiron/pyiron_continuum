@@ -27,12 +27,11 @@ jobs:
         channels: conda-forge
         channel-priority: strict
         auto-update-conda: true
-        environment-file: .ci_support/environment.yml
+        environment-file: .ci_support/environment-notebooks-integration.yml
     - name: Setup
       shell: bash -l {0}
       run: |
         pip install --no-deps .
-        mamba env update --name test --file .ci_support/environment-notebooks.yml
     - name: Tests
       shell: bash -l {0}
       run: python -m unittest discover tests/integration/damask tests/integration/fenicsx
