@@ -214,6 +214,33 @@ class Create:
                                     n_sl=20, output=['xi_sl'],
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
+
+        Parameters for elastoplastic model ( power-law hardening behavior)
+        C_11, C_12, C_44 : Elastic constants in Pascals
+        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior)
+        N_sl : Number of slip-systems for a given slip family
+        a_sl : Hardening exponent for slip
+        dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds
+        h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals
+        h_sl_sl : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems)
+        n_sl : stress exponent for slip
+        xi_0_sl : initial critical shear stress for slip in pascals
+        xi_inf_sl : maximum critical shear stress for slip in pascals
+        output : Quantity as a output (Here xi_sl: shear stress)
+
+        Parameters for elastoplastic model ( isotropic hardening)
+        C_11, C_12, C_44 : Elastic constants in Pascals
+        type : plasticity model (Here isotropic : Isotropic plasticity)
+        a : Hardening exponent for slip
+        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds
+        h_0 : reference/initial hardening stress in pascals
+        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems)
+        n : stress exponent
+        xi_0 : initial critical shear stress in pascals
+        xi_inf : maximum critical shear stress in pascals
+        M : Taylor factor
+        output : Quantity as a output (Here xi: shear stress)
+        For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
         if plasticity == None:
             return {
