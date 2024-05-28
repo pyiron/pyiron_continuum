@@ -229,17 +229,18 @@ class Create:
         output : Quantity as a output (Here xi_sl: shear stress) (damask)
 
         Parameters for elastoplastic model ( isotropic hardening)
-        C_11, C_12, C_44 : Elastic constants in Pascals
-        type : plasticity model (Here isotropic : Isotropic plasticity)
-        a : Hardening exponent for slip
-        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds
-        h_0 : reference/initial hardening stress in pascals
-        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems)
-        n : stress exponent
-        xi_0 : initial critical shear stress in pascals
-        xi_inf : maximum critical shear stress in pascals
-        M : Taylor factor
-        output : Quantity as a output (Here xi: shear stress)
+        C_11, C_12, C_44 : Elastic constants in Pascals (material)
+        type : plasticity model (Here isotropic : Isotropic plasticity) (moel)
+        a : Hardening exponent for slip (material); cf. `a_sl`
+        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
+        h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
+        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model); cf. h_sl
+        n : stress exponent (material); cf. n_sl
+        xi_0 : initial critical shear stress in pascals (material)
+        xi_inf : maximum critical shear stress in pascals (material)
+        M : Taylor factor (material)
+        output : Quantity as a output (Here xi: shear stress) (damask)
+
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
         if plasticity == None:
