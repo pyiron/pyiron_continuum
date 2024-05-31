@@ -6,6 +6,7 @@ dependencies:
   - fenics
   - mshr
   - pyiron_base
+  - pyiron_snippets >=0.1.0,<0.2.0
   - pyiron-data
   - pyvista
   - scipy

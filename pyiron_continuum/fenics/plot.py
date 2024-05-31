@@ -5,7 +5,7 @@
 """
 Store Fenics job plotting routines as a helper to declutter the main class.
 """
-from pyiron_base import ImportAlarm
+from pyiron_snippets.import_alarm import ImportAlarm
 from pyiron_continuum.fenics.fix_plotting import plot as modified_fenics_plot
 with ImportAlarm(
         'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'

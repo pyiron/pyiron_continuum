@@ -6,7 +6,7 @@ DAMASK job, which runs a damask simulation, and create the necessary inputs
 
 import warnings
 
-from pyiron_base import TemplateJob, ImportAlarm
+from pyiron_base import TemplateJob
 
 with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"

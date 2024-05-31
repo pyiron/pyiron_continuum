@@ -6,7 +6,7 @@
 A job class for solving the time-independent Schroedinger equation on a discrete periodic mesh for a single particle.
 """
 
-from pyiron_base import PythonTemplateJob, DataContainer, ImportAlarm
+from pyiron_base import PythonTemplateJob, DataContainer
 import numpy as np
 from pyiron_continuum.mesh import RectMesh
 from scipy.sparse.linalg import eigsh, LinearOperator
@@ -15,7 +15,7 @@ from scipy.constants import physical_constants
 import matplotlib.pyplot as plt
 from typing import Union, Type
 from pyiron_continuum.schroedinger.potentials import Potential
-from pyiron_base import ImportAlarm
+from pyiron_snippets.import_alarm import ImportAlarm
 with ImportAlarm(
         'shcrodinger functionality requires the `k3d` module (and its dependencies) specified as extra'
         'requirements. Please install it and try again.'
