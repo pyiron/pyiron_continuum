@@ -1,4 +1,4 @@
-from pyiron_base import ImportAlarm
+from pyiron_snippets.import_alarm import ImportAlarm
 
 with ImportAlarm(
     "fenics functionality requires the `dolfinx`, `gmsh` modules (and their dependencies) specified as extra"

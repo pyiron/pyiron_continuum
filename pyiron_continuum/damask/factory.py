@@ -2,7 +2,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 """Factory of the damask classes and methods to a pyironized manner"""
 
-from pyiron_base import ImportAlarm
+from pyiron_snippets.import_alarm import ImportAlarm
 
 with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"

@@ -6,7 +6,7 @@
 Factories for Fenics-related object creation.
 """
 
-from pyiron_base import ImportAlarm
+from pyiron_snippets.import_alarm import ImportAlarm
 with ImportAlarm(
         'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
         'requirements. Please install it and try again.'

@@ -5,7 +5,7 @@
 """
 A job class for performing finite element simulations using the [FEniCS](https://fenicsproject.org) code.
 """
-from pyiron_base import ImportAlarm
+from pyiron_snippets.import_alarm import ImportAlarm
 with ImportAlarm(
         'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
         'requirements. Please install it and try again.'
