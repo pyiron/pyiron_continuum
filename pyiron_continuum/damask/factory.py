@@ -202,18 +202,29 @@ class Create:
             elasticity(dict)
             plasticity(dict)
         Examples:
-            phase(composition='Aluminum', lattice= 'cF',
-                  output_list='[F, P, F_e, F_p, L_p, O]',
-                   elasticity=elasticity, plasticity=plasticity)
-            # elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
-                                        C_12= 60.41e9, C_44=28.34e9)
-            #  plasticity = plasticity(N_sl=[12], a_sl=2.25,
-                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
-                                    h_0_sl_sl=75e6,
-                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                                    n_sl=20, output=['xi_sl'],
-                                    type='phenopowerlaw', xi_0_sl=[31e6],
-                                    xi_inf_sl=[63e6])
+            elasticity = elasticity(
+                type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+            )
+            plasticity = plasticity(
+                N_sl=[12],
+                a_sl=2.25,
+                atol_xi=1.0,
+                dot_gamma_0_sl=0.001,
+                h_0_sl_sl=75e6,
+                h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+                n_sl=20,
+                output=['xi_sl'],
+                type='phenopowerlaw',
+                xi_0_sl=[31e6],
+                xi_inf_sl=[63e6]
+            )
+            phase = phase(
+                composition='Aluminum',
+                lattice='cF',
+                output_list='[F, P, F_e, F_p, L_p, O]',
+                elasticity=elasticity,
+                plasticity=plasticity
+            )
 
         Parameters for elastoplastic model ( power-law hardening behavior)
         C_11, C_12, C_44 : Elastic constants in Pascals (material)
@@ -243,24 +254,15 @@ class Create:
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
-        if plasticity == None:
-            return {
-                composition: {
-                    "lattice": lattice,
-                    "mechanical": {"output": output_list, "elastic": elasticity},
-                }
+        d = {
+            composition: {
+                "lattice": lattice,
+                "mechanical": {"output": output_list, "elastic": elasticity},
             }
-        else:
-            return {
-                composition: {
-                    "lattice": lattice,
-                    "mechanical": {
-                        "output": output_list,
-                        "elastic": elasticity,
-                        "plastic": plasticity,
-                    },
-                }
-            }
+        }
+        if plasticity is not None:
+            d[composition]["mecahnical"]["plastic"] = pasticity
+        return d
 
     @staticmethod
     def elasticity(**kwargs):
