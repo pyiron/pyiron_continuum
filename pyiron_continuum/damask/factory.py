@@ -226,10 +226,10 @@ class Create:
     def elasticity(**kwargs):
         """
         Args:
-            C_11, C_12, C_44 : Elastic constants in Pascals (material)
+            type (str): Type of elasticity model (e.g. "Hooke")
+            C_11, C_12, C_44 (float): Elastic constants in Pascals (material)
 
         Returns a dictionary of elasticity parameters for damask input file.
-        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
         Examples:
              elasticity = elasticity(
                 type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
@@ -252,6 +252,7 @@ class Create:
                                     xi_inf_sl=[63e6])
 
         Parameters for elastoplastic model ( power-law hardening behavior)
+        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
         N_sl : Number of slip-systems for a given slip family (material)
         a_sl : Hardening exponent for slip (material)
         dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
