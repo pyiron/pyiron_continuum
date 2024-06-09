@@ -202,22 +202,6 @@ class Create:
             elasticity(dict)
             plasticity(dict)
         Examples:
-            elasticity = elasticity(
-                type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-            )
-            plasticity = plasticity(
-                N_sl=[12],
-                a_sl=2.25,
-                atol_xi=1.0,
-                dot_gamma_0_sl=0.001,
-                h_0_sl_sl=75e6,
-                h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                n_sl=20,
-                output=['xi_sl'],
-                type='phenopowerlaw',
-                xi_0_sl=[31e6],
-                xi_inf_sl=[63e6]
-            )
             phase = phase(
                 composition='Aluminum',
                 lattice='cF',
@@ -225,32 +209,6 @@ class Create:
                 elasticity=elasticity,
                 plasticity=plasticity
             )
-
-        Parameters for elastoplastic model ( power-law hardening behavior)
-        C_11, C_12, C_44 : Elastic constants in Pascals (material)
-        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
-        N_sl : Number of slip-systems for a given slip family (material)
-        a_sl : Hardening exponent for slip (material)
-        dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
-        h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
-        h_sl_sl : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model)
-        n_sl : stress exponent for slip (material)
-        xi_0_sl : initial critical shear stress for slip in pascals (material)
-        xi_inf_sl : maximum critical shear stress for slip in pascals (material)
-        output : Quantity as a output (Here xi_sl: shear stress) (damask)
-
-        Parameters for elastoplastic model ( isotropic hardening)
-        C_11, C_12, C_44 : Elastic constants in Pascals (material)
-        type : plasticity model (Here isotropic : Isotropic plasticity) (moel)
-        a : Hardening exponent for slip (material); cf. `a_sl`
-        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
-        h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
-        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model); cf. h_sl
-        n : stress exponent (material); cf. n_sl
-        xi_0 : initial critical shear stress in pascals (material)
-        xi_inf : maximum critical shear stress in pascals (material)
-        M : Taylor factor (material)
-        output : Quantity as a output (Here xi: shear stress) (damask)
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
@@ -267,10 +225,15 @@ class Create:
     @staticmethod
     def elasticity(**kwargs):
         """
+        Args:
+            C_11, C_12, C_44 : Elastic constants in Pascals (material)
+
         Returns a dictionary of elasticity parameters for damask input file.
+        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
         Examples:
-             elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
-                                        C_12= 60.41e9, C_44=28.34e9)
+             elasticity = elasticity(
+                type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+            )
         """
         return kwargs
 
@@ -278,6 +241,7 @@ class Create:
     def plasticity(**kwargs):
         """
         Returns a dictionary of plasticity parameters for damask input file.
+
         Examples:
             plasticity = plasticity(N_sl=[12], a_sl=2.25,
                                     atol_xi=1.0, dot_gamma_0_sl=0.001,
@@ -286,6 +250,28 @@ class Create:
                                     n_sl=20, output=['xi_sl'],
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
+
+        Parameters for elastoplastic model ( power-law hardening behavior)
+        N_sl : Number of slip-systems for a given slip family (material)
+        a_sl : Hardening exponent for slip (material)
+        dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
+        h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
+        h_sl_sl : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model)
+        n_sl : stress exponent for slip (material)
+        xi_0_sl : initial critical shear stress for slip in pascals (material)
+        xi_inf_sl : maximum critical shear stress for slip in pascals (material)
+        output : Quantity as a output (Here xi_sl: shear stress) (damask)
+
+        Parameters for elastoplastic model ( isotropic hardening)
+        a : Hardening exponent for slip (material); cf. `a_sl`
+        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
+        h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
+        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model); cf. h_sl
+        n : stress exponent (material); cf. n_sl
+        xi_0 : initial critical shear stress in pascals (material)
+        xi_inf : maximum critical shear stress in pascals (material)
+        M : Taylor factor (material)
+        output : Quantity as a output (Here xi: shear stress) (damask)
         """
         has_h0 = False
         has_h = False
