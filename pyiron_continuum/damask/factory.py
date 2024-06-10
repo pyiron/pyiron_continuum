@@ -219,7 +219,7 @@ class Create:
             }
         }
         if plasticity is not None:
-            d[composition]["mecahnical"]["plastic"] = pasticity
+            d[composition]["mechanical"]["plastic"] = plasticity
         return d
 
     @staticmethod
