@@ -231,6 +231,7 @@ class Create:
 
         Returns a dictionary of elasticity parameters for damask input file.
         Examples:
+             # For aluminium
              elasticity = elasticity(
                 type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
             )
