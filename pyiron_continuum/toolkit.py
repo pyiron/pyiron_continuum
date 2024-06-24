@@ -99,7 +99,7 @@ class DAMASK:
         return DAMASKCreator.homogenization(method, parameters)
 
     @staticmethod
-    def Phase(composition, lattice, output_list, elasticity, plasticity):
+    def Phase(composition, lattice, elasticity, plasticity, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
         """
         returns a dictionary describing the phases for damask
         Args:

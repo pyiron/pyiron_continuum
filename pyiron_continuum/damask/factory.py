@@ -192,7 +192,7 @@ class Create:
         return {method: parameters}
 
     @staticmethod
-    def phase(composition, lattice, output_list, elasticity, plasticity=None):
+    def phase(composition, lattice, elasticity, plasticity=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
         """
         Returns a dictionary describing the phases for damask.
         Args:
