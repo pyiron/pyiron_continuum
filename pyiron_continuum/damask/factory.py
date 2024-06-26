@@ -205,7 +205,6 @@ class Create:
             phase = phase(
                 composition='Aluminum',
                 lattice='cF',
-                output_list='[F, P, F_e, F_p, L_p, O]',
                 elasticity=elasticity,
                 plasticity=plasticity
             )
