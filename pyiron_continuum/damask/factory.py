@@ -11,6 +11,7 @@ with ImportAlarm(
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
 from pymatgen.core.periodic_table import Element
+import periodictable
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
