@@ -10,6 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
+from pymatgen.core.periodic_table import Element
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -192,12 +193,29 @@ class Create:
         return {method: parameters}
 
     @staticmethod
-    def phase(composition, lattice, elasticity, plasticity=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
+    def _get_element_abbreviation(name):
+        for element in periodictable.elements:
+            if element.name.lower() == name.lower():
+                return element.symbol
+        raise KeyError(name, "does not exist")
+
+    @staticmethod
+    def _composition_to_lattice(composition):
+
+        # Example usage
+        chemical_name = "Aluminum"
+        abbreviation = self._get_element_abbreviation(chemical_name)
+        print(f"The abbreviation for {chemical_name} is {abbreviation}.")
+
+        return Element(composition).structure
+
+    @staticmethod
+    def phase(composition, lattice=None, elasticity=None, plasticity=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
         """
         Returns a dictionary describing the phases for damask.
         Args:
             composition(str)
-            lattice(dict)
+            lattice(str)
             output_list(str)
             elasticity(dict)
             plasticity(dict)
@@ -211,6 +229,8 @@ class Create:
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
+        if lattice is None:
+            lattice = self._composition_to_lattice(composition)
         d = {
             composition: {
                 "lattice": lattice,
