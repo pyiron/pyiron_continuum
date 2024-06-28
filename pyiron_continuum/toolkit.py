@@ -212,8 +212,8 @@ def get_element_abbreviation(name):
     raise NameError(name, "does not exist")
 
 
-def composition_to_lattice(composition):
+def composition_to_spacegroup(composition):
     from ase.build import bulk
     from ase.spacegroup import get_spacegroup
     abbreviation = get_element_abbreviation(composition)
-    return {"I": "cI", "P": "hP", "F": "cF"}[get_spacegroup(bulk("Fe")).lattice]
+    return get_spacegroup(bulk(abbreviation))

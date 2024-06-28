@@ -10,7 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
-from pyiron_continuum.toolkit import composition_to_lattice
+from pyiron_continuum.toolkit import composition_to_spacegroup
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -216,7 +216,9 @@ class Create:
         if elasticity is None:
             raise ValueError("elasticity must not be None")
         if lattice is None:
-            lattice = composition_to_lattice(composition)
+            lattice = {"I": "cI", "P": "hP", "F": "cF"}[
+                composition_to_spacegroup(composition).lattice
+            ]
         d = {
             composition: {
                 "lattice": lattice,
