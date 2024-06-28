@@ -10,6 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
+from pyiron_continuum.toolkit import composition_to_lattice
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -213,7 +214,7 @@ class Create:
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
         if lattice is None:
-            lattice = self._composition_to_lattice(composition)
+            lattice = composition_to_lattice(composition)
         d = {
             composition: {
                 "lattice": lattice,
