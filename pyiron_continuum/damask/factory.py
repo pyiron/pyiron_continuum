@@ -213,6 +213,8 @@ class Create:
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
+        if elasticity is None:
+            raise ValueError("elasticity must not be None")
         if lattice is None:
             lattice = composition_to_lattice(composition)
         d = {
