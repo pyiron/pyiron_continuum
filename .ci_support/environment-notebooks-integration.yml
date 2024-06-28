@@ -28,4 +28,3 @@ dependencies:
 - trame-vuetify =2.5.0
 - sympy =1.12
 - python-blosc2
-- periodictable =1.5.2
