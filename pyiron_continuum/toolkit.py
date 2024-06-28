@@ -202,3 +202,18 @@ class ContinuumTools(Toolkit):
     @damask.setter
     def damask(self, value):
         self._damask = value
+
+
+def get_element_abbreviation(name):
+    import periodictable
+    for element in periodictable.elements:
+        if element.name.lower() == name.lower():
+            return element.symbol
+    raise NameError(name, "does not exist")
+
+
+def composition_to_lattice(composition):
+    from ase.build import bulk
+    from ase.spacegroup import get_spacegroup
+    abbreviation = get_element_abbreviation(composition)
+    return {"I": "cI", "P": "hP", "F": "cF"}[get_spacegroup(bulk("Fe"))]

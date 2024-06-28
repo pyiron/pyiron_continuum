@@ -10,8 +10,6 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
-from pymatgen.core.periodic_table import Element
-import periodictable
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -193,22 +191,6 @@ class Create:
         """
         return {method: parameters}
 
-    @staticmethod
-    def _get_element_abbreviation(name):
-        for element in periodictable.elements:
-            if element.name.lower() == name.lower():
-                return element.symbol
-        raise KeyError(name, "does not exist")
-
-    @staticmethod
-    def _composition_to_lattice(composition):
-
-        # Example usage
-        chemical_name = "Aluminum"
-        abbreviation = self._get_element_abbreviation(chemical_name)
-        print(f"The abbreviation for {chemical_name} is {abbreviation}.")
-
-        return Element(composition).structure
 
     @staticmethod
     def phase(composition, lattice=None, elasticity=None, plasticity=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
