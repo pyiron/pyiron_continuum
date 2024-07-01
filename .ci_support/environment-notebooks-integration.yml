@@ -14,7 +14,7 @@ dependencies:
 - pyiron_snippets =0.1.0
 - pyiron-data =0.0.29
 - python-damask =3.0.0b
-- scipy =1.13.0
+- scipy =1.13.1
 - seaborn =0.13.2
 - scikit-image =0.20.0
 - papermill

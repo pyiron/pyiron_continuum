@@ -8,7 +8,7 @@ dependencies:
 - numpy =1.26.4
 - pyiron =0.5.2
 - pyiron_snippets =0.1.0
-- scipy =1.13.0
+- scipy =1.13.1
 - sympy =1.12.1
 - python-blosc2
 - python-damask =3.0.0b
