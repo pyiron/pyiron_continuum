@@ -8,13 +8,8 @@ from pyiron_base import JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory
 from pyiron_snippets.import_alarm import ImportAlarm
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
-
-with ImportAlarm(
-    "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
-    "requirements. Please install it and try again."
-) as damask_alarm:
-    from pyiron_continuum.damask.factory import Create as DAMASKCreator
-    from pyiron_continuum.damask.factory import GridFactory
+from pyiron_continuum.damask.factory import Create as DAMASKCreator
+from pyiron_continuum.damask.factory import GridFactory
 
 try:
     from pyiron_base import ProjectGUI
