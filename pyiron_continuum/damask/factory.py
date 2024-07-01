@@ -202,12 +202,49 @@ class Create:
             elasticity(dict)
             plasticity(dict)
         Examples:
-            phase(composition='Aluminum', lattice= 'cF',
-                  output_list='[F, P, F_e, F_p, L_p, O]',
-                   elasticity=elasticity, plasticity=plasticity)
-            # elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
-                                        C_12= 60.41e9, C_44=28.34e9)
-            #  plasticity = plasticity(N_sl=[12], a_sl=2.25,
+            phase = phase(
+                composition='Aluminum',
+                lattice='cF',
+                output_list='[F, P, F_e, F_p, L_p, O]',
+                elasticity=elasticity,
+                plasticity=plasticity
+            )
+
+        For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
+        """
+        d = {
+            composition: {
+                "lattice": lattice,
+                "mechanical": {"output": output_list, "elastic": elasticity},
+            }
+        }
+        if plasticity is not None:
+            d[composition]["mechanical"]["plastic"] = plasticity
+        return d
+
+    @staticmethod
+    def elasticity(**kwargs):
+        """
+        Args:
+            type (str): Type of elasticity model (e.g. "Hooke")
+            C_11, C_12, C_44 (float): Elastic constants in Pascals (material)
+
+        Returns a dictionary of elasticity parameters for damask input file.
+        Examples:
+             # For aluminium
+             elasticity = elasticity(
+                type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
+            )
+        """
+        return kwargs
+
+    @staticmethod
+    def plasticity(**kwargs):
+        """
+        Returns a dictionary of plasticity parameters for damask input file.
+
+        Examples:
+            plasticity = plasticity(N_sl=[12], a_sl=2.25,
                                     atol_xi=1.0, dot_gamma_0_sl=0.001,
                                     h_0_sl_sl=75e6,
                                     h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
@@ -216,7 +253,6 @@ class Create:
                                     xi_inf_sl=[63e6])
 
         Parameters for elastoplastic model ( power-law hardening behavior)
-        C_11, C_12, C_44 : Elastic constants in Pascals (material)
         type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
         N_sl : Number of slip-systems for a given slip family (material)
         a_sl : Hardening exponent for slip (material)
@@ -229,8 +265,6 @@ class Create:
         output : Quantity as a output (Here xi_sl: shear stress) (damask)
 
         Parameters for elastoplastic model ( isotropic hardening)
-        C_11, C_12, C_44 : Elastic constants in Pascals (material)
-        type : plasticity model (Here isotropic : Isotropic plasticity) (moel)
         a : Hardening exponent for slip (material); cf. `a_sl`
         dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
         h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
@@ -240,50 +274,6 @@ class Create:
         xi_inf : maximum critical shear stress in pascals (material)
         M : Taylor factor (material)
         output : Quantity as a output (Here xi: shear stress) (damask)
-
-        For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
-        """
-        if plasticity == None:
-            return {
-                composition: {
-                    "lattice": lattice,
-                    "mechanical": {"output": output_list, "elastic": elasticity},
-                }
-            }
-        else:
-            return {
-                composition: {
-                    "lattice": lattice,
-                    "mechanical": {
-                        "output": output_list,
-                        "elastic": elasticity,
-                        "plastic": plasticity,
-                    },
-                }
-            }
-
-    @staticmethod
-    def elasticity(**kwargs):
-        """
-        Returns a dictionary of elasticity parameters for damask input file.
-        Examples:
-             elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
-                                        C_12= 60.41e9, C_44=28.34e9)
-        """
-        return kwargs
-
-    @staticmethod
-    def plasticity(**kwargs):
-        """
-        Returns a dictionary of plasticity parameters for damask input file.
-        Examples:
-            plasticity = plasticity(N_sl=[12], a_sl=2.25,
-                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
-                                    h_0_sl_sl=75e6,
-                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                                    n_sl=20, output=['xi_sl'],
-                                    type='phenopowerlaw', xi_0_sl=[31e6],
-                                    xi_inf_sl=[63e6])
         """
         has_h0 = False
         has_h = False
