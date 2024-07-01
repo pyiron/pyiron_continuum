@@ -10,8 +10,8 @@ dependencies:
 - k3d
 - matplotlib =3.8.4
 - numpy =1.26.4
-- pyiron =0.5.2
-- pyiron_snippets =0.1.0
+- pyiron_base =0.9.5
+- pyiron_snippets =0.1.2
 - pyiron-data =0.0.30
 - python-damask =3.0.0b
 - scipy =1.13.0
