@@ -11,7 +11,7 @@ dependencies:
 - matplotlib =3.8.4
 - numpy =1.26.4
 - pyiron =0.5.2
-- pyiron_snippets =0.1.0
+- pyiron_snippets =0.1.2
 - pyiron-data =0.0.29
 - python-damask =3.0.0b
 - scipy =1.13.0
