@@ -8,7 +8,7 @@ A toolkit for managing extensions to the project from atomistics.
 from pyiron_base import Toolkit, Project, JobFactoryCore
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
-from pyiron_continuum.project import DAMASKCreator
+from pyiron_continuum.damask.factory import Create as DAMASKCreator
 from pyiron_continuum.schroedinger.schroedinger import TISE
 from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Sinusoidal, SquareWell
