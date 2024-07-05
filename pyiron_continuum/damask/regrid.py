@@ -35,7 +35,7 @@ class Regrid:
     @cached_property
     def d5Out(self):
         d5Out = damask.Result(self.load_name)
-        increments = int(d5Out.increments[-1].split("_")[-1])
+        increments = int(str(d5Out.increments[-1]).split("_")[-1])
         d5Out = d5Out.view(increments=increments)
         return d5Out
 
