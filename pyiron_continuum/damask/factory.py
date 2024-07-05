@@ -193,7 +193,7 @@ class Create:
 
 
     @staticmethod
-    def phase(composition, lattice=None, elasticity=None, plasticity=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
         """
         Returns a dictionary describing the phases for damask.
         Args:
@@ -212,8 +212,6 @@ class Create:
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
-        if elasticity is None:
-            raise ValueError("elasticity must not be None")
         if lattice is None:
             lattice = {"I": "cI", "P": "hP", "F": "cF"}[
                 composition_to_spacegroup(composition).lattice
