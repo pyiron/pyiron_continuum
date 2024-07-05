@@ -123,8 +123,12 @@ class DAMASK:
                                     xi_inf_sl=[63e6])
         """
         return DAMASKCreator.phase(
-            composition, lattice, output_list, elasticity, plasticity
-        )
+            composition=composition,
+            lattice=lattice,
+            output_list=output_list,
+            elasticity=elasticity,
+            plasticity=plasticity,
+    )
 
     @staticmethod
     def Elasticity(**kwargs):
