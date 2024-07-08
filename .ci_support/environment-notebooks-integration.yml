@@ -8,7 +8,7 @@ dependencies:
 - damask-grid =3.0.0b
 - damask-mesh =3.0.0b
 - k3d
-- matplotlib =3.9.0
+- matplotlib =3.8.4
 - numpy =1.26.4
 - pyiron_base =0.9.5
 - pyiron_snippets =0.1.2
