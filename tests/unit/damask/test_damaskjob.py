@@ -62,9 +62,9 @@ class TestDamask(PyironTestCase):
         self.assertIsInstance(job.input.phase, dict)
 
     def test_composition_to_spacegroup(self):
-        self.assertEqual(composition_to_spacegroup("Aluminum").lattice, "F")
-        self.assertEqual(composition_to_spacegroup("Iron").lattice, "I")
-        self.assertEqual(composition_to_spacegroup("Magnesium").lattice, "P")
+        self.assertEqual(composition_to_spacegroup("Aluminum"), "FCC")
+        self.assertEqual(composition_to_spacegroup("Iron"), "BCC")
+        self.assertEqual(composition_to_spacegroup("Magnesium"), "HEX")
         self.assertRaises(NameError, composition_to_spacegroup, "Frodo")
 
     @classmethod

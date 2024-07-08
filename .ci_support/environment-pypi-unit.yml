@@ -12,4 +12,4 @@ dependencies:
 - sympy =1.12.1
 - python-blosc2
 - python-damask =3.0.0b
-- periodictable =1.5.2
+- mendeleev =0.17.0

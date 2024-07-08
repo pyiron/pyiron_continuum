@@ -10,6 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
+import mendeleev
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -214,7 +215,7 @@ class Create:
         """
         if lattice is None:
             lattice = {"I": "cI", "P": "hP", "F": "cF"}[
-                composition_to_spacegroup(composition).lattice
+                composition_to_spacegroup(composition)
             ]
         if output_list is None:
             output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
@@ -319,15 +320,16 @@ class Create:
 
 
 def get_element_abbreviation(name):
-    import periodictable
-    for element in periodictable.elements:
-        if element.name.lower() == name.lower():
-            return element.symbol
-    raise NameError(name, "does not exist")
+    if len(name) <= 2:
+        return name
+    from mendeleev.fetch import fetch_table
+    el_table = fetch_table('elements')
+    cond = el_table['name'] == name
+    if not any(cond):
+        raise NameError(name, "does not exist")
+    return el_table[cond].iloc[0]['symbol']
 
 
 def composition_to_spacegroup(composition):
-    from ase.build import bulk
-    from ase.spacegroup import get_spacegroup
     abbreviation = get_element_abbreviation(composition)
-    return get_spacegroup(bulk(abbreviation))
+    return mendeleev.element(abbreviation).lattice_structure
