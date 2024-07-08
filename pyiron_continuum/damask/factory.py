@@ -259,12 +259,15 @@ class Create:
                                     xi_inf_sl=[63e6])
 
         Parameters for elastoplastic model ( power-law hardening behavior)
-        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
+        type : plasticity model (Here phenopowerlaw : Phenomenological
+            plasticity with power-law hardening behavior) (model)
         N_sl : Number of slip-systems for a given slip family (material)
         a_sl : Hardening exponent for slip (material)
         dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
         h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
-        h_sl_sl : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model)
+        h_sl_sl : slip resistance from slip activity. Value of unity
+            corresponds to self hardening and 1.4 for latent hardening (not for
+            coplannar slip systems) (model)
         n_sl : stress exponent for slip (material)
         xi_0_sl : initial critical shear stress for slip in pascals (material)
         xi_inf_sl : maximum critical shear stress for slip in pascals (material)
@@ -274,7 +277,9 @@ class Create:
         a : Hardening exponent for slip (material); cf. `a_sl`
         dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
         h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
-        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model); cf. h_sl
+        h : slip resistance from slip activity. Value of unity corresponds to
+            self hardening and 1.4 for latent hardening (not for coplannar slip
+            systems) (model); cf. h_sl
         n : stress exponent (material); cf. n_sl
         xi_0 : initial critical shear stress in pascals (material)
         xi_inf : maximum critical shear stress in pascals (material)
