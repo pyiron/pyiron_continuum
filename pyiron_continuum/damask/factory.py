@@ -214,7 +214,7 @@ class Create:
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
         if lattice is None:
-            lattice = {"I": "cI", "P": "hP", "F": "cF"}[
+            lattice = {"BCC": "cI", "HEX": "hP", "FCC": "cF"}[
                 composition_to_spacegroup(composition)
             ]
         if output_list is None:
