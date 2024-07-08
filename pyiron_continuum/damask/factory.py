@@ -193,7 +193,7 @@ class Create:
 
 
     @staticmethod
-    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=["F", "P", "F_e", "F_p", "L_p", "O"]):
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         """
         Returns a dictionary describing the phases for damask.
         Args:
@@ -216,6 +216,8 @@ class Create:
             lattice = {"I": "cI", "P": "hP", "F": "cF"}[
                 composition_to_spacegroup(composition).lattice
             ]
+        if output_list is None:
+            output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
         d = {
             composition: {
                 "lattice": lattice,
