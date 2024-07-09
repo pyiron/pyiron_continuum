@@ -28,3 +28,4 @@ dependencies:
 - trame-vuetify =2.5.0
 - sympy =1.12.1
 - python-blosc2
+- mendeleev =0.17.0

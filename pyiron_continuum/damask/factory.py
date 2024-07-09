@@ -10,6 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
+import mendeleev
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -191,13 +192,14 @@ class Create:
         """
         return {method: parameters}
 
+
     @staticmethod
-    def phase(composition, lattice, output_list, elasticity, plasticity=None):
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         """
         Returns a dictionary describing the phases for damask.
         Args:
             composition(str)
-            lattice(dict)
+            lattice(str)
             output_list(str)
             elasticity(dict)
             plasticity(dict)
@@ -205,13 +207,18 @@ class Create:
             phase = phase(
                 composition='Aluminum',
                 lattice='cF',
-                output_list='[F, P, F_e, F_p, L_p, O]',
                 elasticity=elasticity,
                 plasticity=plasticity
             )
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
+        if lattice is None:
+            lattice = {"BCC": "cI", "HEX": "hP", "FCC": "cF"}[
+                composition_to_spacegroup(composition)
+            ]
+        if output_list is None:
+            output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
         d = {
             composition: {
                 "lattice": lattice,
@@ -310,3 +317,19 @@ class Create:
         if isinstance(method, str):
             method = getattr(Rotation, method)
         return method(*args, **kwargs)
+
+
+def get_element_abbreviation(name):
+    if len(name) <= 2:
+        return name
+    from mendeleev.fetch import fetch_table
+    el_table = fetch_table('elements')
+    cond = el_table['name'] == name
+    if not any(cond):
+        raise NameError(name, "does not exist")
+    return el_table[cond].iloc[0]['symbol']
+
+
+def composition_to_spacegroup(composition):
+    abbreviation = get_element_abbreviation(composition)
+    return mendeleev.element(abbreviation).lattice_structure
