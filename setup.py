@@ -37,7 +37,7 @@ setup(
         'pyiron_base==0.9.10',
         'pyiron_snippets==0.1.3',
         'scipy==1.14.0',
-        'sympy==1.13.1'
+        'sympy==1.13.0'
     ],
     extras_require={
         'fenics': [
