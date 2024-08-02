@@ -4,7 +4,7 @@
 
 import numpy as np
 from pyiron_continuum.elasticity.green import Anisotropic, Isotropic, Green
-from pyiron_continuum.elasticity.eschelby import Eschelby
+from pyiron_continuum.elasticity.eshelby import Eshelby
 from pyiron_continuum.elasticity import tools
 
 __author__ = "Sam Waseda"
@@ -456,7 +456,7 @@ class LinearElasticity:
     def get_dislocation_displacement(self, positions, burgers_vector):
         """
         Displacement field around a dislocation according to anisotropic elasticity theory
-        described by [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
+        described by [Eshelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
@@ -466,13 +466,13 @@ class LinearElasticity:
         Returns:
             ((n, 3)-array): Displacement field (z-axis coincides with the dislocation line)
         """
-        eschelby = Eschelby(self.elastic_tensor, burgers_vector)
-        return eschelby.get_displacement(positions)
+        eshelby = Eshelby(self.elastic_tensor, burgers_vector)
+        return eshelby.get_displacement(positions)
 
     def get_dislocation_strain(self, positions, burgers_vector):
         """
         Strain field around a dislocation according to anisotropic elasticity theory
-        described by [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
+        described by [Eshelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
@@ -482,13 +482,13 @@ class LinearElasticity:
         Returns:
             ((n, 3, 3)-array): Strain field (z-axis coincides with the dislocation line)
         """
-        eschelby = Eschelby(self.elastic_tensor, burgers_vector)
-        return eschelby.get_strain(positions)
+        eshelby = Eshelby(self.elastic_tensor, burgers_vector)
+        return eshelby.get_strain(positions)
 
     def get_dislocation_stress(self, positions, burgers_vector):
         """
         Stress field around a dislocation according to anisotropic elasticity theory
-        described by [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
+        described by [Eshelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
         Args:
             positions ((n,2) or (n,3)-array): Position around a dislocation. The third axis
