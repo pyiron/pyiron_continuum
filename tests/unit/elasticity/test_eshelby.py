@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from pyiron_continuum.elasticity.eschelby import Eschelby
+from pyiron_continuum.elasticity.eshelby import Eshelby
 from pyiron_continuum.elasticity import tools
 
 
@@ -12,7 +12,7 @@ def create_random_HL(b=None):
     C = tools.C_from_voigt(C)
     if b is None:
         b = np.random.random(3)
-    return Eschelby(C, b)
+    return Eshelby(C, b)
 
 
 class TestEschelby(unittest.TestCase):
