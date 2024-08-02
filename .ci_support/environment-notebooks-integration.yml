@@ -9,7 +9,7 @@ dependencies:
 - damask-mesh =3.0.0b
 - k3d
 - numpy =2.0.0
-- matplotlib =3.8.4
+- matplotlib =3.9.1
 - pyiron_base =0.9.10
 - pyiron_snippets =0.1.3
 - pyiron-data =0.0.30

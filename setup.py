@@ -33,7 +33,7 @@ setup(
     packages=find_packages(exclude=["*tests*"]),
     install_requires=[
         'numpy==2.0.0',
-        'matplotlib==3.8.4',
+        'matplotlib==3.9.1',
         'pyiron_base==0.9.10',
         'pyiron_snippets==0.1.3',
         'scipy==1.14.0',
