@@ -10,8 +10,8 @@ dependencies:
 - k3d
 - matplotlib =3.8.4
 - numpy =1.26.4
-- pyiron_base =0.9.5
-- pyiron_snippets =0.1.2
+- pyiron_base =0.9.10
+- pyiron_snippets =0.1.3
 - pyiron-data =0.0.30
 - python-damask =3.0.0b
 - scipy =1.14.0
@@ -28,3 +28,4 @@ dependencies:
 - trame-vuetify =2.5.0
 - sympy =1.12.1
 - python-blosc2
+- mendeleev =0.17.0

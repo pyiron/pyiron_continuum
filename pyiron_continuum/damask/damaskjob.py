@@ -111,7 +111,7 @@ class DAMASK(TemplateJob):
         """
         self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
-    def set_phase(self, composition, lattice, output_list):
+    def set_phase(self, composition, lattice, output_list=None):
         """
 
         Args:
