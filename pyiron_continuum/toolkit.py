@@ -8,7 +8,7 @@ A toolkit for managing extensions to the project from atomistics.
 from pyiron_base import Toolkit, Project, JobFactoryCore
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
-from pyiron_continuum.project import DAMASKCreator
+from pyiron_continuum.damask.factory import Create as DAMASKCreator
 from pyiron_continuum.schroedinger.schroedinger import TISE
 from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Sinusoidal, SquareWell
@@ -99,7 +99,7 @@ class DAMASK:
         return DAMASKCreator.homogenization(method, parameters)
 
     @staticmethod
-    def Phase(composition, lattice, output_list, elasticity, plasticity):
+    def Phase(composition, lattice, elasticity, plasticity, output_list=None):
         """
         returns a dictionary describing the phases for damask
         Args:
@@ -123,8 +123,12 @@ class DAMASK:
                                     xi_inf_sl=[63e6])
         """
         return DAMASKCreator.phase(
-            composition, lattice, output_list, elasticity, plasticity
-        )
+            composition=composition,
+            lattice=lattice,
+            output_list=output_list,
+            elasticity=elasticity,
+            plasticity=plasticity,
+    )
 
     @staticmethod
     def Elasticity(**kwargs):

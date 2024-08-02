@@ -10,6 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
+import mendeleev
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -191,13 +192,14 @@ class Create:
         """
         return {method: parameters}
 
+
     @staticmethod
-    def phase(composition, lattice, output_list, elasticity, plasticity=None):
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         """
         Returns a dictionary describing the phases for damask.
         Args:
             composition(str)
-            lattice(dict)
+            lattice(str)
             output_list(str)
             elasticity(dict)
             plasticity(dict)
@@ -205,13 +207,18 @@ class Create:
             phase = phase(
                 composition='Aluminum',
                 lattice='cF',
-                output_list='[F, P, F_e, F_p, L_p, O]',
                 elasticity=elasticity,
                 plasticity=plasticity
             )
 
         For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
         """
+        if lattice is None:
+            lattice = {"BCC": "cI", "HEX": "hP", "FCC": "cF"}[
+                composition_to_spacegroup(composition)
+            ]
+        if output_list is None:
+            output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
         d = {
             composition: {
                 "lattice": lattice,
@@ -253,12 +260,15 @@ class Create:
                                     xi_inf_sl=[63e6])
 
         Parameters for elastoplastic model ( power-law hardening behavior)
-        type : plasticity model (Here phenopowerlaw : Phenomenological plasticity with power-law hardening behavior) (model)
+        type : plasticity model (Here phenopowerlaw : Phenomenological
+            plasticity with power-law hardening behavior) (model)
         N_sl : Number of slip-systems for a given slip family (material)
         a_sl : Hardening exponent for slip (material)
         dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
         h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
-        h_sl_sl : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model)
+        h_sl_sl : slip resistance from slip activity. Value of unity
+            corresponds to self hardening and 1.4 for latent hardening (not for
+            coplannar slip systems) (model)
         n_sl : stress exponent for slip (material)
         xi_0_sl : initial critical shear stress for slip in pascals (material)
         xi_inf_sl : maximum critical shear stress for slip in pascals (material)
@@ -268,7 +278,9 @@ class Create:
         a : Hardening exponent for slip (material); cf. `a_sl`
         dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
         h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
-        h : slip resistance from slip activity. Value of unity corresponds to self hardening and 1.4 for latent hardening (not for coplannar slip systems) (model); cf. h_sl
+        h : slip resistance from slip activity. Value of unity corresponds to
+            self hardening and 1.4 for latent hardening (not for coplannar slip
+            systems) (model); cf. h_sl
         n : stress exponent (material); cf. n_sl
         xi_0 : initial critical shear stress in pascals (material)
         xi_inf : maximum critical shear stress in pascals (material)
@@ -305,3 +317,19 @@ class Create:
         if isinstance(method, str):
             method = getattr(Rotation, method)
         return method(*args, **kwargs)
+
+
+def get_element_abbreviation(name):
+    if len(name) <= 2:
+        return name
+    from mendeleev.fetch import fetch_table
+    el_table = fetch_table('elements')
+    cond = el_table['name'] == name
+    if not any(cond):
+        raise NameError(name, "does not exist")
+    return el_table[cond].iloc[0]['symbol']
+
+
+def composition_to_spacegroup(composition):
+    abbreviation = get_element_abbreviation(composition)
+    return mendeleev.element(abbreviation).lattice_structure
