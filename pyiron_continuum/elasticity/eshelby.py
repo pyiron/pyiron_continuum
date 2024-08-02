@@ -14,10 +14,10 @@ __status__ = "development"
 __date__ = "Aug 21, 2021"
 
 
-class Eschelby:
+class Eshelby:
     """
     Anisotropic elasticity theory for dislocations described by
-    [Eschelby](https://doi.org/10.1016/0001-6160(53)90099-6).
+    [Eshelby](https://doi.org/10.1016/0001-6160(53)90099-6).
 
     All notations follow the original paper.
     """
