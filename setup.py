@@ -35,7 +35,7 @@ setup(
         'matplotlib==3.8.4',
         'numpy==1.26.4',
         'pyiron_base==0.9.10',
-        'pyiron_snippets==0.1.2',
+        'pyiron_snippets==0.1.3',
         'scipy==1.14.0',
         'sympy==1.12.1'
     ],
