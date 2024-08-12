@@ -32,7 +32,7 @@ setup(
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
     install_requires=[
-        'matplotlib==3.9.1',
+        'matplotlib==3.9.1.post1',
         'numpy==1.26.4',
         'pyiron_base==0.9.11',
         'pyiron_snippets==0.1.3',
