@@ -26,6 +26,6 @@ dependencies:
 - trame =3.6.0
 - trame-vtk =2.8.8
 - trame-vuetify =2.5.0
-- sympy =1.13.1
+- sympy =1.13.2
 - python-blosc2
 - mendeleev =0.17.0
