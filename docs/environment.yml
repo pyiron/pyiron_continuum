@@ -7,6 +7,9 @@ dependencies:
 - sphinx-gallery
 - sphinx-rtd-theme
 - versioneer
+- coveralls
+- coverage
+- codacy-coverage
 - matplotlib =3.9.2
 - numpy =1.26.4
 - pyiron_base =0.9.12
