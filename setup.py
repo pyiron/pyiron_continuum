@@ -36,7 +36,7 @@ setup(
         'numpy==1.26.4',
         'pyiron_base==0.10.0',
         'pyiron_snippets==0.1.4',
-        'scipy==1.14.0',
+        'scipy==1.14.1',
         'sympy==1.13.2'
     ],
     extras_require={
