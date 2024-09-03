@@ -4,18 +4,14 @@
 
 import unittest
 from pyiron_continuum.reference.mendeleev import get_atom_info
-import numpy as np
 
 
 class TestMendeleev(unittest.TestCase):
     def test_data(self):
-        self.assertEqual(get_atom_info("aluminium", "name", "symbol"), "Al")
-        self.assertRaises(
-            KeyError, get_atom_info, "aluminium", "name", "symbol", 0.99
-        )
-        self.assertRaises(
-            KeyError, get_atom_info, "aluminium", "name", "symbol", 1
-        )
+        self.assertEqual(get_atom_info(name="aluminium")["symbol"], "Al")
+        with self.assertRaises(KeyError):
+            print(get_atom_info(name="my dog chased a cat"))
+        self.assertRaises(ValueError, get_atom_info)
 
 
 if __name__ == "__main__":

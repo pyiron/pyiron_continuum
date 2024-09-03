@@ -9,32 +9,25 @@ def get_tag(tag, arr, cutoff=0.8):
     return results[0]
 
 
-def get_atom_info(name, column_in, column_out, difflib_cutoff=0.8):
+def get_atom_info(difflib_cutoff=0.8, **kwargs):
     """
     Get atomic information from the periodic table.
 
-    Parameters
-    ----------
-    name : str
-        Element name or symbol.
-    column_in : str
-        Column name to search for the element.
-    column_out : str
-        Column name to return.
-    difflib_cutoff : float, optional
-        Cutoff for difflib.get_close_matches. Default is 0.8.
+    Args:
+        difflib_cutoff (float): Cutoff for difflib.get_close_matches
+        **kwargs: Key-value pairs to search for
 
-    Returns
-    -------
-    str
-        Atomic information.
+    Returns:
+        dict: Atomic information
     """
     df = fetch_table("elements")
-    if difflib_cutoff < 1:
-        name = get_tag(name, df[column_in], cutoff=difflib_cutoff)
-    data = df[df[column_in] == name]
-    if len(data) == 0:
-        raise KeyError(f"'{name}' not found")
-    if len(data) > 1:
-        raise KeyError(f"'{name}' is not uniquely defined")
-    return list(data[column_out])[0]
+    if len(kwargs) == 0:
+        raise ValueError("No arguments provided")
+    for key, tag in kwargs.items():
+        if difflib_cutoff < 1:
+            key = get_tag(key, df.keys(), cutoff=difflib_cutoff)
+            tag = get_tag(tag, df[key], cutoff=difflib_cutoff)
+            if sum(df[key] == tag) == 0:
+                raise KeyError(f"'{tag}' not found")
+            df = df[df[key] == tag]
+    return df.squeeze(axis=0).to_dict()
