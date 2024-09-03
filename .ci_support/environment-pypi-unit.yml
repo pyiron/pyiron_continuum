@@ -2,6 +2,7 @@ channels:
 - conda-forge
 dependencies:
 - coveralls
+- atomistics =0.1.32
 - coverage
 - codacy-coverage
 - matplotlib =3.9.2
