@@ -5,7 +5,6 @@
 import unittest
 from pyiron_base._tests import PyironTestCase
 from pyiron_continuum import Project
-from pyiron_continuum.damask.factory import composition_to_spacegroup
 
 
 class TestDamask(PyironTestCase):
