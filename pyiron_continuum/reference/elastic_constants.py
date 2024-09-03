@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 
-import numpy as np
 from atomistics.referencedata.wikipedia import get_elastic_properties
 
 
