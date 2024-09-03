@@ -7,7 +7,7 @@ from pyiron_continuum.reference.elastic_constants import get_elastic_constants
 import numpy as np
 
 
-class TestDecorators(unittest.TestCase):
+class TestElasticConstants(unittest.TestCase):
     def test_elastic_constants(self):
         d = get_elastic_constants("Fe")
         self.assertTrue(all(key in d for key in ["C_11", "C_12", "C_44"]))
