@@ -218,7 +218,10 @@ class Create:
                 composition_to_spacegroup(composition)
             ]
         if output_list is None:
-            output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
+            if plasticity is None:
+                output_list = ["F", "P", "F_e"]
+            else:
+                output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
         d = {
             composition: {
                 "lattice": lattice,
