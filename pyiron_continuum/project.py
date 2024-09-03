@@ -56,7 +56,7 @@ class Damask(PyironFactory):
         return DAMASKCreator.material(rotation, elements, phase, homogenization)
 
     @staticmethod
-    def phase(composition, lattice, elasticity, plasticity, output_list=None):
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         warnings.warn(
             "Setting phase via project creator is deprecated. Use job.set_phase instead"
         )

@@ -10,7 +10,7 @@ with ImportAlarm(
 ) as damask_alarm:
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
-import mendeleev
+from pyiron_continuum.reference.mendeleev import get_atom_info
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -215,10 +215,13 @@ class Create:
         """
         if lattice is None:
             lattice = {"BCC": "cI", "HEX": "hP", "FCC": "cF"}[
-                composition_to_spacegroup(composition)
+                get_atom_info(name=composition)["lattice_structure"]
             ]
         if output_list is None:
-            output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
+            if plasticity is None:
+                output_list = ["F", "P", "F_e"]
+            else:
+                output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
         d = {
             composition: {
                 "lattice": lattice,
@@ -317,19 +320,3 @@ class Create:
         if isinstance(method, str):
             method = getattr(Rotation, method)
         return method(*args, **kwargs)
-
-
-def get_element_abbreviation(name):
-    if len(name) <= 2:
-        return name
-    from mendeleev.fetch import fetch_table
-    el_table = fetch_table('elements')
-    cond = el_table['name'] == name
-    if not any(cond):
-        raise NameError(name, "does not exist")
-    return el_table[cond].iloc[0]['symbol']
-
-
-def composition_to_spacegroup(composition):
-    abbreviation = get_element_abbreviation(composition)
-    return mendeleev.element(abbreviation).lattice_structure
