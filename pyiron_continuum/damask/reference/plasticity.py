@@ -42,7 +42,7 @@ def get_plasticity(
                     try:
                         # Load the YAML content into a Python dictionary
                         yaml_content = yaml.safe_load(file_response.text)
-                        yaml_dicts[file["name"]] = yaml_content
+                        yaml_dicts[file["name"].replace(".yaml", "")] = yaml_content
                     except yaml.YAMLError as e:
                         warnings.warn(f"Failed to load {file['name']}: {e}")
                 else:
