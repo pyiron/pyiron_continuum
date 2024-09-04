@@ -4,7 +4,6 @@
 
 import unittest
 from pyiron_continuum.damask.reference.yaml import get_plasticity, get_elasticity
-import unittest
 
 
 class TestReference(unittest.TestCase):
