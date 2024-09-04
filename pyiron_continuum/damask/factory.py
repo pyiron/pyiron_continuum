@@ -11,6 +11,7 @@ with ImportAlarm(
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
 from pyiron_continuum.reference.mendeleev import get_atom_info
+from pyiron_continuum.reference.yaml import get_elasticity, get_plasticity
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -233,6 +234,10 @@ class Create:
         return d
 
     @staticmethod
+    def list_elasticity():
+        return get_elasticity()
+
+    @staticmethod
     def elasticity(**kwargs):
         """
         Args:
@@ -247,6 +252,10 @@ class Create:
             )
         """
         return kwargs
+
+    @staticmethod
+    def list_plasticity():
+        return get_elasticity()
 
     @staticmethod
     def plasticity(**kwargs):
