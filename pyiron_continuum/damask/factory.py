@@ -144,6 +144,7 @@ class Create:
     def __init__(self):
         """The create factory for the damask job."""
         self._grid = GridFactory()
+        self.plasticity = self.Plasticity(self)
 
     @property
     def grid(self):
@@ -191,7 +192,6 @@ class Create:
             homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
         """
         return {method: parameters}
-
 
     @staticmethod
     def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
@@ -248,65 +248,68 @@ class Create:
         """
         return kwargs
 
-    @staticmethod
-    def plasticity(**kwargs):
-        """
-        Returns a dictionary of plasticity parameters for damask input file.
+    class Plasticity:
+        def __init__(self, outer_instance):
+            self._outer_instance = outer_instance  # Reference to the outer Material instance if needed
 
-        Examples:
-            plasticity = plasticity(N_sl=[12], a_sl=2.25,
-                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
-                                    h_0_sl_sl=75e6,
-                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                                    n_sl=20, output=['xi_sl'],
-                                    type='phenopowerlaw', xi_0_sl=[31e6],
-                                    xi_inf_sl=[63e6])
+        def __call__(self, **kwargs):
+            """
+            Returns a dictionary of plasticity parameters for damask input file.
 
-        Parameters for elastoplastic model ( power-law hardening behavior)
-        type : plasticity model (Here phenopowerlaw : Phenomenological
-            plasticity with power-law hardening behavior) (model)
-        N_sl : Number of slip-systems for a given slip family (material)
-        a_sl : Hardening exponent for slip (material)
-        dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
-        h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
-        h_sl_sl : slip resistance from slip activity. Value of unity
-            corresponds to self hardening and 1.4 for latent hardening (not for
-            coplannar slip systems) (model)
-        n_sl : stress exponent for slip (material)
-        xi_0_sl : initial critical shear stress for slip in pascals (material)
-        xi_inf_sl : maximum critical shear stress for slip in pascals (material)
-        output : Quantity as a output (Here xi_sl: shear stress) (damask)
+            Examples:
+                plasticity = plasticity(N_sl=[12], a_sl=2.25,
+                                        atol_xi=1.0, dot_gamma_0_sl=0.001,
+                                        h_0_sl_sl=75e6,
+                                        h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
+                                        n_sl=20, output=['xi_sl'],
+                                        type='phenopowerlaw', xi_0_sl=[31e6],
+                                        xi_inf_sl=[63e6])
 
-        Parameters for elastoplastic model ( isotropic hardening)
-        a : Hardening exponent for slip (material); cf. `a_sl`
-        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
-        h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
-        h : slip resistance from slip activity. Value of unity corresponds to
-            self hardening and 1.4 for latent hardening (not for coplannar slip
-            systems) (model); cf. h_sl
-        n : stress exponent (material); cf. n_sl
-        xi_0 : initial critical shear stress in pascals (material)
-        xi_inf : maximum critical shear stress in pascals (material)
-        M : Taylor factor (material)
-        output : Quantity as a output (Here xi: shear stress) (damask)
-        """
-        has_h0 = False
-        has_h = False
-        vals = {}
-        for key, value in kwargs.items():
-            if "h_0_sl_sl" in key:
-                has_h0 = True
-                vals["h_0_sl-sl"] = value
-            if "h_sl_sl" in key:
-                has_h = True
-                vals["h_sl-sl"] = value
-        if has_h0:
-            kwargs["h_0_sl-sl"] = vals["h_0_sl-sl"]
-            del kwargs["h_0_sl_sl"]
-        if has_h:
-            kwargs["h_sl-sl"] = vals["h_sl-sl"]
-            del kwargs["h_sl_sl"]
-        return kwargs
+            Parameters for elastoplastic model ( power-law hardening behavior)
+            type : plasticity model (Here phenopowerlaw : Phenomenological
+                plasticity with power-law hardening behavior) (model)
+            N_sl : Number of slip-systems for a given slip family (material)
+            a_sl : Hardening exponent for slip (material)
+            dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
+            h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
+            h_sl_sl : slip resistance from slip activity. Value of unity
+                corresponds to self hardening and 1.4 for latent hardening (not for
+                coplannar slip systems) (model)
+            n_sl : stress exponent for slip (material)
+            xi_0_sl : initial critical shear stress for slip in pascals (material)
+            xi_inf_sl : maximum critical shear stress for slip in pascals (material)
+            output : Quantity as a output (Here xi_sl: shear stress) (damask)
+
+            Parameters for elastoplastic model ( isotropic hardening)
+            a : Hardening exponent for slip (material); cf. `a_sl`
+            dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
+            h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
+            h : slip resistance from slip activity. Value of unity corresponds to
+                self hardening and 1.4 for latent hardening (not for coplannar slip
+                systems) (model); cf. h_sl
+            n : stress exponent (material); cf. n_sl
+            xi_0 : initial critical shear stress in pascals (material)
+            xi_inf : maximum critical shear stress in pascals (material)
+            M : Taylor factor (material)
+            output : Quantity as a output (Here xi: shear stress) (damask)
+            """
+            has_h0 = False
+            has_h = False
+            vals = {}
+            for key, value in kwargs.items():
+                if "h_0_sl_sl" in key:
+                    has_h0 = True
+                    vals["h_0_sl-sl"] = value
+                if "h_sl_sl" in key:
+                    has_h = True
+                    vals["h_sl-sl"] = value
+            if has_h0:
+                kwargs["h_0_sl-sl"] = vals["h_0_sl-sl"]
+                del kwargs["h_0_sl_sl"]
+            if has_h:
+                kwargs["h_sl-sl"] = vals["h_sl-sl"]
+                del kwargs["h_sl_sl"]
+            return kwargs
 
     @staticmethod
     def rotation(method="from_random", *args, **kwargs):
