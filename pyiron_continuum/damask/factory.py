@@ -193,7 +193,6 @@ class Create:
         """
         return {method: parameters}
 
-
     @staticmethod
     def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         """
