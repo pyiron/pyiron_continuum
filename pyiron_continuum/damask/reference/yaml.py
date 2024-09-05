@@ -90,7 +90,9 @@ def get_yaml(
                     except yaml.YAMLError as e:
                         warnings.warn(f"Failed to load {file['name']}: {e}")
                 else:
-                    warnings.warn(f"Failed to download {file['name']}: {file_response.status_code}")
+                    warnings.warn(
+                        f"Failed to download {file['name']}: {file_response.status_code}"
+                    )
     else:
         response.raise_for_status()
     return yaml_dicts
