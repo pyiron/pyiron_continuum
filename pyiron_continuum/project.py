@@ -83,7 +83,7 @@ class Damask(PyironFactory):
         return DAMASKCreator.plasticity(**kwargs)
 
     @staticmethod
-    def homogenization(method, parameters):
+    def homogenization(method=None, parameters=None):
         warnings.warn(
             "Setting homogenization via project creator is deprecated. Use job.set_homogenization instead"
         )
