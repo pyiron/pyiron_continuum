@@ -49,7 +49,9 @@ class Regrid:
 
     @property
     def grid_coords_cell_0(self):
-        return self.grid_coords_point_initial + self.d5Out.get("u_p") - self.d5Out.origin
+        return (
+            self.grid_coords_point_initial + self.d5Out.get("u_p") - self.d5Out.origin
+        )
 
     @property
     def size_rg(self):
@@ -57,14 +59,15 @@ class Regrid:
         cornersRVE_coords = np.diag(self.size_0)
         cornersRVE_idx = [
             np.argwhere(
-                np.isclose(self.grid_coords_node_initial, cornersRVE_coords[corner]).all(
-                    axis=1
-                )
+                np.isclose(
+                    self.grid_coords_node_initial, cornersRVE_coords[corner]
+                ).all(axis=1)
             ).item()
             for corner in range(3)
         ]
         return (
-            np.diag(self.grid_coords_node_0[cornersRVE_idx]) - self.grid_coords_node_0[0]
+            np.diag(self.grid_coords_node_0[cornersRVE_idx])
+            - self.grid_coords_node_0[0]
         )
 
     @property

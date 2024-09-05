@@ -7,9 +7,10 @@ Store Fenics job plotting routines as a helper to declutter the main class.
 """
 from pyiron_snippets.import_alarm import ImportAlarm
 from pyiron_continuum.fenics.fix_plotting import plot as modified_fenics_plot
+
 with ImportAlarm(
-        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as fenics_alarm:
     import fenics as FEN
 import matplotlib.pyplot as plt
@@ -57,7 +58,11 @@ class Plot:
             axes.pop(projection_axis)
             return nodes[axes]
         elif len(nodes) != 2:
-            raise ValueError("Expected nodes to be in 2- or 3-dimensions, but got node shape {}".format(nodes.T.shape))
+            raise ValueError(
+                "Expected nodes to be in 2- or 3-dimensions, but got node shape {}".format(
+                    nodes.T.shape
+                )
+            )
         else:
             return nodes
 
@@ -66,21 +71,23 @@ class Plot:
         if len(nodal_values.shape) > 1:
             if len(nodal_values.shape) != 2:
                 raise ValueError(
-                    "Expected nodal values to have shape (n,) or (n, m) but got {}".format(nodal_values.shape)
+                    "Expected nodal values to have shape (n,) or (n, m) but got {}".format(
+                        nodal_values.shape
+                    )
                 )
             nodal_values = np.linalg.norm(nodal_values, axis=-1)
         return nodal_values
 
     def nodal2d(
-            self,
-            nodal_values,
-            nodes=None,
-            n_grid=1000,
-            n_grid_x=None,
-            n_grid_y=None,
-            add_colorbar=True,
-            lognorm=False,
-            projection_axis=None
+        self,
+        nodal_values,
+        nodes=None,
+        n_grid=1000,
+        n_grid_x=None,
+        n_grid_y=None,
+        add_colorbar=True,
+        lognorm=False,
+        projection_axis=None,
     ):
         """
         Plot a heatmap of nodal values (or their magnitude if vectors) interpolated onto a uniform grid.
@@ -135,10 +142,10 @@ class Plot:
         fig, ax = plt.subplots()
         heat = ax.imshow(
             Zi[::-1],
-            aspect='equal',
+            aspect="equal",
             cmap=plt.cm.viridis,
             extent=[Xi.min(), Xi.max(), Yi.min(), Yi.max()],
-            norm=LogNorm() if lognorm else None
+            norm=LogNorm() if lognorm else None,
         )
         if add_colorbar:
             fig.colorbar(heat, shrink=0.5, aspect=10)
@@ -164,27 +171,36 @@ class Plot:
             (matplotlib.axes._subplots.AxesSubplot): The subplots axis on which the plotting occurs.
         """
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
         nodal_values = self._nodal_values_to_1d(nodal_values)
         nodes = self._job.mesh.coordinates() if nodes is None else nodes
         if nodes.shape[1] != 3:
-            raise ValueError("Expected nodes to have shape (n, 3)  but got {}".format(nodes.shape))
+            raise ValueError(
+                "Expected nodes to have shape (n, 3)  but got {}".format(nodes.shape)
+            )
 
-        scattered = ax.scatter(*nodes.T, zdir='z', s=20, c=nodal_values, depthshade=True, cmap=plt.cm.viridis)
+        scattered = ax.scatter(
+            *nodes.T,
+            zdir="z",
+            s=20,
+            c=nodal_values,
+            depthshade=True,
+            cmap=plt.cm.viridis
+        )
         if add_colorbar:
             fig.colorbar(scattered, shrink=0.5, aspect=10)
         return scattered, fig, ax
 
     def solution2d(
-            self,
-            frame=-1,
-            n_grid=1000,
-            n_grid_x=None,
-            n_grid_y=None,
-            add_colorbar=True,
-            lognorm=False,
-            projection_axis=None
+        self,
+        frame=-1,
+        n_grid=1000,
+        n_grid_x=None,
+        n_grid_y=None,
+        add_colorbar=True,
+        lognorm=False,
+        projection_axis=None,
     ):
         """
         Plot a heatmap of solution magnitudes interpolated onto a uniform grid.
@@ -213,7 +229,7 @@ class Plot:
             n_grid_y=n_grid_y,
             add_colorbar=add_colorbar,
             lognorm=lognorm,
-            projection_axis=projection_axis
+            projection_axis=projection_axis,
         )
 
     def solution3d(self, frame=-1, nodes=None, add_colorbar=True):
@@ -231,4 +247,8 @@ class Plot:
             (matplotlib.figure.Figure): The parent figure.
             (matplotlib.axes._subplots.AxesSubplot): The subplots axis on which the plotting occurs.
         """
-        return self.nodal3d(nodal_values=self._job.output.solution[frame], nodes=nodes, add_colorbar=add_colorbar)
+        return self.nodal3d(
+            nodal_values=self._job.output.solution[frame],
+            nodes=nodes,
+            add_colorbar=add_colorbar,
+        )
