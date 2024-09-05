@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-import warnings
 from pyiron_base import JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory
 from pyiron_snippets.import_alarm import ImportAlarm
@@ -43,23 +42,14 @@ class Damask(PyironFactory):
 
     @staticmethod
     def loading(solver, load_steps):
-        warnings.warn(
-            "Setting loading via project creator is deprecated. Use job.set_loading instead"
-        )
         return DAMASKCreator.loading(solver=solver, load_steps=load_steps)
 
     @staticmethod
     def material(rotation, elements, phase, homogenization):
-        warnings.warn(
-            "Setting material via project creator is deprecated. Use job.set_material instead"
-        )
         return DAMASKCreator.material(rotation, elements, phase, homogenization)
 
     @staticmethod
-    def phase(composition, lattice, elasticity, plasticity, output_list=None):
-        warnings.warn(
-            "Setting phase via project creator is deprecated. Use job.set_phase instead"
-        )
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         return DAMASKCreator.phase(
             composition=composition,
             lattice=lattice,
@@ -70,30 +60,18 @@ class Damask(PyironFactory):
 
     @staticmethod
     def elasticity(**kwargs):
-        warnings.warn(
-            "Setting elasticity via project creator is deprecated. Use job.set_elasticity instead"
-        )
         return DAMASKCreator.elasticity(**kwargs)
 
     @staticmethod
     def plasticity(**kwargs):
-        warnings.warn(
-            "Setting plasticity via project creator is deprecated. Use job.set_plasticity instead"
-        )
         return DAMASKCreator.plasticity(**kwargs)
 
     @staticmethod
     def homogenization(method, parameters):
-        warnings.warn(
-            "Setting homogenization via project creator is deprecated. Use job.set_homogenization instead"
-        )
         return DAMASKCreator.homogenization(method=method, parameters=parameters)
 
     @staticmethod
     def rotation(method, *args, **kwargs):
-        warnings.warn(
-            "Setting rotation via project creator is deprecated. Use job.set_rotation instead"
-        )
         return DAMASKCreator.rotation(method=method, *args, **kwargs)
 
 

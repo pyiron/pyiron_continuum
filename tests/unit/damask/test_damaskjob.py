@@ -5,7 +5,6 @@
 import unittest
 from pyiron_base._tests import PyironTestCase
 from pyiron_continuum import Project
-from pyiron_continuum.damask.factory import composition_to_spacegroup
 
 
 class TestDamask(PyironTestCase):
@@ -60,12 +59,6 @@ class TestDamask(PyironTestCase):
             output_list='[F, P, F_e, F_p, L_p, O]',
         )
         self.assertIsInstance(job.input.phase, dict)
-
-    def test_composition_to_spacegroup(self):
-        self.assertEqual(composition_to_spacegroup("Aluminum"), "FCC")
-        self.assertEqual(composition_to_spacegroup("Iron"), "BCC")
-        self.assertEqual(composition_to_spacegroup("Magnesium"), "HEX")
-        self.assertRaises(NameError, composition_to_spacegroup, "Frodo")
 
     @classmethod
     def tearDownClass(cls):

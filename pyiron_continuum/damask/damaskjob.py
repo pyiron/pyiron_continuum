@@ -4,8 +4,6 @@
 DAMASK job, which runs a damask simulation, and create the necessary inputs
 """
 
-import warnings
-
 from pyiron_base import TemplateJob
 from pyiron_snippets.import_alarm import ImportAlarm
 
@@ -111,7 +109,7 @@ class DAMASK(TemplateJob):
         """
         self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
 
-    def set_phase(self, composition, lattice, output_list=None):
+    def set_phase(self, composition, lattice=None, output_list=None):
         """
 
         Args:
@@ -176,9 +174,6 @@ class DAMASK(TemplateJob):
 
     @material.setter
     def material(self, value):
-        warnings.warn(
-            "Setting material via project creator is deprecated. Use job.set_material instead"
-        )
         self.input.material = value
 
     def _attempt_init_material(self):
@@ -224,9 +219,6 @@ class DAMASK(TemplateJob):
 
     @grid.setter
     def grid(self, grid):
-        warnings.warn(
-            "Setting grid via project creator is deprecated. Use job.set_grid instead"
-        )
         self.input.grid = grid
 
     @property
@@ -235,9 +227,6 @@ class DAMASK(TemplateJob):
 
     @loading.setter
     def loading(self, value):
-        warnings.warn(
-            "Setting loading via project creator is deprecated. Use job.set_loading instead"
-        )
         self.input.loading = value
 
     def set_loading(self, solver, load_steps):
