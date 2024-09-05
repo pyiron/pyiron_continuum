@@ -128,7 +128,7 @@ class DAMASK:
             output_list=output_list,
             elasticity=elasticity,
             plasticity=plasticity,
-    )
+        )
 
     @staticmethod
     def Elasticity(**kwargs):

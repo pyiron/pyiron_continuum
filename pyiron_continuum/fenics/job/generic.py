@@ -6,9 +6,10 @@
 A job class for performing finite element simulations using the [FEniCS](https://fenicsproject.org) code.
 """
 from pyiron_snippets.import_alarm import ImportAlarm
+
 with ImportAlarm(
-        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
@@ -119,17 +120,19 @@ class Fenics(GenericJob):
     def __init__(self, project, job_name):
         """Create a new Fenics type job"""
         super(Fenics, self).__init__(project, job_name)
-        warnings.warn("Currently, the c++ dolfin functions used by fenics are not stored in the HDF5 file."
-                      " This includes the domains, boundary condition, spatial functions."
-                      " Therefore, it is not possible to reload the job properly, from HDF5 file."
-                      " It would be safe to remove the Fenics jobs, after defining the project.")
+        warnings.warn(
+            "Currently, the c++ dolfin functions used by fenics are not stored in the HDF5 file."
+            " This includes the domains, boundary condition, spatial functions."
+            " Therefore, it is not possible to reload the job properly, from HDF5 file."
+            " It would be safe to remove the Fenics jobs, after defining the project."
+        )
         self._python_only_job = True
         self.create = Creator(self)
         self._plot = Plot(self)
 
-        self.input = DataContainer(table_name='input')
+        self.input = DataContainer(table_name="input")
         self.input.mesh_resolution = 2
-        self.input.element_type = 'P'
+        self.input.element_type = "P"
         self.input.element_order = 1
         self.input.n_steps = 1
         self.input.n_print = 1
@@ -137,7 +140,7 @@ class Fenics(GenericJob):
         self.input.solver_parameters = {}
         # TODO?: Make input sub-classes to catch invalid input?
 
-        self.output = DataContainer(table_name='output')
+        self.output = DataContainer(table_name="output")
         self.output.solution = []
 
         # TODO: Figure out how to get these attributes into input/otherwise serializable
@@ -145,7 +148,9 @@ class Fenics(GenericJob):
         self.BC = None  # the boundary condition
         self._lhs = None  # the left hand side of the equation; FEniCS function
         self._rhs = None  # the right hand side of the equation; FEniCS function
-        self.time_dependent_expressions = []  # Any expressions used with a `t` attribute to evolve
+        self.time_dependent_expressions = (
+            []
+        )  # Any expressions used with a `t` attribute to evolve
         # TODO: Make a class to force these to be Expressions and to update them?
         self.assigned_u = None
         self.V_class = FEN.FunctionSpace
@@ -155,7 +160,7 @@ class Fenics(GenericJob):
         self._u = None  # u is the unkown function
         self._v = None  # the test function
         self._solution = None
-        self._vtk_filename = join(self.project_hdf5.path, 'output.pvd')
+        self._vtk_filename = join(self.project_hdf5.path, "output.pvd")
 
     # Wrap equations in setters so they can be easily protected in subclasses
     @property
@@ -184,7 +189,9 @@ class Fenics(GenericJob):
         else:
             self._mesh = mshr.generate_mesh(self.domain, self.input.mesh_resolution)
 
-        self._V = self.V_class(self.mesh, self.input.element_type, self.input.element_order)
+        self._V = self.V_class(
+            self.mesh, self.input.element_type, self.input.element_order
+        )
         # TODO: Allow changing what type of function space is used (VectorFunctionSpace, MultiMeshFunctionSpace...)
         # TODO: Allow having multiple sets of spaces and test/trial functions
         self._u = FEN.TrialFunction(self.V)
@@ -192,8 +199,10 @@ class Fenics(GenericJob):
         self._solution = FEN.Function(self.V)
 
         if any([v is not None for v in [self.BC, self.LHS, self.RHS]]):
-            warnings.warn("The mesh is being generated, but at least one of the boundary conditions or equation sides"
-                          "is already defined -- please re-define these values since the mesh is updated")
+            warnings.warn(
+                "The mesh is being generated, but at least one of the boundary conditions or equation sides"
+                "is already defined -- please re-define these values since the mesh is updated"
+            )
 
     def refresh(self):
         self.generate_mesh()
@@ -221,6 +230,7 @@ class Fenics(GenericJob):
         if self._v is None:
             self.refresh()
         return self._v
+
     # TODO: Do all this refreshing with a simple decorator instead of duplicate code
 
     @property
@@ -282,7 +292,12 @@ class Fenics(GenericJob):
         for step in np.arange(self.input.n_steps):
             for expr in self.time_dependent_expressions:
                 expr.t += self.input.dt
-            FEN.solve(self.LHS == self.RHS, self.u, self.BC, solver_parameters=self.input.solver_parameters)
+            FEN.solve(
+                self.LHS == self.RHS,
+                self.u,
+                self.BC,
+                solver_parameters=self.input.solver_parameters,
+            )
             if step % self.input.n_print == 0 or step == self.input.n_print - 1:
                 self._append_to_output()
             try:

@@ -55,7 +55,7 @@ class Damask(PyironFactory):
             lattice=lattice,
             output_list=output_list,
             elasticity=elasticity,
-            plasticity=plasticity
+            plasticity=plasticity,
         )
 
     @staticmethod

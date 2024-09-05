@@ -198,8 +198,7 @@ class Plot:
         return PlotDeformed.plotDefomed_vectorfunctionspace(V1, uh, factor)
 
     def plot_stresses_vonMises(self, mesh, V1, uh, lambda_, mu, factor):
-        return PlotStresses.plotStresses_vonMises(
-            mesh, V1, uh, lambda_, mu, factor)
+        return PlotStresses.plotStresses_vonMises(mesh, V1, uh, lambda_, mu, factor)
 
     def plot_load_scalar(self, mesh, load, factor):
         return PlotLoad.plotLoad_scalar(mesh, load, factor)
@@ -209,4 +208,3 @@ class Plot:
 
     def getValues_pressure(self, mesh, load, points):
         return PlotValuesFunction.getValues_Pressure(mesh, load, points)
-
