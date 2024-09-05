@@ -7,8 +7,10 @@ from pyiron_continuum.elasticity import tools
 from tqdm.auto import tqdm
 
 __author__ = "Sam Waseda"
-__copyright__ = "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2021, Max-Planck-Institut für Eisenforschung GmbH "
+    "- Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sam Waseda"
 __email__ = "waseda@mpie.de"
@@ -39,6 +41,7 @@ class Green:
     The Fourier transform of this equation can be analytically solved for the isotropic elasticity
     theory. For the anisotropic case, the integration along the azimuthal angle is required.
     """
+
     def _get_greens_function(self, r, derivative=0, fourier=False):
         """
         Args:
@@ -50,15 +53,12 @@ class Green:
             (numpy.array): Green's function values. If `derivative=0` or `fourier=True`,
                 (n, 3)-array is returned. For each derivative increment, a 3d-axis is added.
         """
-        raise NotImplementedError('get_greens_function must be defined in the child class')
+        raise NotImplementedError(
+            "get_greens_function must be defined in the child class"
+        )
 
     def get_greens_function(
-        self,
-        r,
-        derivative=0,
-        fourier=False,
-        check_unique=False,
-        save_memory=False
+        self, r, derivative=0, fourier=False, check_unique=False, save_memory=False
     ):
         """
         Args:
@@ -79,14 +79,18 @@ class Green:
         if check_unique:
             x, inv = np.unique(x.reshape(-1, 3), axis=0, return_inverse=True)
         if save_memory:
-            g_tmp = np.array([
-                self._get_greens_function(
-                    r=xx, derivative=derivative, fourier=fourier
-                )
-                for xx in tqdm(x)
-            ])
+            g_tmp = np.array(
+                [
+                    self._get_greens_function(
+                        r=xx, derivative=derivative, fourier=fourier
+                    )
+                    for xx in tqdm(x)
+                ]
+            )
         else:
-            g_tmp = self._get_greens_function(r=x, derivative=derivative, fourier=fourier)
+            g_tmp = self._get_greens_function(
+                r=x, derivative=derivative, fourier=fourier
+            )
         if check_unique:
             g_tmp = g_tmp[inv].reshape(np.asarray(r).shape + (derivative + 1) * (3,))
         return g_tmp
@@ -102,6 +106,7 @@ class Isotropic(Green):
     .. math:
         G = A \\delta_{ij} / r + B r_i r_j / r^3
     """
+
     def __init__(self, poissons_ratio, shear_modulus, min_distance=0, optimize=True):
         """
         Args:
@@ -122,56 +127,79 @@ class Isotropic(Green):
     def A(self):
         """First coefficient of the Green's function. For more, cf. DocString in the class level."""
         if self._A is None:
-            self._A = (3-4*self.poissons_ratio)*self.B
+            self._A = (3 - 4 * self.poissons_ratio) * self.B
         return self._A
 
     @property
     def B(self):
         """Second coefficient of the Green's function. For more, cf. DocString in the class level."""
         if self._B is None:
-            self._B = 1/(16*np.pi*self.shear_modulus*(1-self.poissons_ratio))
+            self._B = 1 / (16 * np.pi * self.shear_modulus * (1 - self.poissons_ratio))
         return self._B
 
     def G(self, r):
         """Green's function."""
-        R_inv = 1/np.linalg.norm(r, axis=-1)
-        G = self.A*np.eye(3)+self.B*np.einsum(
-            '...i,...j,...->...ij', r, r, R_inv**2, optimize=self.optimize
+        R_inv = 1 / np.linalg.norm(r, axis=-1)
+        G = self.A * np.eye(3) + self.B * np.einsum(
+            "...i,...j,...->...ij", r, r, R_inv**2, optimize=self.optimize
         )
-        return np.einsum('...ij,...->...ij', G, R_inv)
+        return np.einsum("...ij,...->...ij", G, R_inv)
 
     def G_fourier(self, k):
         """Fourier transform of the Green's function"""
         K = np.linalg.norm(k, axis=-1)
-        if self.min_dist==0:
-            return 4*np.pi*(
-                self.A*np.einsum('...,ij->...ij', 1/K**2, np.eye(3))
-                + self.B*np.einsum('...,ij->...ij', 1/K**2, np.eye(3))
-                - 2*self.B*np.einsum('...,...i,...j->...ij',  1/K**3, k, k)
+        if self.min_dist == 0:
+            return (
+                4
+                * np.pi
+                * (
+                    self.A * np.einsum("...,ij->...ij", 1 / K**2, np.eye(3))
+                    + self.B * np.einsum("...,ij->...ij", 1 / K**2, np.eye(3))
+                    - 2 * self.B * np.einsum("...,...i,...j->...ij", 1 / K**3, k, k)
+                )
             )
-        return 4*np.pi*(
-            self.A*np.einsum('...,ij->...ij', np.cos(K*self.min_dist)/K**2, np.eye(3))
-            + self.B*np.einsum(
-                '...,ij->...ij', np.sin(K*self.min_dist)/(K**3*self.min_dist), np.eye(3)
+        return (
+            4
+            * np.pi
+            * (
+                self.A
+                * np.einsum(
+                    "...,ij->...ij", np.cos(K * self.min_dist) / K**2, np.eye(3)
+                )
+                + self.B
+                * np.einsum(
+                    "...,ij->...ij",
+                    np.sin(K * self.min_dist) / (K**3 * self.min_dist),
+                    np.eye(3),
+                )
+                + self.B
+                * np.einsum(
+                    "...,...i,...j->nij",
+                    np.cos(K * self.min_dist) / K**4
+                    - 3 * np.sin(K * self.min_dist) / (K**5 * self.min_dist),
+                    k,
+                    k,
+                    optimize=self.optimize,
+                )
             )
-            + self.B*np.einsum(
-                '...,...i,...j->nij',
-                np.cos(K*self.min_dist)/K**4-3*np.sin(K*self.min_dist)/(K**5*self.min_dist),
-                k, k, optimize=self.optimize)
         )
 
     def dG(self, r):
         """First derivative of the Green's function."""
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
-        distance_condition = R<self.min_dist
+        distance_condition = R < self.min_dist
         R[distance_condition] = 1
-        r = np.einsum('...i,...->...i', r, 1/R)
-        v = -self.A*np.einsum('ik,...j->...ijk', E, r)
-        v += self.B*np.einsum('ij,...k->...ijk', E, r)
-        v += self.B*np.einsum('jk,...i->...ijk', E, r)
-        v -= 3*self.B*np.einsum('...i,...j,...k->...ijk', r, r, r, optimize=self.optimize)
-        v = np.einsum('...ijk,...->...ijk', v, 1/R**2)
+        r = np.einsum("...i,...->...i", r, 1 / R)
+        v = -self.A * np.einsum("ik,...j->...ijk", E, r)
+        v += self.B * np.einsum("ij,...k->...ijk", E, r)
+        v += self.B * np.einsum("jk,...i->...ijk", E, r)
+        v -= (
+            3
+            * self.B
+            * np.einsum("...i,...j,...k->...ijk", r, r, r, optimize=self.optimize)
+        )
+        v = np.einsum("...ijk,...->...ijk", v, 1 / R**2)
         v[distance_condition] *= 0
         return v
 
@@ -179,20 +207,48 @@ class Isotropic(Green):
         """Second derivative of the Green's function."""
         E = np.eye(3)
         R = np.linalg.norm(r, axis=-1)
-        distance_condition = R<self.min_dist
+        distance_condition = R < self.min_dist
         R[distance_condition] = 1
-        r = np.einsum('...i,...->...i', r, 1/R)
-        v = -self.A*np.einsum('ik,jl->ijkl', E, E)
-        v = v+3*self.A*np.einsum('ik,...j,...l->...ijkl', E, r, r, optimize=self.optimize)
-        v = v+self.B*np.einsum('il,jk->ijkl', E, E)
-        v -= 3*self.B*np.einsum('il,...j,...k->...ijkl', E, r, r, optimize=self.optimize)
-        v = v+self.B*np.einsum('ij,kl->ijkl', E, E)
-        v -= 3*self.B*np.einsum('...i,...j,kl->...ijkl', r, r, E, optimize=self.optimize)
-        v -= 3*self.B*np.einsum('ij,...k,...l->...ijkl', E, r, r, optimize=self.optimize)
-        v -= 3*self.B*np.einsum('jk,...i,...l->...ijkl', E, r, r, optimize=self.optimize)
-        v -= 3*self.B*np.einsum('jl,...i,...k->...ijkl', E, r, r, optimize=self.optimize)
-        v += 15*self.B*np.einsum('...i,...j,...k,...l->...ijkl', r, r, r, r, optimize=self.optimize)
-        v = np.einsum('...ijkl,...->...ijkl', v, 1/R**3)
+        r = np.einsum("...i,...->...i", r, 1 / R)
+        v = -self.A * np.einsum("ik,jl->ijkl", E, E)
+        v = v + 3 * self.A * np.einsum(
+            "ik,...j,...l->...ijkl", E, r, r, optimize=self.optimize
+        )
+        v = v + self.B * np.einsum("il,jk->ijkl", E, E)
+        v -= (
+            3
+            * self.B
+            * np.einsum("il,...j,...k->...ijkl", E, r, r, optimize=self.optimize)
+        )
+        v = v + self.B * np.einsum("ij,kl->ijkl", E, E)
+        v -= (
+            3
+            * self.B
+            * np.einsum("...i,...j,kl->...ijkl", r, r, E, optimize=self.optimize)
+        )
+        v -= (
+            3
+            * self.B
+            * np.einsum("ij,...k,...l->...ijkl", E, r, r, optimize=self.optimize)
+        )
+        v -= (
+            3
+            * self.B
+            * np.einsum("jk,...i,...l->...ijkl", E, r, r, optimize=self.optimize)
+        )
+        v -= (
+            3
+            * self.B
+            * np.einsum("jl,...i,...k->...ijkl", E, r, r, optimize=self.optimize)
+        )
+        v += (
+            15
+            * self.B
+            * np.einsum(
+                "...i,...j,...k,...l->...ijkl", r, r, r, r, optimize=self.optimize
+            )
+        )
+        v = np.einsum("...ijkl,...->...ijkl", v, 1 / R**3)
         v[distance_condition] *= 0
         return v
 
@@ -206,7 +262,7 @@ class Isotropic(Green):
         elif derivative == 2:
             return self.ddG(r)
         else:
-            raise ValueError('Derivative can be up to 2')
+            raise ValueError("Derivative can be up to 2")
 
 
 class Anisotropic(Green):
@@ -215,7 +271,7 @@ class Anisotropic(Green):
     elasticity theory based on Barnett's approach. All notations follow Barnett's paper.
 
     [Link](https://doi.org/10.1002/pssb.2220490238)
-    
+
     Notes:
 
     - In some cases this class can become extremely RAM-intensive. If possible do not keep
@@ -223,6 +279,7 @@ class Anisotropic(Green):
     - If the medium is isotropic, use Isotropic instead, which has analytical solutions and is
       therefore much faster.
     """
+
     def __init__(self, elastic_tensor, n_mesh=100, optimize=True):
         """
         Args:
@@ -231,7 +288,9 @@ class Anisotropic(Green):
             optimize (bool): cf. `optimize` in `numpy.einsum`
         """
         self.C = elastic_tensor
-        self.phi_range, self.dphi = np.linspace(0, np.pi, n_mesh, endpoint=False, retstep=True)
+        self.phi_range, self.dphi = np.linspace(
+            0, np.pi, n_mesh, endpoint=False, retstep=True
+        )
         self.optimize = optimize
         self._initialize()
 
@@ -247,9 +306,9 @@ class Anisotropic(Green):
     def z(self):
         if self._z is None:
             self._z = np.einsum(
-                'i...x,in->n...x',
+                "i...x,in->n...x",
                 tools.get_plane(self.T),
-                [np.cos(self.phi_range), np.sin(self.phi_range)]
+                [np.cos(self.phi_range), np.sin(self.phi_range)],
             )
         return self._z
 
@@ -257,7 +316,7 @@ class Anisotropic(Green):
     def Ms(self):
         if self._Ms is None:
             self._Ms = np.einsum(
-                'ijkl,...j,...l->...ik', self.C, self.z, self.z, optimize=self.optimize
+                "ijkl,...j,...l->...ik", self.C, self.z, self.z, optimize=self.optimize
             )
             self._Ms = np.linalg.inv(self._Ms)
         return self._Ms
@@ -271,79 +330,91 @@ class Anisotropic(Green):
     @property
     def zT(self):
         if self._zT is None:
-            self._zT = np.einsum('...p,...w->...pw', self.z, self.T)
-            self._zT = self._zT+np.einsum('...ij->...ji', self._zT)
+            self._zT = np.einsum("...p,...w->...pw", self.z, self.T)
+            self._zT = self._zT + np.einsum("...ij->...ji", self._zT)
         return self._zT
 
     @property
     def F(self):
         if self._F is None:
             self._F = np.einsum(
-                'jpnw,...ij,...nr,...pw->...ir', self.C, self.Ms, self.Ms, self.zT,
-                optimize=self.optimize
+                "jpnw,...ij,...nr,...pw->...ir",
+                self.C,
+                self.Ms,
+                self.Ms,
+                self.zT,
+                optimize=self.optimize,
             )
         return self._F
 
     @property
     def MF(self):
         if self._MF is None:
-            self._MF = np.einsum('...ij,...nr->...ijnr', self.F, self.Ms)
-            self._MF = self._MF+np.einsum('...ijnr->...nrij', self._MF)
+            self._MF = np.einsum("...ij,...nr->...ijnr", self.F, self.Ms)
+            self._MF = self._MF + np.einsum("...ijnr->...nrij", self._MF)
         return self._MF
 
     @property
     def Air(self):
-        Air = np.einsum('...pw,...ijnr->...ijnrpw', self.zT, self.MF)
-        Air -= 2*np.einsum(
-            '...ij,...nr,...p,...w->...ijnrpw',
-            self.Ms, self.Ms, self.T, self.T, optimize=self.optimize
+        Air = np.einsum("...pw,...ijnr->...ijnrpw", self.zT, self.MF)
+        Air -= 2 * np.einsum(
+            "...ij,...nr,...p,...w->...ijnrpw",
+            self.Ms,
+            self.Ms,
+            self.T,
+            self.T,
+            optimize=self.optimize,
         )
-        Air = np.einsum('jpnw,...ijnrpw->...ir', self.C, Air)
+        Air = np.einsum("jpnw,...ijnrpw->...ir", self.C, Air)
         return Air
 
     @property
     def _integrand_second_derivative(self):
-        results = -2*np.einsum('...sm,...ir->...isrm', self.zT, self.F)
-        results += 2*np.einsum(
-            '...s,...m,...ir->...isrm', self.T, self.T, self.Ms, optimize=self.optimize
+        results = -2 * np.einsum("...sm,...ir->...isrm", self.zT, self.F)
+        results += 2 * np.einsum(
+            "...s,...m,...ir->...isrm", self.T, self.T, self.Ms, optimize=self.optimize
         )
         results += np.einsum(
-            '...s,...m,...ir->...isrm', self.z, self.z, self.Air, optimize=self.optimize
+            "...s,...m,...ir->...isrm", self.z, self.z, self.Air, optimize=self.optimize
         )
         return results
 
     @property
     def _integrand_first_derivative(self):
-        results = np.einsum('...s,...ir->...isr', self.z, self.F)
-        results -= np.einsum('...s,...ir->...isr', self.T, self.Ms)
+        results = np.einsum("...s,...ir->...isr", self.z, self.F)
+        results -= np.einsum("...s,...ir->...isr", self.T, self.Ms)
         return results
 
     def _get_greens_function(self, r, derivative=0, fourier=False):
         self.r = np.asarray(r)
         if fourier:
             G = np.einsum(
-                'ijkl,...j,...l->...ik',
-                self.C,
-                self.r,
-                self.r,
-                optimize=self.optimize
+                "ijkl,...j,...l->...ik", self.C, self.r, self.r, optimize=self.optimize
             )
             return np.linalg.inv(G)
         self._initialize()
         if derivative == 0:
-            M = np.einsum('n...ij->...ij', self.Ms)*self.dphi/(4*np.pi**2)
-            return np.einsum('...ij,...->...ij', M, 1/np.linalg.norm(self.r, axis=-1))
+            M = np.einsum("n...ij->...ij", self.Ms) * self.dphi / (4 * np.pi**2)
+            return np.einsum("...ij,...->...ij", M, 1 / np.linalg.norm(self.r, axis=-1))
         elif derivative == 1:
-            M = np.einsum(
-                'n...isr->...isr', self._integrand_first_derivative
-            )/(4*np.pi**2)*self.dphi
-            return np.einsum('...isr,...->...isr', M, 1/np.linalg.norm(self.r, axis=-1)**2)
+            M = (
+                np.einsum("n...isr->...isr", self._integrand_first_derivative)
+                / (4 * np.pi**2)
+                * self.dphi
+            )
+            return np.einsum(
+                "...isr,...->...isr", M, 1 / np.linalg.norm(self.r, axis=-1) ** 2
+            )
         elif derivative == 2:
-            M = np.einsum(
-                'n...isrm->...isrm', self._integrand_second_derivative
-            )/(4*np.pi**2)*self.dphi
-            return np.einsum('...isrm,...->...isrm', M, 1/np.linalg.norm(self.r, axis=-1)**3)
+            M = (
+                np.einsum("n...isrm->...isrm", self._integrand_second_derivative)
+                / (4 * np.pi**2)
+                * self.dphi
+            )
+            return np.einsum(
+                "...isrm,...->...isrm", M, 1 / np.linalg.norm(self.r, axis=-1) ** 3
+            )
 
 
-Anisotropic.__doc__ = Green.__doc__+Anisotropic.__doc__
-Isotropic.__doc__ = Green.__doc__+Isotropic.__doc__
+Anisotropic.__doc__ = Green.__doc__ + Anisotropic.__doc__
+Isotropic.__doc__ = Green.__doc__ + Isotropic.__doc__
