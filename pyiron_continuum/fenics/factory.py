@@ -7,9 +7,10 @@ Factories for Fenics-related object creation.
 """
 
 from pyiron_snippets.import_alarm import ImportAlarm
+
 with ImportAlarm(
-        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as fenics_alarm:
     import fenics as FEN
     import mshr
@@ -43,15 +44,19 @@ class DomainFactory(PyironFactory):
 
     def circle(self, center, radius):
         return mshr.Circle(FEN.Point(*center), radius)
-#    circle.__doc__ = mshr.Circle.__doc__
+
+    #    circle.__doc__ = mshr.Circle.__doc__
 
     def square(self, length, origin=None):
         if origin is None:
             x, y = 0, 0
         else:
             x, y = origin[0], origin[1]
-        return mshr.Rectangle(FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y))
-#    square.__doc__ = mshr.Rectangle.__doc__
+        return mshr.Rectangle(
+            FEN.Point(0 + x, 0 + y), FEN.Point(length + x, length + y)
+        )
+
+    #    square.__doc__ = mshr.Rectangle.__doc__
 
     @staticmethod
     def box(corner1=None, corner2=None):
@@ -63,23 +68,30 @@ class DomainFactory(PyironFactory):
     @staticmethod
     def tetrahedron(p1, p2, p3, p4):
         """A tetrahedron defined by four points. (Details to be discovered and documented.)"""
-        return mshr.Tetrahedron(FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4))
+        return mshr.Tetrahedron(
+            FEN.Point(p1), FEN.Point(p2), FEN.Point(p3), FEN.Point(p4)
+        )
 
 
 class UnitMeshFactory(PyironFactory):
     def square(self, nx, ny):
         return FEN.UnitSquareMesh(nx, ny)
- #   square.__doc__ = FEN.UnitSquareMesh.__doc__
+
+
+#   square.__doc__ = FEN.UnitSquareMesh.__doc__
 
 
 class RegularMeshFactory(PyironFactory):
     def rectangle(self, p1, p2, nx, ny):
         return FEN.RectangleMesh(FEN.Point(p1), FEN.Point(p2), nx, ny)
-#    rectangle.__doc__ = FEN.RectangleMesh.__doc__
+
+    #    rectangle.__doc__ = FEN.RectangleMesh.__doc__
 
     def box(self, p1, p2, nx, ny, nz):
         return FEN.BoxMesh(FEN.Point(p1), FEN.Point(p2), nx, ny, nz)
- #   box.__doc__ = FEN.BoxMesh.__doc__
+
+
+#   box.__doc__ = FEN.BoxMesh.__doc__
 
 
 class BoundaryConditionFactory(PyironFactory):

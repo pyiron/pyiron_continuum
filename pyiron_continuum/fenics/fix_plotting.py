@@ -10,9 +10,10 @@ copy and modify the functionality
 
 import os
 from pyiron_snippets.import_alarm import ImportAlarm
+
 with ImportAlarm(
-        'fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "fenics functionality requires the `fenics`, `mshr` modules (and their dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as fenics_alarm:
     from dolfin.common.plotting import (
         _has_matplotlib,
@@ -24,7 +25,7 @@ with ImportAlarm(
         mplot_expression,
         mplot_function,
         mplot_meshfunction,
-        _meshfunction_types
+        _meshfunction_types,
     )
     import dolfin.cpp as cpp
     import ufl
@@ -108,6 +109,7 @@ def plot(object, *args, **kwargs):
     # Plot element
     if isinstance(object, ufl.FiniteElementBase):
         import ffc
+
         return ffc.plot(object, *args, **kwargs)
 
     # For dolfin.function.Function, extract cpp_object
@@ -116,7 +118,7 @@ def plot(object, *args, **kwargs):
 
     # Get mesh from explicit mesh kwarg, only positional arg, or via
     # object
-    mesh = kwargs.pop('mesh', None)
+    mesh = kwargs.pop("mesh", None)
     if isinstance(object, cpp.mesh.Mesh):
         if mesh is not None and mesh.id() != object.id():
             raise RuntimeError("Got different mesh in plot object and keyword argument")
@@ -138,15 +140,19 @@ def plot(object, *args, **kwargs):
     # Try to project if object is not a standard plottable type
     if not isinstance(object, _all_plottable_types):
         from dolfin.fem.projection import project
+
         try:
-            cpp.log.info("Object cannot be plotted directly, projecting to "
-                         "piecewise linears.")
+            cpp.log.info(
+                "Object cannot be plotted directly, projecting to " "piecewise linears."
+            )
             object = project(object, mesh=mesh)
             mesh = object.function_space().mesh()
             object = object._cpp_object
         except Exception as e:
-            msg = "Don't know how to plot given object:\n  %s\n" \
-                  "and projection failed:\n  %s" % (str(object), str(e))
+            msg = (
+                "Don't know how to plot given object:\n  %s\n"
+                "and projection failed:\n  %s" % (str(object), str(e))
+            )
             raise RuntimeError(msg)
 
     # Plot
@@ -164,10 +170,15 @@ def _plot_matplotlib(obj, mesh, kwargs):
         return
 
     # Plotting is not working with all ufl cells
-    if mesh.ufl_cell().cellname() not in ['interval', 'triangle', 'tetrahedron']:
-        raise AttributeError(("Matplotlib plotting backend doesn't handle %s mesh.\n"
-                              "Possible options are saving the output to XDMF file "
-                              "or using 'x3dom' backend.") % mesh.ufl_cell().cellname())
+    if mesh.ufl_cell().cellname() not in ["interval", "triangle", "tetrahedron"]:
+        raise AttributeError(
+            (
+                "Matplotlib plotting backend doesn't handle %s mesh.\n"
+                "Possible options are saving the output to XDMF file "
+                "or using 'x3dom' backend."
+            )
+            % mesh.ufl_cell().cellname()
+        )
 
     # Avoid importing pyplot until used
     try:
@@ -180,12 +191,13 @@ def _plot_matplotlib(obj, mesh, kwargs):
     if gdim == 3 or kwargs.get("mode") in ("warp",):
         # Importing this toolkit has side effects enabling 3d support
         from mpl_toolkits.mplot3d import axes3d  # noqa
+
         # Enabling the 3d toolbox requires some additional arguments
-        ax = plt.gca(projection='3d')
+        ax = plt.gca(projection="3d")
     else:
         ax = plt.gca()
     if mesh.geometry().dim() < 3:
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
 
     title = kwargs.pop("title", None)
     if title is not None:
@@ -203,8 +215,10 @@ def _plot_matplotlib(obj, mesh, kwargs):
     _unsupported_kwargs = ["rescale", "wireframe"]
     for kw in _unsupported_kwargs:
         if kwargs.pop(kw, None):
-            cpp.warning("Matplotlib backend does not support '%s' kwarg yet. "
-                        "Ignoring it..." % kw)
+            cpp.warning(
+                "Matplotlib backend does not support '%s' kwarg yet. "
+                "Ignoring it..." % kw
+            )
 
     if isinstance(obj, cpp.function.Function):
         return mplot_function(ax, obj, **kwargs)
@@ -217,4 +231,4 @@ def _plot_matplotlib(obj, mesh, kwargs):
     elif isinstance(obj, _meshfunction_types):
         return mplot_meshfunction(ax, obj, **kwargs)
     else:
-        raise AttributeError('Failed to plot %s' % type(obj))
+        raise AttributeError("Failed to plot %s" % type(obj))
