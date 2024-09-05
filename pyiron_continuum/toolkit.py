@@ -141,6 +141,13 @@ class DAMASK:
         return DAMASKCreator.elasticity(**kwargs)
 
     @staticmethod
+    def list_elasticity():
+        """
+        returns a list of available elasticity types
+        """
+        return DAMASKCreator.list_elasticity()
+
+    @staticmethod
     def Plasticity(**kwargs):
         """
         returns a dictionary of plasticity parameters for damask input file
@@ -154,6 +161,13 @@ class DAMASK:
                                     xi_inf_sl=[63e6])
         """
         return DAMASKCreator.plasticity(**kwargs)
+
+    @staticmethod
+    def list_plasticity():
+        """
+        returns a list of available plasticity types
+        """
+        return DAMASKCreator.list_plasticity()
 
     @staticmethod
     def Rotation(method="from_random", *args, **kwargs):
