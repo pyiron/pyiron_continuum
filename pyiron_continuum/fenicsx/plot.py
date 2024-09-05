@@ -56,9 +56,7 @@ def epsilon(u):
 
 
 def sigma(u, lambda_, mu):
-    return lambda_ * ufl.nabla_div(u) * ufl.Identity(
-        len(u)
-    ) + 2 * mu * epsilon(u)
+    return lambda_ * ufl.nabla_div(u) * ufl.Identity(len(u)) + 2 * mu * epsilon(u)
 
 
 class PlotStresses:
@@ -68,12 +66,14 @@ class PlotStresses:
     def plotStresses_vonMises(mesh, V, uh, lambda_, mu, factor):
         topology, cell_types, geometry = DFX.plot.vtk_mesh(V)
         grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
-        s = sigma(uh, lambda_, mu) - 1. / geometry.shape[1] * ufl.tr(sigma(
-            uh, lambda_, mu)) * ufl.Identity(len(uh))
-        von_Mises = ufl.sqrt(3. / 2 * ufl.inner(s, s))
+        s = sigma(uh, lambda_, mu) - 1.0 / geometry.shape[1] * ufl.tr(
+            sigma(uh, lambda_, mu)
+        ) * ufl.Identity(len(uh))
+        von_Mises = ufl.sqrt(3.0 / 2 * ufl.inner(s, s))
         V_von_mises = DFX.fem.functionspace(mesh, ("DG", 0))
         stress_expr = DFX.fem.Expression(
-            von_Mises, V_von_mises.element.interpolation_points())
+            von_Mises, V_von_mises.element.interpolation_points()
+        )
         stresses = DFX.fem.Function(V_von_mises)
         stresses.interpolate(stress_expr)
         p = pyvista.Plotter()
@@ -104,7 +104,6 @@ class PlotLoad:
         return p.show()
 
 
-
 class PlotValuesFunction:
     def __init__(self):
         super().__init__()
@@ -115,7 +114,9 @@ class PlotValuesFunction:
         cells = []
         points_on_proc = []
         cell_candidates = geometry.compute_collisions_points(bb_tree, points.T)
-        colliding_cells = geometry.compute_colliding_cells(mesh, cell_candidates, points.T)
+        colliding_cells = geometry.compute_colliding_cells(
+            mesh, cell_candidates, points.T
+        )
         for i, point in enumerate(points.T):
             if len(colliding_cells.links(i)) > 0:
                 points_on_proc.append(point)
@@ -134,7 +135,9 @@ class PlotValuesFunction:
         cells = []
         points_on_proc = []
         cell_candidates = geometry.compute_collisions_points(bb_tree, points.T)
-        colliding_cells = geometry.compute_colliding_cells(mesh, cell_candidates, points.T)
+        colliding_cells = geometry.compute_colliding_cells(
+            mesh, cell_candidates, points.T
+        )
         for i, point in enumerate(points.T):
             if len(colliding_cells.links(i)) > 0:
                 points_on_proc.append(point)
@@ -142,6 +145,3 @@ class PlotValuesFunction:
         points_on_proc = np.array(points_on_proc, dtype=np.float64)
         p_values = pressure.eval(points_on_proc, cells)
         return p_values, points_on_proc
-
-
-

@@ -16,19 +16,20 @@ import matplotlib.pyplot as plt
 from typing import Union, Type
 from pyiron_continuum.schroedinger.potentials import Potential
 from pyiron_snippets.import_alarm import ImportAlarm
+
 with ImportAlarm(
-        'shcrodinger functionality requires the `k3d` module (and its dependencies) specified as extra'
-        'requirements. Please install it and try again.'
+    "shcrodinger functionality requires the `k3d` module (and its dependencies) specified as extra"
+    "requirements. Please install it and try again."
 ) as k3d_alarm:
     import k3d
 
-HBAR = physical_constants['reduced Planck constant in eV s'][0]
-KB = physical_constants['Boltzmann constant in eV/K'][0]
+HBAR = physical_constants["reduced Planck constant in eV s"][0]
+KB = physical_constants["Boltzmann constant in eV/K"][0]
 # conversion factor to convert the units of all terms in the Schroedinder equation are in eV. More documentation
 # in _hamiltonian of the TISE class.
 EV2_S2_PER_ANG2_PER_AMU_IN_EV = 9.64853322e27
 # keep the default mass as electron mass in AMU.
-M = physical_constants['electron mass in u'][0]
+M = physical_constants["electron mass in u"][0]
 
 __author__ = "Liam Huber, Raynol Dsouza"
 __copyright__ = (
@@ -44,7 +45,8 @@ __date__ = "Sep 8, 2021"
 
 class _TISEInput(DataContainer):
     """TISE custom input holder"""
-    def __init__(self, init=None, table_name='input', lazy=False):
+
+    def __init__(self, init=None, table_name="input", lazy=False):
         super().__init__(init=init, table_name=table_name, lazy=lazy)
         self._mesh = None
         self._potential = None
@@ -58,7 +60,9 @@ class _TISEInput(DataContainer):
     @mesh.setter
     def mesh(self, new_mesh: RectMesh):
         if not isinstance(new_mesh, RectMesh):
-            raise TypeError(f'Meshes must be of type {RectMesh} but got type {type(new_mesh)}')
+            raise TypeError(
+                f"Meshes must be of type {RectMesh} but got type {type(new_mesh)}"
+            )
         new_mesh.simplify_1d = False
         self._mesh = new_mesh
 
@@ -73,7 +77,8 @@ class _TISEInput(DataContainer):
 
 class _TISEOutput(DataContainer):
     """TISE custom output holder"""
-    def __init__(self, init=None, table_name='input', lazy=False):
+
+    def __init__(self, init=None, table_name="input", lazy=False):
         super().__init__(init=init, table_name=table_name, lazy=lazy)
         self.energy = None
         self.psi = None
@@ -84,7 +89,7 @@ class _TISEOutput(DataContainer):
         return tuple(n for n in range(1, len(self.psi.shape)))
 
     def _broadcast_vector_to_space(self, vector: np.ndarray) -> np.ndarray:
-        return vector.reshape(-1, *(1,)*len(self._space_axes))
+        return vector.reshape(-1, *(1,) * len(self._space_axes))
 
     def _weight_states(self, states: np.ndarray, weights: np.ndarray) -> np.ndarray:
         return states * self._broadcast_vector_to_space(weights)
@@ -92,7 +97,7 @@ class _TISEOutput(DataContainer):
     @property
     def rho(self) -> np.ndarray:
         if self._rho is None and self.psi is not None:
-            self._rho = self.psi ** 2
+            self._rho = self.psi**2
         return self._rho
 
     def get_boltzmann_occupation(self, temperature: float) -> np.ndarray:
@@ -182,8 +187,9 @@ class TISE(PythonTemplateJob):
         Thus, to get the first term to eV we need to multiply it by eV s / A**2 / u.
         The math is here: https://www.wolframalpha.com/input/?i=%28eV*s%29%5E2%2F%28AMU%29+%2F%28Angstrom%5E2%29+in+eV
         """
-        return -(HBAR ** 2 / (2 * self.input.mass)) * self.mesh.laplacian(psi) * EV2_S2_PER_ANG2_PER_AMU_IN_EV + \
-               self._potential_psi(psi)
+        return -(HBAR**2 / (2 * self.input.mass)) * self.mesh.laplacian(
+            psi
+        ) * EV2_S2_PER_ANG2_PER_AMU_IN_EV + self._potential_psi(psi)
 
     def _flat_hamiltonian(self, psi_1d: np.ndarray) -> np.ndarray:
         """Matrix-vector product for `LinearOperator` to use."""
@@ -194,9 +200,11 @@ class TISE(PythonTemplateJob):
         n_mat = np.prod(self.mesh.divisions)
         flat_ham = LinearOperator((n_mat, n_mat), self._flat_hamiltonian)
 
-        eigenvalues, eigenvectors = eigsh(flat_ham, which='SA', k=self.input.n_states)
+        eigenvalues, eigenvectors = eigsh(flat_ham, which="SA", k=self.input.n_states)
         self.output.energy = eigenvalues
-        self.output.psi = np.array([np.reshape(v, self.mesh.divisions) for v in eigenvectors.T])
+        self.output.psi = np.array(
+            [np.reshape(v, self.mesh.divisions) for v in eigenvectors.T]
+        )
         self.status.finished = True
         self.to_hdf()
 
@@ -234,7 +242,9 @@ class _PlotCore(ABC):
         return self._make_plot(self._job.output.rho[i], ax=ax, **kwargs)
 
     def boltzmann_rho(self, temperature, ax=None, **kwargs):
-        return self._make_plot(self._job.output.get_boltzmann_rho(temperature), ax=ax, **kwargs)
+        return self._make_plot(
+            self._job.output.get_boltzmann_rho(temperature), ax=ax, **kwargs
+        )
 
 
 class _Plot1D(_PlotCore):
@@ -246,7 +256,7 @@ class _Plot1D(_PlotCore):
         if n_states is None:
             n_states = self._job.input.n_states
         fig, ax = plt.subplots()
-        self.potential(ax=ax.twinx(), label='potl', color='k')
+        self.potential(ax=ax.twinx(), label="potl", color="k")
         for i in range(n_states):
             self.psi(i, shift=self._job.output.energy[i], ax=ax, label=i)
         ax.legend()
@@ -268,10 +278,17 @@ class _Plot3D(_PlotCore):
             return None, ax
 
     def _plot(self, ax, data, level=0.01, **kwargs):
-        plt_surface = k3d.marching_cubes(scalar_field=data.astype(np.float32), level=level,
-                                         bounds=self._job.mesh.bounds.flatten())
+        plt_surface = k3d.marching_cubes(
+            scalar_field=data.astype(np.float32),
+            level=level,
+            bounds=self._job.mesh.bounds.flatten(),
+        )
         ax += plt_surface
-        plt_surface = k3d.marching_cubes(scalar_field=data.astype(np.float32), level=-level,
-                                         bounds=self._job.mesh.bounds.flatten(), color=10)
+        plt_surface = k3d.marching_cubes(
+            scalar_field=data.astype(np.float32),
+            level=-level,
+            bounds=self._job.mesh.bounds.flatten(),
+            color=10,
+        )
         ax += plt_surface
         return ax

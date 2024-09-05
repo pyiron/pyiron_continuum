@@ -1,4 +1,3 @@
-
 from pyiron_base import HasStorage
 from abc import ABC, abstractmethod
 from pyiron_continuum.mesh import RectMesh
@@ -60,10 +59,13 @@ class SquareWell(Potential):
 
     def __call__(self, mesh: Type[RectMesh]) -> np.ndarray:
         potential = np.ones_like(mesh.mesh) * self.depth
-        mask = np.array([
-            (m >= 0.5 * l * (1 - self.width - 1E-16)) * (m < 0.5 * l * (1 + self.width))
-            for m, l in zip(mesh.mesh, mesh.lengths)
-        ])
+        mask = np.array(
+            [
+                (m >= 0.5 * l * (1 - self.width - 1e-16))
+                * (m < 0.5 * l * (1 + self.width))
+                for m, l in zip(mesh.mesh, mesh.lengths)
+            ]
+        )
         potential[mask] = 0
         return np.amax(potential, axis=0)
 
@@ -96,7 +98,7 @@ class Sinusoidal(Potential):
     def _clean_waves(self, n_waves: int) -> int:
         if not np.issubdtype(type(n_waves), np.integer):
             raise TypeError(
-                f'Waves must come in integers to obey periodic boundary conditions, but got {type(n_waves)}'
+                f"Waves must come in integers to obey periodic boundary conditions, but got {type(n_waves)}"
             )
         return n_waves
 
@@ -122,5 +124,5 @@ class Sinusoidal(Potential):
                 self.amplitude * np.sin(2 * np.pi * self.n_waves * m / l)
                 for m, l in zip(mesh.mesh, mesh.lengths)
             ],
-            axis=0
+            axis=0,
         )

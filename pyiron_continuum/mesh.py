@@ -9,50 +9,63 @@ A job class for solving the time-independent Schroedinger equation on a discrete
 from pyiron_base import HasStorage
 import numpy as np
 from typing import Union, List, Callable, Any
+
 BoundsList = List[Union[float, int, List[Union[float, int]]]]
 
 
 def callable_to_array(method):
     """If the first argument of the method is callable, replaces it with the callable evaluated on self."""
+
     def wrapper(self, fnc, **kwargs):
         if callable(fnc):
             return method(self, fnc(self), **kwargs)
         else:
             return method(self, fnc, **kwargs)
+
     return wrapper
 
 
 def has_default_accuracy(method):
     """Replaces the `accuracy` argument with the instance attribute of the same name if `accuracy` is None."""
+
     def wrapper(self, fnc, accuracy=None, **kwargs):
         accuracy = self.accuracy if accuracy is None else accuracy
         if accuracy % 2 != 0 or accuracy < 2:
-            raise ValueError(f'Expected an even, positive accuracy but got {accuracy}')
+            raise ValueError(f"Expected an even, positive accuracy but got {accuracy}")
         return method(self, fnc, accuracy=accuracy, **kwargs)
+
     return wrapper
 
 
 def takes_scalar_field(method):
     """Makes sure the first argument has the right shape to be a scalar field on the mesh."""
+
     def wrapper(self, scalar_field, **kwargs):
         scalar_field = np.array(scalar_field)
         if np.all(scalar_field.shape == self.divisions):
             return method(self, scalar_field, **kwargs)
         else:
-            raise TypeError(f'Argument for {method.__name__} not recognized: should be a scalar field, or function '
-                            f'taking the mesh and returning a scalar field.')
+            raise TypeError(
+                f"Argument for {method.__name__} not recognized: should be a scalar field, or function "
+                f"taking the mesh and returning a scalar field."
+            )
+
     return wrapper
 
 
 def takes_vector_field(method):
     """Makes sure the first argument has the right shape to be a vector field on the mesh."""
+
     def wrapper(self, vector_field, **kwargs):
         vector_field = np.array(vector_field)
         if np.all(vector_field.shape == self.shape):
             return method(self, vector_field, **kwargs)
         else:
-            raise TypeError(f'Argument for {method.__name__} not recognized: should be a vector field, or function '
-                            f'taking the mesh and returning a vector field.')
+            raise TypeError(
+                f"Argument for {method.__name__} not recognized: should be a vector field, or function "
+                f"taking the mesh and returning a vector field."
+            )
+
     return wrapper
 
 
@@ -116,11 +129,11 @@ class RectMesh(HasStorage):
     """
 
     def __init__(
-            self,
-            bounds: Union[float, int, BoundsList, np.ndarray] = 1,
-            divisions: Union[int, List[int], np.ndarray] = 1,
-            accuracy: int = 4,
-            simplify_1d: bool = False
+        self,
+        bounds: Union[float, int, BoundsList, np.ndarray] = 1,
+        divisions: Union[int, List[int], np.ndarray] = 1,
+        accuracy: int = 4,
+        simplify_1d: bool = False,
     ):
         """
         Instantiate a rectangular mesh.
@@ -177,7 +190,7 @@ class RectMesh(HasStorage):
     @accuracy.setter
     def accuracy(self, n: int):
         if n % 2 != 0:
-            raise ValueError(f'Expected an even integer but got {2}')
+            raise ValueError(f"Expected an even integer but got {2}")
         self.storage.accuracy = int(n)
 
     @property
@@ -229,45 +242,51 @@ class RectMesh(HasStorage):
         linspaces = []
         steps = []
         for bound, ndiv in zip(self.storage.bounds, self.storage.divisions):
-            space, step = np.linspace(bound[0], bound[1], num=ndiv, endpoint=False, retstep=True)
+            space, step = np.linspace(
+                bound[0], bound[1], num=ndiv, endpoint=False, retstep=True
+            )
             linspaces.append(space)
             steps.append(step)
 
-        mesh = np.meshgrid(*linspaces, indexing='ij')
+        mesh = np.meshgrid(*linspaces, indexing="ij")
         self.storage.steps = np.array(steps)
         self.storage.mesh = np.array(mesh)
 
     def _clean_input(
-            self,
-            bounds: Union[float, int, BoundsList, np.ndarray],
-            divisions: Union[int, List[int], np.ndarray]
+        self,
+        bounds: Union[float, int, BoundsList, np.ndarray],
+        divisions: Union[int, List[int], np.ndarray],
     ) -> (np.ndarray, np.ndarray):
-        if not hasattr(bounds, '__len__'):
+        if not hasattr(bounds, "__len__"):
             bounds = [[0, bounds]]
         bounds = np.array(bounds)  # Enforce array to guarantee `shape`
 
         if len(bounds.shape) == 1:
             bounds = np.array([[0, b] for b in bounds])
         elif len(bounds.shape) > 2 or bounds.shape[-1] > 2:
-            raise ValueError(f'Bounds must be of the shape (n,) or (n, 2), but got {bounds.shape}')
+            raise ValueError(
+                f"Bounds must be of the shape (n,) or (n, 2), but got {bounds.shape}"
+            )
 
         if np.any(np.isclose(bounds.ptp(axis=-1), 0)):
-            raise ValueError(f'Bounds must be finite length in all dimensions, but found lengths {bounds.ptp(axis=-1)}')
+            raise ValueError(
+                f"Bounds must be finite length in all dimensions, but found lengths {bounds.ptp(axis=-1)}"
+            )
 
-        if hasattr(divisions, '__len__'):
+        if hasattr(divisions, "__len__"):
             if len(divisions) != len(bounds):
                 raise ValueError(
-                    f'Divisions must be a single value or have the same length as bounds but got {len(divisions)} and '
-                    f'{len(bounds)}'
+                    f"Divisions must be a single value or have the same length as bounds but got {len(divisions)} and "
+                    f"{len(bounds)}"
                 )
             elif np.any([not self._is_int(div) for div in divisions]):
-                raise TypeError(f'Divisions must all be int-like, but got {divisions}')
+                raise TypeError(f"Divisions must all be int-like, but got {divisions}")
         elif self._is_int(divisions):
             divisions = len(bounds) * [divisions]
         else:
             raise TypeError(
-                f'Expected divisions to be int-like or a list-like objects of ints the same length as bounds, but got '
-                f'{divisions}'
+                f"Expected divisions to be int-like or a list-like objects of ints the same length as bounds, but got "
+                f"{divisions}"
             )
         return bounds, np.array(divisions)
 
@@ -289,22 +308,31 @@ class RectMesh(HasStorage):
                 method.
         """
         if n % 2 != 0:
-            raise ValueError('`n` must be an even number')
+            raise ValueError("`n` must be an even number")
         p = int(0.5 * (m + 1)) - 1 + int(0.5 * n)
         b = np.zeros(2 * p + 1)
         b[m] = np.prod(np.arange(m) + 1)
-        return np.linalg.solve(np.arange(-p, p + 1) ** np.arange(0, 2 * p + 1)[:, None], b)
+        return np.linalg.solve(
+            np.arange(-p, p + 1) ** np.arange(0, 2 * p + 1)[:, None], b
+        )
 
     # OPERATIONS:
     @callable_to_array
     @takes_scalar_field
-    def _numpy_gradient(self, scalar_field: Union[Callable, np.ndarray], axis=None, edge_order=1):
+    def _numpy_gradient(
+        self, scalar_field: Union[Callable, np.ndarray], axis=None, edge_order=1
+    ):
         return np.gradient(scalar_field, *self.steps, axis=axis, edge_order=edge_order)
 
     @callable_to_array
     @has_default_accuracy
     @takes_scalar_field
-    def derivative(self, scalar_field: Union[Callable, np.ndarray], order: int = 1, accuracy: int = None):
+    def derivative(
+        self,
+        scalar_field: Union[Callable, np.ndarray],
+        order: int = 1,
+        accuracy: int = None,
+    ):
         """
         Numeric differential for a uniform grid using the central difference method.
 
@@ -332,13 +360,15 @@ class RectMesh(HasStorage):
                 if np.isclose(c, 0):
                     continue
                 res[ax] += c * np.roll(scalar_field, rolls[n], axis=ax)
-            res[ax] /= h ** order
+            res[ax] /= h**order
         return res
 
     @callable_to_array
     @has_default_accuracy
     @takes_scalar_field
-    def grad(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
+    def grad(
+        self, scalar_field: Union[Callable, np.ndarray], accuracy: int = None
+    ) -> np.array:
         """
         Gradient of a scalar field.
 
@@ -357,7 +387,9 @@ class RectMesh(HasStorage):
     @callable_to_array
     @has_default_accuracy
     @takes_vector_field
-    def div(self, vector_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
+    def div(
+        self, vector_field: Union[Callable, np.ndarray], accuracy: int = None
+    ) -> np.array:
         """
         Divergence of a vector field.
 
@@ -370,12 +402,20 @@ class RectMesh(HasStorage):
         Returns:
             (numpy.ndarray): The scalar field divergence of the vector input at each point on the mesh.
         """
-        return np.sum([self.derivative(vector_field[ax], accuracy=accuracy)[ax] for ax in np.arange(self.dim)], axis=0)
+        return np.sum(
+            [
+                self.derivative(vector_field[ax], accuracy=accuracy)[ax]
+                for ax in np.arange(self.dim)
+            ],
+            axis=0,
+        )
 
     @callable_to_array
     @has_default_accuracy
     @takes_scalar_field
-    def laplacian(self, scalar_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
+    def laplacian(
+        self, scalar_field: Union[Callable, np.ndarray], accuracy: int = None
+    ) -> np.array:
         """
         Discrete Laplacian operator applied to a given function or scalar field.
 
@@ -393,7 +433,9 @@ class RectMesh(HasStorage):
     @callable_to_array
     @has_default_accuracy
     @takes_vector_field
-    def curl(self, vector_field: Union[Callable, np.ndarray], accuracy: int = None) -> np.array:
+    def curl(
+        self, vector_field: Union[Callable, np.ndarray], accuracy: int = None
+    ) -> np.array:
         """
         Curl of a vector field.
 
@@ -413,8 +455,16 @@ class RectMesh(HasStorage):
             (NotImplementedError): If the vector field provided is not three dimensional.
         """
         if self.dim != 3:
-            raise NotImplementedError("I'm no mathematician, so curl is only coded for the traditional 3d space.")
-        grads = np.array([self.derivative(vf, accuracy=accuracy) for vf in vector_field])
-        pos = np.array([grads[(2 + i) % self.dim][(1 + i) % self.dim] for i in range(self.dim)])
-        neg = np.array([grads[(1 + i) % self.dim][(2 + i) % self.dim] for i in range(self.dim)])
+            raise NotImplementedError(
+                "I'm no mathematician, so curl is only coded for the traditional 3d space."
+            )
+        grads = np.array(
+            [self.derivative(vf, accuracy=accuracy) for vf in vector_field]
+        )
+        pos = np.array(
+            [grads[(2 + i) % self.dim][(1 + i) % self.dim] for i in range(self.dim)]
+        )
+        neg = np.array(
+            [grads[(1 + i) % self.dim][(2 + i) % self.dim] for i in range(self.dim)]
+        )
         return pos - neg
