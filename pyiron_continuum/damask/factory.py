@@ -182,7 +182,7 @@ class Create:
         return MaterialFactory.config(rotation, elements, phase, homogenization)
 
     @staticmethod
-    def homogenization(method, parameters):
+    def homogenization(method=None, parameters=None):
         """
         Returns damask homogenization as a dictionary.
         Args:
@@ -191,6 +191,10 @@ class Create:
         Examples:
             homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
         """
+        if method is None:
+            method = "SX"
+        if parameters is None:
+            parameters = {"N_constituents": 1, "mechanical": {"type": "pass"}}
         return {method: parameters}
 
     @staticmethod

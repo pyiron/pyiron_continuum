@@ -87,7 +87,7 @@ class DAMASK:
         return DAMASKCreator.material(rotation, elements, phase, homogenization)
 
     @staticmethod
-    def Homogenization(method, parameters):
+    def Homogenization(method=None, parameters=None):
         """
         returns damask homogenization as a dictionary
         Args:
