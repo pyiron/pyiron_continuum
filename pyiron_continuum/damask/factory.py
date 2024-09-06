@@ -95,10 +95,21 @@ class GridFactory:
 
 
 def generate_loading_tensor():
+    """
+    Returns the default boundary conditions for the damask loading tensor.
+    """
     return np.full((3, 3), "F").astype("<U5"), np.eye(3)
 
 
-def generate_load_step(boundary_conditions, N, t, f_out=None, r=None, f_restart=None, estimate_rate=None):
+def generate_load_step(
+    boundary_conditions,
+    N,
+    t,
+    f_out=None,
+    r=None,
+    f_restart=None,
+    estimate_rate=None
+):
     """
     Args:
         boundary_conditions (tuple[list, list]): Keys and values of the
