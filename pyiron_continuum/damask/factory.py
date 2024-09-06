@@ -94,6 +94,73 @@ class GridFactory:
         )
 
 
+def generate_loading_tensor():
+    return np.full((3, 3), "F").astype("<U5"), np.eye(3)
+
+
+def generate_load_step(boundary_conditions, N, t, f_out=None, r=None, f_restart=None, estimate_rate=None):
+    """
+    Args:
+        boundary_conditions (tuple[list, list]): Keys and values of the
+            boundary conditions (see comments below)
+        N (int): Number of increments
+        t (float): Time of load step in seconds, i.e.
+        r (float): Scaling factor (default 1) in geometric time step series
+        f_out (int): Output frequency of results, i.e. f_out=3 writes results
+            every third increment
+        f_restart (int): output frequency of restart information; e.g.
+            f_restart=3 writes restart information every tenth increment
+        estimate_rate (float): estimate field of deformation gradient
+            fluctuations based on former load step (default) or assume to be
+            homogeneous, i.e. no fluctuations
+
+    Returns:
+        dict: A dictionary of the load step
+
+
+    Comments:
+
+        `boundary_conditions` should be generated from
+        `generate_loading_tensor()` and as the format below:
+
+        (array([['F', 'F', 'F'],
+                ['F', 'F', 'F'],
+                ['F', 'F', 'F']], dtype='<U5'),
+         array([[1., 0., 0.],
+                [0., 1., 0.],
+                [0., 0., 1.]]))
+
+        where the first array is the keys and the second array is the values.
+        The keys can be 'F', 'P', 'dot_F' or 'dot_P'. These keys correspond to:
+
+        F: deformation gradient at end of load step
+        dot_F: rate of deformation gradient during load step
+        P: first Piola–Kirchhoff stress at end of load step
+        dot_P: rate of first Piola–Kirchhoff stress during load step
+
+        The default values correspond to the identity matrix, i.e no deformation.
+    """
+    key, value = boundary_conditions
+    result = {
+        "boundary_conditions": {"mechanical": {}},
+        "discretization": {"t": t, "N": N},
+    }
+    if r is not None:
+        result["discretization"]["r"] = r
+    if f_out is not None:
+        result["f_out"] = f_out
+    if f_restart is not None:
+        result["f_restart"] = f_restart
+    if estimate_rate is not None:
+        result["estimate_rate"] = estimate_rate
+    for tag in ["F", "P", "dot_F", "dot_P"]:
+        if tag in key:
+            mat = np.full((3, 3), "x").astype(object)
+            mat[key == tag] = value[key == tag]
+            result["boundary_conditions"]["mechanical"][tag] = mat.tolist()
+    return result
+
+
 class DamaskLoading(dict):
     def __init__(self, solver, load_steps):
         """A factory for damask Loading class, which is a damask._config.YAML object."""
