@@ -178,19 +178,18 @@ class DamaskLoading(dict):
         super(DamaskLoading, self).__init__(self)
 
     def __new__(cls, solver, load_steps):
-        loading_dict = dict()
-        loading_dict["solver"] = solver
         if not isinstance(load_steps, list):
             load_steps = [load_steps]
-        loading_dict["loadstep"] = [
-            LoadStep(
-                mech_bc_dict=load_step["mech_bc_dict"],
-                discretization=load_step["discretization"],
-                additional_parameters_dict=load_step["additional"],
-            )
-            for load_step in load_steps
-        ]
-        return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
+        if "mech_bc_dict" in load_steps[0]:
+            load_steps = [
+                LoadStep(
+                    mech_bc_dict=load_step["mech_bc_dict"],
+                    discretization=load_step["discretization"],
+                    additional_parameters_dict=load_step["additional"],
+                )
+                for load_step in load_steps
+            ]
+        return YAML(solver=solver, loadstep=load_steps)
 
 
 class LoadStep(dict):
