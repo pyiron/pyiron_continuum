@@ -189,6 +189,9 @@ def generate_load_step(
 
     Returns:
         dict: A dictionary of the load step
+
+    You can find more information about the parameters in the damask documentation:
+    https://damask-multiphysics.org/documentation/file_formats/grid_solver.html#load-case
     """
     result = {
         "boundary_conditions": {"mechanical": {}},
