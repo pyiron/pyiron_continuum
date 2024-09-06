@@ -94,44 +94,43 @@ class GridFactory:
         )
 
 
-def generate_loading_tensor():
+def generate_loading_tensor(default="F"):
     """
     Returns the default boundary conditions for the damask loading tensor.
-    """
-    return np.full((3, 3), "F").astype("<U5"), np.eye(3)
 
-
-def generate_load_step(
-    boundary_conditions,
-    N,
-    t,
-    f_out=None,
-    r=None,
-    f_restart=None,
-    estimate_rate=None
-):
-    """
     Args:
-        boundary_conditions (tuple[list, list]): Keys and values of the
-            boundary conditions (see comments below)
-        N (int): Number of increments
-        t (float): Time of load step in seconds, i.e.
-        r (float): Scaling factor (default 1) in geometric time step series
-        f_out (int): Output frequency of results, i.e. f_out=3 writes results
-            every third increment
-        f_restart (int): output frequency of restart information; e.g.
-            f_restart=3 writes restart information every tenth increment
-        estimate_rate (float): estimate field of deformation gradient
-            fluctuations based on former load step (default) or assume to be
-            homogeneous, i.e. no fluctuations
+        default (str): Default value of the tensor. It can be 'F', 'P', 'dot_F'
+            or 'dot_P'.
 
     Returns:
-        dict: A dictionary of the load step
+        tuple: A tuple of two numpy arrays. The first array is the keys and the
+            second array is the values.
+    """
+    assert default in ["F", "P", "dot_F", "dot_P"]
+    if default == "F":
+        return np.full((3, 3), "F").astype("<U5"), np.eye(3)
+    else:
+        return np.full((3, 3), default).astype("<U5"), np.zeros((3, 3))
 
+
+def loading_tensor_to_dict(key, value):
+    """
+    Converts the damask loading tensor to a dictionary.
+
+    Args:
+        key (numpy.ndarray): Keys of the tensor
+        value (numpy.ndarray): Values of the tensor
+
+    Returns:
+        dict: A dictionary of the tensor
+
+    Example:
+        key, value = generate_loading_tensor()
+        loading_tensor_to_dict(key, value)
 
     Comments:
 
-        `boundary_conditions` should be generated from
+        `key` and `value` should be generated from
         `generate_loading_tensor()` and as the format below:
 
         (array([['F', 'F', 'F'],
@@ -148,10 +147,49 @@ def generate_load_step(
         dot_F: rate of deformation gradient during load step
         P: first Piola–Kirchhoff stress at end of load step
         dot_P: rate of first Piola–Kirchhoff stress during load step
-
-        The default values correspond to the identity matrix, i.e no deformation.
     """
-    key, value = boundary_conditions
+    result = {}
+    for tag in ["F", "P", "dot_F", "dot_P"]:
+        if tag in key:
+            mat = np.full((3, 3), "x").astype(object)
+            mat[key == tag] = value[key == tag]
+            result[tag] = mat.tolist()
+    return result
+
+
+def generate_load_step(
+    N,
+    t,
+    F=None,
+    dot_F=None,
+    P=None,
+    dot_P=None,
+    f_out=None,
+    r=None,
+    f_restart=None,
+    estimate_rate=None
+):
+    """
+    Args:
+        N (int): Number of increments
+        t (float): Time of load step in seconds, i.e.
+        F (numpy.ndarray): Deformation gradient at end of load step
+        dot_F (numpy.ndarray): Rate of deformation gradient during load step
+        P (numpy.ndarray): First Piola–Kirchhoff stress at end of load step
+        dot_P (numpy.ndarray): Rate of first Piola–Kirchhoff stress during
+            load step
+        r (float): Scaling factor (default 1) in geometric time step series
+        f_out (int): Output frequency of results, i.e. f_out=3 writes results
+            every third increment
+        f_restart (int): output frequency of restart information; e.g.
+            f_restart=3 writes restart information every tenth increment
+        estimate_rate (float): estimate field of deformation gradient
+            fluctuations based on former load step (default) or assume to be
+            homogeneous, i.e. no fluctuations
+
+    Returns:
+        dict: A dictionary of the load step
+    """
     result = {
         "boundary_conditions": {"mechanical": {}},
         "discretization": {"t": t, "N": N},
@@ -164,11 +202,16 @@ def generate_load_step(
         result["f_restart"] = f_restart
     if estimate_rate is not None:
         result["estimate_rate"] = estimate_rate
-    for tag in ["F", "P", "dot_F", "dot_P"]:
-        if tag in key:
-            mat = np.full((3, 3), "x").astype(object)
-            mat[key == tag] = value[key == tag]
-            result["boundary_conditions"]["mechanical"][tag] = mat.tolist()
+    if F is None and dot_F is None and P is None and dot_P is None:
+        raise ValueError("At least one of the tensors should be provided.")
+    if F is not None:
+        result["boundary_conditions"]["mechanical"]["F"] = F
+    if dot_F is not None:
+        result["boundary_conditions"]["mechanical"]["dot_F"] = dot_F
+    if P is not None:
+        result["boundary_conditions"]["mechanical"]["P"] = P
+    if dot_P is not None:
+        result["boundary_conditions"]["mechanical"]["dot_P"] = dot_P
     return result
 
 

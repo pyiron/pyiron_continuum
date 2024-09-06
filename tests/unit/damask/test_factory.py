@@ -8,17 +8,20 @@ from pyiron_continuum.damask import factory
 
 class TestDamaskFactory(unittest.TestCase):
     def test_generate_load_step(self):
+        key, value = factory.generate_loading_tensor(default="P")
+        self.assertTrue(key[0, 0] == "P")
         key, value = factory.generate_loading_tensor()
         value[0, 0] = 0
         key[0, 0] = "P"
-        data = factory.generate_load_step(
-            boundary_conditions=(key, value), N=40, t=10
-        )
+        key[1, 1] = "dot_P"
+        key[2, 2] = "dot_F"
+        d = factory.loading_tensor_to_dict(key, value)
+        data = factory.generate_load_step(N=40, t=10, **d)
         self.assertTrue("P" in data["boundary_conditions"]["mechanical"])
         for tag in ["f_out", "r", "f_restart", "estimate_rate"]:
-            data = factory.generate_load_step(
-                boundary_conditions=(key, value), N=40, t=10, **{tag: 1}
-            )
+            d = factory.loading_tensor_to_dict(key, value)
+            d.update({tag: 1})
+            data = factory.generate_load_step(N=40, t=10, **d)
             if tag != "r":
                 self.assertTrue(tag in data)
             else:
