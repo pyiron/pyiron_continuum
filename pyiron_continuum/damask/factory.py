@@ -138,7 +138,7 @@ class LoadStep(dict):
 
     @staticmethod
     def load_tensorial(arr):
-        return [arr[0:3], arr[3:6], arr[6:9]]
+        return np.asarray(arr).reshape(3, 3).tolist()
 
 
 class Create:
