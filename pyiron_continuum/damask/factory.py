@@ -126,9 +126,7 @@ class LoadStep(dict):
             }
         )
 
-        if additional_parameters_dict is not None and isinstance(
-            additional_parameters_dict, dict
-        ):
+        if isinstance(additional_parameters_dict, dict):
             self.update(additional_parameters_dict)
 
         for key, val in mech_bc_dict.items():
