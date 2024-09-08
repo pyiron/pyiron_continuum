@@ -222,33 +222,27 @@ def get_damask_loading(solver, load_steps):
     if not isinstance(load_steps, list):
         load_steps = [load_steps]
     if "mech_bc_dict" in load_steps[0]:
-        load_steps = [
-            translate_load_steps(
-                mech_bc_dict=load_step["mech_bc_dict"],
-                discretization=load_step["discretization"],
-                additional_parameters_dict=load_step["additional"],
-            )
-            for load_step in load_steps
-        ]
-    return YAML(solver=solver, loadstep=load_steps)
+        return YAML(solver=solver, loadstep=translate_load_steps(load_steps))
+    else:
+        return YAML(solver=solver, loadstep=load_steps)
 
 
-def translate_load_steps(
-    mech_bc_dict, discretization, additional_parameters_dict=None
-):
+def translate_load_steps(load_steps):
     """An auxilary class, which helps to parse loadsteps to a dictionary."""
-    result = {
-        "boundary_conditions": {"mechanical": {}},
-        "discretization": discretization,
-    }
-
-    if isinstance(additional_parameters_dict, dict):
-        result.update(additional_parameters_dict)
-
-    for key, val in mech_bc_dict.items():
-        result["boundary_conditions"]["mechanical"].update(
-            {key: [val[0:3], val[3:6], val[6:9]]}
+    result = []
+    for load_step in load_steps:
+        result.append(
+            {
+                "boundary_conditions": {"mechanical": {}},
+                "discretization": load_step["discretization"],
+            }
         )
+        if isinstance(load_step["additional"], dict):
+            result[-1].update(load_step["additional"])
+        for key, val in load_step["mech_bc_dict"].items():
+            result[-1]["boundary_conditions"]["mechanical"].update(
+                {key: [val[0:3], val[3:6], val[6:9]]}
+            )
     return result
 
 

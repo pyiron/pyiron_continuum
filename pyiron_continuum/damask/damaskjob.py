@@ -247,19 +247,7 @@ class DAMASK(TemplateJob):
     def append_loading(self, load_steps):
         if not isinstance(load_steps, list):
             load_steps = [load_steps]
-        if "mech_bc_dict" in load_steps[0]:
-            self.input.loading["loadstep"].extend(
-                [
-                    translate_load_steps(
-                        mech_bc_dict=load_step["mech_bc_dict"],
-                        discretization=load_step["discretization"],
-                        additional_parameters_dict=load_step["additional"],
-                    )
-                    for load_step in load_steps
-                ]
-            )
-        else:
-            self.input.loading["loadstep"].extend(load_steps)
+        self.input.loading["loadstep"].extend(translate_load_steps(load_steps))
 
     def _write_material(self):
         if self.input.material is not None:
