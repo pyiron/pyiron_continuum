@@ -223,7 +223,7 @@ def get_damask_loading(solver, load_steps):
         load_steps = [load_steps]
     if "mech_bc_dict" in load_steps[0]:
         load_steps = [
-            LoadStep(
+            translate_load_steps(
                 mech_bc_dict=load_step["mech_bc_dict"],
                 discretization=load_step["discretization"],
                 additional_parameters_dict=load_step["additional"],
@@ -233,28 +233,23 @@ def get_damask_loading(solver, load_steps):
     return YAML(solver=solver, loadstep=load_steps)
 
 
-class LoadStep(dict):
-    def __init__(self, mech_bc_dict, discretization, additional_parameters_dict=None):
-        """An auxilary class, which helps to parse loadsteps to a dictionary."""
-        super(LoadStep, self).__init__(self)
-        self.update(
-            {
-                "boundary_conditions": {"mechanical": {}},
-                "discretization": discretization,
-            }
+def translate_load_steps(
+    mech_bc_dict, discretization, additional_parameters_dict=None
+):
+    """An auxilary class, which helps to parse loadsteps to a dictionary."""
+    result = {
+        "boundary_conditions": {"mechanical": {}},
+        "discretization": discretization,
+    }
+
+    if isinstance(additional_parameters_dict, dict):
+        result.update(additional_parameters_dict)
+
+    for key, val in mech_bc_dict.items():
+        result["boundary_conditions"]["mechanical"].update(
+            {key: [val[0:3], val[3:6], val[6:9]]}
         )
-
-        if isinstance(additional_parameters_dict, dict):
-            self.update(additional_parameters_dict)
-
-        for key, val in mech_bc_dict.items():
-            self["boundary_conditions"]["mechanical"].update(
-                {key: LoadStep.load_tensorial(val)}
-            )
-
-    @staticmethod
-    def load_tensorial(arr):
-        return np.asarray(arr).reshape(3, 3).tolist()
+    return result
 
 
 class Create:

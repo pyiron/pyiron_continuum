@@ -15,7 +15,7 @@ with ImportAlarm(
 from pyiron_continuum.damask.factory import (
     Create as DAMASKCreator,
     GridFactory,
-    LoadStep,
+    translate_load_steps,
 )
 import pyiron_continuum.damask.regrid as rgg
 import numpy as np
@@ -249,7 +249,7 @@ class DAMASK(TemplateJob):
             load_steps = [load_steps]
         self.input.loading["loadstep"].extend(
             [
-                LoadStep(
+                translate_load_steps(
                     mech_bc_dict=load_step["mech_bc_dict"],
                     discretization=load_step["discretization"],
                     additional_parameters_dict=load_step["additional"],
