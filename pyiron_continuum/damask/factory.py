@@ -94,11 +94,9 @@ class GridFactory:
 
 
 def get_damask_loading(solver, load_steps):
-    loading_dict = dict()
-    loading_dict["solver"] = solver
     if not isinstance(load_steps, list):
         load_steps = [load_steps]
-    loading_dict["loadstep"] = [
+    loadsteps = [
         LoadStep(
             mech_bc_dict=load_step["mech_bc_dict"],
             discretization=load_step["discretization"],
@@ -106,7 +104,7 @@ def get_damask_loading(solver, load_steps):
         )
         for load_step in load_steps
     ]
-    return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
+    return YAML(solver=solver, loadstep=loadsteps)
 
 
 class LoadStep(dict):
