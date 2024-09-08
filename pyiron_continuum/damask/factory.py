@@ -11,6 +11,7 @@ with ImportAlarm(
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
 from pyiron_continuum.reference.mendeleev import get_atom_info
+from pyiron_continuum.damask.reference.yaml import get_elasticity, get_plasticity
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -174,7 +175,7 @@ class Create:
         return MaterialFactory.config(rotation, elements, phase, homogenization)
 
     @staticmethod
-    def homogenization(method, parameters):
+    def homogenization(method=None, parameters=None):
         """
         Returns damask homogenization as a dictionary.
         Args:
@@ -183,6 +184,10 @@ class Create:
         Examples:
             homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
         """
+        if method is None:
+            method = "SX"
+        if parameters is None:
+            parameters = {"N_constituents": 1, "mechanical": {"type": "pass"}}
         return {method: parameters}
 
     @staticmethod
@@ -225,6 +230,10 @@ class Create:
         return d
 
     @staticmethod
+    def list_elasticity():
+        return get_elasticity()
+
+    @staticmethod
     def elasticity(**kwargs):
         """
         Args:
@@ -239,6 +248,10 @@ class Create:
             )
         """
         return kwargs
+
+    @staticmethod
+    def list_plasticity():
+        return get_plasticity()
 
     @staticmethod
     def plasticity(**kwargs):
