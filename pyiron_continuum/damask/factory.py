@@ -98,7 +98,7 @@ def get_damask_loading(solver, load_steps):
     if not isinstance(load_steps, list):
         load_steps = [load_steps]
     loadsteps = [
-        _translate_load_steps(
+        translate_load_steps(
             mech_bc_dict=load_step["mech_bc_dict"],
             discretization=load_step["discretization"],
             additional_parameters_dict=load_step["additional"],
@@ -108,7 +108,7 @@ def get_damask_loading(solver, load_steps):
     return YAML(solver=solver, loadstep=loadsteps)
 
 
-def _translate_load_steps(
+def translate_load_steps(
     mech_bc_dict, discretization, additional_parameters_dict=None
 ):
     """An auxilary class, which helps to parse loadsteps to a dictionary."""
