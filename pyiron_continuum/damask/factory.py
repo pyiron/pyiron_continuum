@@ -93,25 +93,20 @@ class GridFactory:
         )
 
 
-class DamaskLoading(dict):
-    def __init__(self, solver, load_steps):
-        """A factory for damask Loading class, which is a damask._config.YAML object."""
-        super(DamaskLoading, self).__init__(self)
-
-    def __new__(cls, solver, load_steps):
-        loading_dict = dict()
-        loading_dict["solver"] = solver
-        if not isinstance(load_steps, list):
-            load_steps = [load_steps]
-        loading_dict["loadstep"] = [
-            LoadStep(
-                mech_bc_dict=load_step["mech_bc_dict"],
-                discretization=load_step["discretization"],
-                additional_parameters_dict=load_step["additional"],
-            )
-            for load_step in load_steps
-        ]
-        return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
+def get_damask_loading(solver, load_steps):
+    loading_dict = dict()
+    loading_dict["solver"] = solver
+    if not isinstance(load_steps, list):
+        load_steps = [load_steps]
+    loading_dict["loadstep"] = [
+        LoadStep(
+            mech_bc_dict=load_step["mech_bc_dict"],
+            discretization=load_step["discretization"],
+            additional_parameters_dict=load_step["additional"],
+        )
+        for load_step in load_steps
+    ]
+    return YAML(solver=loading_dict["solver"], loadstep=loading_dict["loadstep"])
 
 
 class LoadStep(dict):
@@ -166,7 +161,7 @@ class Create:
             'discretization':{'t': 10.,'N': 40, 'f_out': 4},
             'additional': {'f_out': 4}
         """
-        return DamaskLoading(solver=solver, load_steps=load_steps)
+        return get_damask_loading(solver=solver, load_steps=load_steps)
 
     @staticmethod
     def material(rotation, elements, phase, homogenization):
