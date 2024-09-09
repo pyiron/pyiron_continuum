@@ -51,9 +51,7 @@ class Damask(PyironFactory):
         )
 
     @staticmethod
-    def phase(
-        composition, elasticity, plasticity=None, lattice=None, output_list=None
-    ):
+    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
         return DAMASKCreator.get_phase(
             composition=composition,
             lattice=lattice,
@@ -72,9 +70,7 @@ class Damask(PyironFactory):
 
     @staticmethod
     def homogenization(method=None, parameters=None):
-        return DAMASKCreator.get_homogenization(
-            method=method, parameters=parameters
-        )
+        return DAMASKCreator.get_homogenization(method=method, parameters=parameters)
 
     @staticmethod
     def rotation(method, *args, **kwargs):

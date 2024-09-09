@@ -74,7 +74,6 @@ class DAMASK:
         """
         return DAMASKCreator.get_loading(solver=solver, load_steps=load_steps)
 
-
     @staticmethod
     def generate_loading_tensor(default="F"):
         return DAMASKCreator.generate_loading_tensor(default=default)

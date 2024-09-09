@@ -167,7 +167,7 @@ def generate_load_step(
     f_out=None,
     r=None,
     f_restart=None,
-    estimate_rate=None
+    estimate_rate=None,
 ):
     """
     Args:
@@ -262,9 +262,7 @@ def get_homogenization(method=None, parameters=None):
     return {method: parameters}
 
 
-def get_phase(
-    composition, elasticity, plasticity=None, lattice=None, output_list=None
-):
+def get_phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
     """
     Returns a dictionary describing the phases for damask.
     Args:
