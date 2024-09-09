@@ -74,6 +74,47 @@ class DAMASK:
         """
         return DAMASKCreator.loading(solver=solver, load_steps=load_steps)
 
+
+    @staticmethod
+    def generate_loading_tensor(default="F"):
+        return DAMASKCreator.generate_loading_tensor(default=default)
+
+    generate_loading_tensor.__doc__ = DAMASKCreator.generate_loading_tensor.__doc__
+
+    @staticmethod
+    def loading_tensor_to_dict(key, value):
+        return DAMASKCreator.loading_tensor_to_dict(key, value)
+
+    loading_tensor_to_dict.__doc__ = DAMASKCreator.loading_tensor_to_dict.__doc__
+
+    @staticmethod
+    def generate_load_step(
+        N,
+        t,
+        F=None,
+        dot_F=None,
+        P=None,
+        dot_P=None,
+        f_out=None,
+        r=None,
+        f_restart=None,
+        estimate_rate=None,
+    ):
+        return DAMASKCreator.generate_load_step(
+            N=N,
+            t=t,
+            F=F,
+            dot_F=dot_F,
+            P=P,
+            dot_P=dot_P,
+            f_out=f_out,
+            r=r,
+            f_restart=f_restart,
+            estimate_rate=estimate_rate,
+        )
+
+    generate_load_step.__doc__ = DAMASKCreator.generate_load_step.__doc__
+
     @staticmethod
     def Material(rotation, elements, phase, homogenization):
         """
