@@ -7,7 +7,7 @@ from pyiron_base import JobTypeChoice, Project as ProjectCore
 from pyiron_base import Creator as CreatorCore, PyironFactory
 from pyiron_snippets.import_alarm import ImportAlarm
 from pyiron_continuum.elasticity.linear_elasticity import LinearElasticity
-from pyiron_continuum.damask.factory import Create as DAMASKCreator
+from pyiron_continuum.damask import factory as DAMASKCreator
 from pyiron_continuum.damask.factory import GridFactory
 
 try:
@@ -30,27 +30,31 @@ __date__ = "Sep 1, 2017"
 
 class Damask(PyironFactory):
     def __init__(self):
-        self.create = DAMASKCreator()
+        self._grid = DAMASKCreator.GridFactory()
 
     @property
     def grid(self):
-        return self.create.grid
+        return self._grid
 
     @grid.setter
     def grid(self, value):
-        self.create.grid = value
+        self._grid = value
 
     @staticmethod
     def loading(solver, load_steps):
-        return DAMASKCreator.loading(solver=solver, load_steps=load_steps)
+        return DAMASKCreator.get_loading(solver=solver, load_steps=load_steps)
 
     @staticmethod
     def material(rotation, elements, phase, homogenization):
-        return DAMASKCreator.material(rotation, elements, phase, homogenization)
+        return DAMASKCreator.MaterialFactory.config(
+            rotation, elements, phase, homogenization
+        )
 
     @staticmethod
-    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
-        return DAMASKCreator.phase(
+    def phase(
+        composition, elasticity, plasticity=None, lattice=None, output_list=None
+    ):
+        return DAMASKCreator.get_phase(
             composition=composition,
             lattice=lattice,
             output_list=output_list,
@@ -60,19 +64,21 @@ class Damask(PyironFactory):
 
     @staticmethod
     def elasticity(**kwargs):
-        return DAMASKCreator.elasticity(**kwargs)
+        return kwargs
 
     @staticmethod
     def plasticity(**kwargs):
-        return DAMASKCreator.plasticity(**kwargs)
+        return kwargs
 
     @staticmethod
     def homogenization(method=None, parameters=None):
-        return DAMASKCreator.homogenization(method=method, parameters=parameters)
+        return DAMASKCreator.get_homogenization(
+            method=method, parameters=parameters
+        )
 
     @staticmethod
     def rotation(method, *args, **kwargs):
-        return DAMASKCreator.rotation(method=method, *args, **kwargs)
+        return DAMASKCreator.get_rotation(method=method, *args, **kwargs)
 
 
 class Project(ProjectCore):

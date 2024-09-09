@@ -3,7 +3,7 @@ import yaml
 import warnings
 
 
-def get_elasticity(
+def list_elasticity(
     sub_folder="elastic",
     repo_owner="damask-multiphysics",
     repo_name="DAMASK",
@@ -24,7 +24,7 @@ def get_elasticity(
     return get_yaml(sub_folder, repo_owner, repo_name, directory_path)
 
 
-def get_plasticity(
+def list_plasticity(
     sub_folder="plastic",
     repo_owner="damask-multiphysics",
     repo_name="DAMASK",

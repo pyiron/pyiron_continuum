@@ -8,7 +8,7 @@ A toolkit for managing extensions to the project from atomistics.
 from pyiron_base import Toolkit, Project, JobFactoryCore
 from pyiron_continuum.fenics.job.generic import Fenics
 from pyiron_continuum.fenics.job.elastic import FenicsLinearElastic
-from pyiron_continuum.damask.factory import Create as DAMASKCreator
+from pyiron_continuum.damask import factory as DAMASKCreator
 from pyiron_continuum.schroedinger.schroedinger import TISE
 from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Sinusoidal, SquareWell
@@ -49,15 +49,15 @@ class Potential:
 class DAMASK:
     def __init__(self):
         """Initializer of damask python objects."""
-        self._creator = DAMASKCreator()
+        self._grid = DAMASKCreator.GridFactory()
 
     @property
     def Grid(self):
-        return self._creator.grid
+        return self._grid
 
     @Grid.setter
     def Grid(self, value):
-        self._creator.grid = value
+        self._grid = value
 
     @staticmethod
     def Loading(solver, load_steps):
@@ -72,7 +72,7 @@ class DAMASK:
             'discretization':{'t': 10.,'N': 40, 'f_out': 4},
             'additional': {'f_out': 4}
         """
-        return DAMASKCreator.loading(solver=solver, load_steps=load_steps)
+        return DAMASKCreator.get_loading(solver=solver, load_steps=load_steps)
 
 
     @staticmethod
@@ -125,7 +125,9 @@ class DAMASK:
             phase(dict): a dictionary describing the phase parameters
             homogenization(dict): a dictionary describing the damask homogenization
         """
-        return DAMASKCreator.material(rotation, elements, phase, homogenization)
+        return DAMASKCreator.MaterialFactory.config(
+            rotation, elements, phase, homogenization
+        )
 
     @staticmethod
     def Homogenization(method=None, parameters=None):
@@ -137,7 +139,7 @@ class DAMASK:
         Examples:
             homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
         """
-        return DAMASKCreator.homogenization(method, parameters)
+        return DAMASKCreator.get_homogenization(method, parameters)
 
     @staticmethod
     def Phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
@@ -163,7 +165,7 @@ class DAMASK:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
-        return DAMASKCreator.phase(
+        return DAMASKCreator.get_phase(
             composition=composition,
             lattice=lattice,
             output_list=output_list,
@@ -179,7 +181,7 @@ class DAMASK:
              elasticity= elasticity(type= 'Hooke', C_11= 106.75e9,
                                         C_12= 60.41e9, C_44=28.34e9)
         """
-        return DAMASKCreator.elasticity(**kwargs)
+        return kwargs
 
     @staticmethod
     def list_elasticity():
@@ -201,7 +203,7 @@ class DAMASK:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
-        return DAMASKCreator.plasticity(**kwargs)
+        return kwargs
 
     @staticmethod
     def list_plasticity():
@@ -219,7 +221,7 @@ class DAMASK:
                 If string is given, it looks for the method within
                 `damask.Rotation` via `getattr`.
         """
-        return DAMASKCreator.rotation(method, *args, **kwargs)
+        return DAMASKCreator.get_rotation(method, *args, **kwargs)
 
 
 class Schroedinger:

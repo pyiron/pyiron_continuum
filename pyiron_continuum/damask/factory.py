@@ -11,7 +11,7 @@ with ImportAlarm(
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
 from pyiron_continuum.reference.mendeleev import get_atom_info
-from pyiron_continuum.damask.reference.yaml import get_elasticity, get_plasticity
+from pyiron_continuum.damask.reference.yaml import list_elasticity, list_plasticity
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (
@@ -218,7 +218,7 @@ def generate_load_step(
     return result
 
 
-def get_damask_loading(solver, load_steps):
+def get_loading(solver, load_steps):
     if not isinstance(load_steps, list):
         load_steps = [load_steps]
     if "mech_bc_dict" in load_steps[0]:
@@ -246,234 +246,75 @@ def translate_load_steps(load_steps):
     return result
 
 
-class Create:
-    def __init__(self):
-        """The create factory for the damask job."""
-        self._grid = GridFactory()
+def get_homogenization(method=None, parameters=None):
+    """
+    Returns damask homogenization as a dictionary.
+    Args:
+        method(str): homogenization method
+        parameters(dict): the required parameters
+    Examples:
+        homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
+    """
+    if method is None:
+        method = "SX"
+    if parameters is None:
+        parameters = {"N_constituents": 1, "mechanical": {"type": "pass"}}
+    return {method: parameters}
 
-    @property
-    def grid(self):
-        return self._grid
 
-    @grid.setter
-    def grid(self, value):
-        self._grid = value
-
-    @staticmethod
-    def generate_loading_tensor(default="F"):
-        return generate_loading_tensor(default=default)
-
-    generate_loading_tensor.__doc__ = generate_loading_tensor.__doc__
-
-    @staticmethod
-    def loading_tensor_to_dict(key, value):
-        return loading_tensor_to_dict(key, value)
-
-    loading_tensor_to_dict.__doc__ = loading_tensor_to_dict.__doc__
-
-    @staticmethod
-    def generate_load_step(
-        N,
-        t,
-        F=None,
-        dot_F=None,
-        P=None,
-        dot_P=None,
-        f_out=None,
-        r=None,
-        f_restart=None,
-        estimate_rate=None,
-    ):
-        return generate_load_step(
-            N=N,
-            t=t,
-            F=F,
-            dot_F=dot_F,
-            P=P,
-            dot_P=dot_P,
-            f_out=f_out,
-            r=r,
-            f_restart=f_restart,
-            estimate_rate=estimate_rate,
+def get_phase(
+    composition, elasticity, plasticity=None, lattice=None, output_list=None
+):
+    """
+    Returns a dictionary describing the phases for damask.
+    Args:
+        composition(str)
+        lattice(str)
+        output_list(str)
+        elasticity(dict)
+        plasticity(dict)
+    Examples:
+        phase = phase(
+            composition='Aluminum',
+            lattice='cF',
+            elasticity=elasticity,
+            plasticity=plasticity
         )
 
-    generate_load_step.__doc__ = generate_load_step.__doc__
-
-    @staticmethod
-    def loading(solver, load_steps):
-        """
-        Creates the required damask loading.
-        Args:
-            solver(dict): a dictionary desrcribing the solver: e.g, {'mechanical': 'spectral_basic'}
-            load_steps(list/single dict): a list of dict or single dict, which describes the loading conditions
-            an example would be:
-            {'mech_bc_dict':{'dot_F':[1e-2,0,0, 0,'x',0,  0,0,'x'],
-                            'P':['x','x','x', 'x',0,'x',  'x','x',0]},
-            'discretization':{'t': 10.,'N': 40, 'f_out': 4},
-            'additional': {'f_out': 4}
-        """
-        return get_damask_loading(solver=solver, load_steps=load_steps)
-
-    @staticmethod
-    def material(rotation, elements, phase, homogenization):
-        """
-        Creates a damask material.
-        Args:
-            rotation(damask.Rotation): damask rotation object
-            elements(str): elements describing the phase
-            phase(dict): a dictionary describing the phase parameters
-            homogenization(dict): a dictionary describing the damask homogenization
-        """
-        return MaterialFactory.config(rotation, elements, phase, homogenization)
-
-    @staticmethod
-    def homogenization(method=None, parameters=None):
-        """
-        Returns damask homogenization as a dictionary.
-        Args:
-            method(str): homogenization method
-            parameters(dict): the required parameters
-        Examples:
-            homogenization(method='SX', parameters={'N_constituents': 1, "mechanical": {"type": "pass"}})
-        """
-        if method is None:
-            method = "SX"
-        if parameters is None:
-            parameters = {"N_constituents": 1, "mechanical": {"type": "pass"}}
-        return {method: parameters}
-
-    @staticmethod
-    def phase(composition, elasticity, plasticity=None, lattice=None, output_list=None):
-        """
-        Returns a dictionary describing the phases for damask.
-        Args:
-            composition(str)
-            lattice(str)
-            output_list(str)
-            elasticity(dict)
-            plasticity(dict)
-        Examples:
-            phase = phase(
-                composition='Aluminum',
-                lattice='cF',
-                elasticity=elasticity,
-                plasticity=plasticity
-            )
-
-        For the details of isotropic model, one can refer to https://doi.org/10.1016/j.scriptamat.2017.09.047
-        """
-        if lattice is None:
-            lattice = {"BCC": "cI", "HEX": "hP", "FCC": "cF"}[
-                get_atom_info(name=composition)["lattice_structure"]
-            ]
-        if output_list is None:
-            if plasticity is None:
-                output_list = ["F", "P", "F_e"]
-            else:
-                output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
-        d = {
-            composition: {
-                "lattice": lattice,
-                "mechanical": {"output": output_list, "elastic": elasticity},
-            }
+    For the details of isotropic model, one can refer to:
+    https://doi.org/10.1016/j.scriptamat.2017.09.047
+    """
+    if lattice is None:
+        lattice = {"BCC": "cI", "HEX": "hP", "FCC": "cF"}[
+            get_atom_info(name=composition)["lattice_structure"]
+        ]
+    if output_list is None:
+        if plasticity is None:
+            output_list = ["F", "P", "F_e"]
+        else:
+            output_list = ["F", "P", "F_e", "F_p", "L_p", "O"]
+    d = {
+        composition: {
+            "lattice": lattice,
+            "mechanical": {"output": output_list, "elastic": elasticity},
         }
-        if plasticity is not None:
-            d[composition]["mechanical"]["plastic"] = plasticity
-        return d
+    }
+    if plasticity is not None:
+        d[composition]["mechanical"]["plastic"] = plasticity
+    return d
 
-    @staticmethod
-    def list_elasticity():
-        return get_elasticity()
 
-    @staticmethod
-    def elasticity(**kwargs):
-        """
-        Args:
-            type (str): Type of elasticity model (e.g. "Hooke")
-            C_11, C_12, C_44 (float): Elastic constants in Pascals (material)
+def get_rotation(method="from_random", *args, **kwargs):
+    """
+    Args:
+        method (damask.Rotation.*/str): Method of damask.Rotation class which
+            based on the given arguments creates the Rotation object. If
+            string is given, it looks for the method within `damask.Rotation`
+            via `getattr`.
 
-        Returns a dictionary of elasticity parameters for damask input file.
-        Examples:
-             # For aluminium
-             elasticity = elasticity(
-                type='Hooke', C_11=106.75e9, C_12=60.41e9, C_44=28.34e9
-            )
-        """
-        return kwargs
-
-    @staticmethod
-    def list_plasticity():
-        return get_plasticity()
-
-    @staticmethod
-    def plasticity(**kwargs):
-        """
-        Returns a dictionary of plasticity parameters for damask input file.
-
-        Examples:
-            plasticity = plasticity(N_sl=[12], a_sl=2.25,
-                                    atol_xi=1.0, dot_gamma_0_sl=0.001,
-                                    h_0_sl_sl=75e6,
-                                    h_sl_sl=[1, 1, 1.4, 1.4, 1.4, 1.4],
-                                    n_sl=20, output=['xi_sl'],
-                                    type='phenopowerlaw', xi_0_sl=[31e6],
-                                    xi_inf_sl=[63e6])
-
-        Parameters for elastoplastic model ( power-law hardening behavior)
-        type : plasticity model (Here phenopowerlaw : Phenomenological
-            plasticity with power-law hardening behavior) (model)
-        N_sl : Number of slip-systems for a given slip family (material)
-        a_sl : Hardening exponent for slip (material)
-        dot_gamma_0_sl : reference/initial shear strain rate for slip in per seconds (experiment)
-        h_0_sl_sl : reference/initial hardening rate for slip-slip activity in pascals (material)
-        h_sl_sl : slip resistance from slip activity. Value of unity
-            corresponds to self hardening and 1.4 for latent hardening (not for
-            coplannar slip systems) (model)
-        n_sl : stress exponent for slip (material)
-        xi_0_sl : initial critical shear stress for slip in pascals (material)
-        xi_inf_sl : maximum critical shear stress for slip in pascals (material)
-        output : Quantity as a output (Here xi_sl: shear stress) (damask)
-
-        Parameters for elastoplastic model ( isotropic hardening)
-        a : Hardening exponent for slip (material); cf. `a_sl`
-        dot_gamma_0 : reference/initial shear strain rate for slip in per seconds (experiment); cf. dot_gamma_0_sl
-        h_0 : reference/initial hardening stress in pascals (material); cf. h_0_sl_sl
-        h : slip resistance from slip activity. Value of unity corresponds to
-            self hardening and 1.4 for latent hardening (not for coplannar slip
-            systems) (model); cf. h_sl
-        n : stress exponent (material); cf. n_sl
-        xi_0 : initial critical shear stress in pascals (material)
-        xi_inf : maximum critical shear stress in pascals (material)
-        M : Taylor factor (material)
-        output : Quantity as a output (Here xi: shear stress) (damask)
-        """
-        has_h0 = False
-        has_h = False
-        vals = {}
-        for key, value in kwargs.items():
-            if "h_0_sl_sl" in key:
-                has_h0 = True
-                vals["h_0_sl-sl"] = value
-            if "h_sl_sl" in key:
-                has_h = True
-                vals["h_sl-sl"] = value
-        if has_h0:
-            kwargs["h_0_sl-sl"] = vals["h_0_sl-sl"]
-            del kwargs["h_0_sl_sl"]
-        if has_h:
-            kwargs["h_sl-sl"] = vals["h_sl-sl"]
-            del kwargs["h_sl_sl"]
-        return kwargs
-
-    @staticmethod
-    def rotation(method="from_random", *args, **kwargs):
-        """
-        Args:
-            method (damask.Rotation.*/str): Method of damask.Rotation class
-                which based on the given arguments creates the Rotation object.
-                If string is given, it looks for the method within
-                `damask.Rotation` via `getattr`.
-        """
-        if isinstance(method, str):
-            method = getattr(Rotation, method)
-        return method(*args, **kwargs)
+    Returns:
+        damask.Rotation: A Rotation object
+    """
+    if isinstance(method, str):
+        method = getattr(Rotation, method)
+    return method(*args, **kwargs)
