@@ -12,11 +12,7 @@ with ImportAlarm(
     "requirements. Please install it and try again."
 ) as damask_alarm:
     from damask import Result, YAML, ConfigMaterial
-from pyiron_continuum.damask.factory import (
-    Create as DAMASKCreator,
-    GridFactory,
-    translate_load_steps,
-)
+from pyiron_continuum.damask import factory
 import pyiron_continuum.damask.regrid as rgg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -72,7 +68,7 @@ class DAMASK(TemplateJob):
         ... )
 
         """
-        self.input.elasticity = DAMASKCreator.elasticity(**kwargs)
+        self.input.elasticity = kwargs
 
     def set_plasticity(self, **kwargs):
         """
@@ -93,7 +89,7 @@ class DAMASK(TemplateJob):
         ...     xi_inf_sl=[63e6]
         ... )
         """
-        self.input.plasticity = DAMASKCreator.plasticity(**kwargs)
+        self.input.plasticity = kwargs
 
     def set_homogenization(self, **kwargs):
         """
@@ -107,7 +103,7 @@ class DAMASK(TemplateJob):
         ...     parameters={'N_constituents': 1, "mechanical": {"type": "pass"}}
         ... )
         """
-        self.input.homogenization = DAMASKCreator.homogenization(**kwargs)
+        self.input.homogenization = factory.get_homogenization(**kwargs)
 
     def set_phase(self, composition, lattice=None, output_list=None):
         """
@@ -148,7 +144,7 @@ class DAMASK(TemplateJob):
                 "phase can only be defined after elasticity and plasticity are"
                 " defined (cf. job.set_elasticity and job.set_plasticity)"
             )
-        self.input.phase = DAMASKCreator.phase(
+        self.input.phase = factory.get_phase(
             elasticity=self.input.elasticity,
             plasticity=self.input.plasticity,
             composition=composition,
@@ -165,7 +161,7 @@ class DAMASK(TemplateJob):
                 If string is given, it looks for the method within
                 `damask.Rotation` via `getattr`.
         """
-        self._rotation = [DAMASKCreator.rotation(method, *args, **kwargs)]
+        self._rotation = [factory.get_rotation(method, *args, **kwargs)]
         self._attempt_init_material()
 
     @property
@@ -184,7 +180,7 @@ class DAMASK(TemplateJob):
             "homogenization": self.input.homogenization,
         }
         if None not in data.values():
-            self.input.material = DAMASKCreator.material(**data)
+            self.input.material = factory.MaterialFactory.config(**data)
 
     def set_material(self, rotation, elements, phase, homogenization):
         """
@@ -197,7 +193,7 @@ class DAMASK(TemplateJob):
         Returns:
             None
         """
-        self.input.material = DAMASKCreator.material(
+        self.input.material = factory.MaterialFactory.config(
             rotation, elements, phase, homogenization
         )
 
@@ -207,7 +203,7 @@ class DAMASK(TemplateJob):
 
     def set_grid(self, method="voronoi_tessellation", **kwargs):
         if method == "voronoi_tessellation":
-            self.input.grid = GridFactory.via_voronoi_tessellation(**kwargs)
+            self.input.grid = factory.GridFactory.via_voronoi_tessellation(**kwargs)
         else:
             raise NotImplementedError(
                 "Currently only `voronoi_tessellation` is implemented"
@@ -242,12 +238,12 @@ class DAMASK(TemplateJob):
                 'discretization':{'t': 10.,'N': 40, 'f_out': 4},
                 'additional': {'f_out': 4}
         """
-        self.input.loading = DAMASKCreator.loading(solver=solver, load_steps=load_steps)
+        self.input.loading = factory.get_loading(solver=solver, load_steps=load_steps)
 
     def append_loading(self, load_steps):
         if not isinstance(load_steps, list):
             load_steps = [load_steps]
-        self.input.loading["loadstep"].extend(translate_load_steps(load_steps))
+        self.input.loading["loadstep"].extend(factory.translate_load_steps(load_steps))
 
     def _write_material(self):
         if self.input.material is not None:
