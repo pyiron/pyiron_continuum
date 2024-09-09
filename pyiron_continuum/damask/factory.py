@@ -316,3 +316,11 @@ def get_rotation(method="from_random", *args, **kwargs):
     if isinstance(method, str):
         method = getattr(Rotation, method)
     return method(*args, **kwargs)
+
+
+def get_plasticity(**kwargs):
+    for key_old, key_new in {"h_0_sl_sl": "h_0_sl-sl", "h_sl_sl": "h_sl-sl"}.items():
+        if key_old in kwargs:
+            kwargs[key_new] = kwargs[key_old]
+            del kwargs[key_old]
+    return kwargs

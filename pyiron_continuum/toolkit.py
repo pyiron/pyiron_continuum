@@ -202,7 +202,7 @@ class DAMASK:
                                     type='phenopowerlaw', xi_0_sl=[31e6],
                                     xi_inf_sl=[63e6])
         """
-        return kwargs
+        return DAMASKCreator.get_plasticity(**kwargs)
 
     @staticmethod
     def list_plasticity():

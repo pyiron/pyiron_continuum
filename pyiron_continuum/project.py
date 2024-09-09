@@ -66,7 +66,7 @@ class Damask(PyironFactory):
 
     @staticmethod
     def plasticity(**kwargs):
-        return kwargs
+        return DAMASKCreator.get_plasticity(**kwargs)
 
     @staticmethod
     def homogenization(method=None, parameters=None):
