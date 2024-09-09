@@ -1,6 +1,12 @@
 channels:
 - conda-forge
 dependencies:
+- ipykernel
+- myst-parser
+- nbsphinx
+- sphinx-gallery
+- sphinx-rtd-theme
+- versioneer
 - coveralls
 - atomistics =0.1.32
 - coverage
