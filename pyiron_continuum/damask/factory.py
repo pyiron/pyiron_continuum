@@ -11,7 +11,6 @@ with ImportAlarm(
     from damask import GeomGrid, YAML, ConfigMaterial, seeds, Rotation
 import numpy as np
 from pyiron_continuum.reference.mendeleev import get_atom_info
-from pyiron_continuum.damask.reference.yaml import list_elasticity, list_plasticity
 
 __author__ = "Muhammad Hassani"
 __copyright__ = (

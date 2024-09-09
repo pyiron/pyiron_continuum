@@ -12,6 +12,7 @@ from pyiron_continuum.damask import factory as DAMASKCreator
 from pyiron_continuum.schroedinger.schroedinger import TISE
 from pyiron_continuum.mesh import RectMesh
 from pyiron_continuum.schroedinger.potentials import Sinusoidal, SquareWell
+from pyiron_continuum.damask.reference.yaml import list_elasticity, list_plasticity
 
 __author__ = "Liam Huber"
 __copyright__ = (
@@ -187,7 +188,7 @@ class DAMASK:
         """
         returns a list of available elasticity types
         """
-        return DAMASKCreator.list_elasticity()
+        return list_elasticity()
 
     @staticmethod
     def Plasticity(**kwargs):
@@ -209,7 +210,7 @@ class DAMASK:
         """
         returns a list of available plasticity types
         """
-        return DAMASKCreator.list_plasticity()
+        return list_plasticity()
 
     @staticmethod
     def Rotation(method="from_random", *args, **kwargs):

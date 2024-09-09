@@ -180,9 +180,7 @@ class DAMASK(TemplateJob):
             "homogenization": self.input.homogenization,
         }
         if None not in data.values():
-            self.input.material = factory.MaterialFactory.config(
-                rotation, elements, phase, homogenization
-            )
+            self.input.material = factory.MaterialFactory.config(**data)
 
     def set_material(self, rotation, elements, phase, homogenization):
         """
