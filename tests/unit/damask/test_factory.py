@@ -27,6 +27,12 @@ class TestDamaskFactory(unittest.TestCase):
             else:
                 self.assertTrue(tag in data["discretization"])
 
+    def test_generate_grid_from_voronoi_tesselation(self):
+        grid = factory.generate_grid_from_voronoi_tessellation(16, 8, 1e-5)
+        self.assertAlmostEquals(grid.size.max(), 1.0e-5)
+        self.assertAlmostEquals(grid.size.min(), 1.0e-5)
+
+
 
 if __name__ == "__main__":
     unittest.main()

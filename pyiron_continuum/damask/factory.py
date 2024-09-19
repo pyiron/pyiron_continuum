@@ -72,25 +72,33 @@ class GridFactory:
 
     @staticmethod
     def via_voronoi_tessellation(spatial_discretization, num_grains, box_size):
-        if isinstance(spatial_discretization, (int, float)):
-            spatial_discretization = np.array(
-                [spatial_discretization, spatial_discretization, spatial_discretization]
-            )
-        if isinstance(box_size, (int, float)):
-            box_size = np.array([box_size, box_size, box_size])
-        seed = seeds.from_random(box_size, num_grains)
-        return GeomGrid.from_Voronoi_tessellation(
-            spatial_discretization, box_size, seed
+        return generate_grid_from_voronoi_tessellation(
+            spatial_discretization, num_grains, box_size
         )
+
+
+def generate_grid_from_voronoi_tessellation(
+    spatial_discretization, num_grains, box_size
+):
+    if isinstance(spatial_discretization, (int, float)):
+        spatial_discretization = np.array(
+            [spatial_discretization, spatial_discretization, spatial_discretization]
+        )
+    if isinstance(box_size, (int, float)):
+        box_size = np.array([box_size, box_size, box_size])
+    seed = seeds.from_random(box_size, num_grains)
+    return GeomGrid.from_Voronoi_tessellation(
+        spatial_discretization, box_size, seed
+    )
 
 
 def generate_material(rotation, elements, phase, homogenization):
     _config = ConfigMaterial(
         {"material": [], "phase": phase, "homogenization": homogenization}
     )
-    if not isinstance(rotation, list):
+    if not isinstance(rotation, (list, tuple, np.ndarray)):
         rotation = [rotation]
-    if not isinstance(elements, list):
+    if not isinstance(rotation, (list, tuple, np.ndarray)):
         elements = [elements]
     for r, e in zip(rotation, elements):
         _config = _config.material_add(
