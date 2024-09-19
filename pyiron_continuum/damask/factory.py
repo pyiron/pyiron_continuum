@@ -317,7 +317,7 @@ def get_phase(composition, elasticity, plasticity=None, lattice=None, output_lis
 
 
 def get_random_rotation(
-    shape: Optional[int, numpy.ndarray, Sequence[int]] = None,
+    shape: Optional[int, np.ndarray, Sequence[int]] = None,
     rng_seed: Optional[
         int,
         np.ndarray,
