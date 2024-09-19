@@ -3,6 +3,7 @@
 """Factory of the damask classes and methods to a pyironized manner"""
 
 from pyiron_snippets.import_alarm import ImportAlarm
+from typing import Union, Optional, Sequence
 
 with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
@@ -313,6 +314,19 @@ def get_phase(composition, elasticity, plasticity=None, lattice=None, output_lis
     if plasticity is not None:
         d[composition]["mechanical"]["plastic"] = plasticity
     return d
+
+
+def get_random_rotation(
+    shape: Optional[int, numpy.ndarray, Sequence[int]] = None,
+    rng_seed: Optional[
+        int,
+        np.ndarray,
+        Sequence[int],
+        np.random.bit_generator.SeedSequence,
+        np.random._generator.Generator
+    ] = None,
+):
+    return Rotation.from_random(shape=shape, rng_seed=rng_seed)
 
 
 def get_rotation(method="from_random", *args, **kwargs):
