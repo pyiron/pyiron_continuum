@@ -34,14 +34,7 @@ class MaterialFactory:
 
     @staticmethod
     def config(rotation, elements, phase, homogenization):
-        _config = ConfigMaterial(
-            {"material": [], "phase": phase, "homogenization": homogenization}
-        )
-        for r, e in zip(rotation, elements):
-            _config = _config.material_add(
-                O=r, phase=e, homogenization=list(homogenization.keys())[0]
-            )
-        return _config
+        return generate_material(rotation, elements, phase, homogenization)
 
     @staticmethod
     def read(file_path):
@@ -89,6 +82,21 @@ class GridFactory:
         return GeomGrid.from_Voronoi_tessellation(
             spatial_discretization, box_size, seed
         )
+
+
+def generate_material(rotation, elements, phase, homogenization):
+    _config = ConfigMaterial(
+        {"material": [], "phase": phase, "homogenization": homogenization}
+    )
+    if not isinstance(rotation, list):
+        rotation = [rotation]
+    if not isinstance(elements, list):
+        elements = [elements]
+    for r, e in zip(rotation, elements):
+        _config = _config.material_add(
+            O=r, phase=e, homogenization=list(homogenization.keys())[0]
+        )
+    return _config
 
 
 def generate_loading_tensor(default="F"):
