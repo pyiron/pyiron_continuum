@@ -79,13 +79,13 @@ class DAMASK:
     def generate_loading_tensor(default="F"):
         return DAMASKCreator.generate_loading_tensor(default=default)
 
-    generate_loading_tensor.__doc__ = DAMASKCreator.generate_loading_tensor.__doc__
+    generate_loading_tensor.__func__.__doc__ = DAMASKCreator.generate_loading_tensor.__doc__
 
     @staticmethod
     def loading_tensor_to_dict(key, value):
         return DAMASKCreator.loading_tensor_to_dict(key, value)
 
-    loading_tensor_to_dict.__doc__ = DAMASKCreator.loading_tensor_to_dict.__doc__
+    loading_tensor_to_dict.__func__.__doc__ = DAMASKCreator.loading_tensor_to_dict.__doc__
 
     @staticmethod
     def generate_load_step(
@@ -113,7 +113,7 @@ class DAMASK:
             estimate_rate=estimate_rate,
         )
 
-    generate_load_step.__doc__ = DAMASKCreator.generate_load_step.__doc__
+    generate_load_step.__func__.__doc__ = DAMASKCreator.generate_load_step.__doc__
 
     @staticmethod
     def Material(rotation, elements, phase, homogenization):

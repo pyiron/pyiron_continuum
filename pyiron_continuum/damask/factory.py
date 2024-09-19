@@ -79,13 +79,11 @@ class GridFactory:
 
     @staticmethod
     def via_voronoi_tessellation(spatial_discretization, num_grains, box_size):
-        if isinstance(spatial_discretization, int) or isinstance(
-            spatial_discretization, float
-        ):
+        if isinstance(spatial_discretization, (int, float)):
             spatial_discretization = np.array(
                 [spatial_discretization, spatial_discretization, spatial_discretization]
             )
-        if isinstance(box_size, int) or isinstance(box_size, float):
+        if isinstance(box_size, (int, float)):
             box_size = np.array([box_size, box_size, box_size])
         seed = seeds.from_random(box_size, num_grains)
         return GeomGrid.from_Voronoi_tessellation(
