@@ -3,7 +3,7 @@
 """Factory of the damask classes and methods to a pyironized manner"""
 
 from pyiron_snippets.import_alarm import ImportAlarm
-from typing import Union, Optional, Sequence
+from typing import Sequence
 
 with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
@@ -88,9 +88,7 @@ def generate_grid_from_voronoi_tessellation(
     if isinstance(box_size, (int, float)):
         box_size = np.array([box_size, box_size, box_size])
     seed = seeds.from_random(box_size, num_grains)
-    return GeomGrid.from_Voronoi_tessellation(
-        spatial_discretization, box_size, seed
-    )
+    return GeomGrid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
 
 
 def generate_material(rotation, elements, phase, homogenization):
@@ -318,13 +316,14 @@ def get_phase(composition, elasticity, plasticity=None, lattice=None, output_lis
 
 def get_random_rotation(
     shape: int | np.ndarray | Sequence[int] | None = None,
-    rng_seed: Optional[
-        int,
-        np.ndarray,
-        Sequence[int],
-        np.random.bit_generator.SeedSequence,
-        np.random._generator.Generator
-    ] = None,
+    rng_seed: (
+        int
+        | np.ndarray
+        | Sequence[int]
+        | np.random.bit_generator.SeedSequence
+        | np.random._generator.Generator
+        | None
+    ) = None,
 ):
     return Rotation.from_random(shape=shape, rng_seed=rng_seed)
 
