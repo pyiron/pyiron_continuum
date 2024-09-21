@@ -3,6 +3,7 @@
 """Factory of the damask classes and methods to a pyironized manner"""
 
 from pyiron_snippets.import_alarm import ImportAlarm
+from typing import Sequence
 
 with ImportAlarm(
     "DAMASK functionality requires the `damask` module (and its dependencies) specified as extra"
@@ -34,14 +35,7 @@ class MaterialFactory:
 
     @staticmethod
     def config(rotation, elements, phase, homogenization):
-        _config = ConfigMaterial(
-            {"material": [], "phase": phase, "homogenization": homogenization}
-        )
-        for r, e in zip(rotation, elements):
-            _config = _config.material_add(
-                O=r, phase=e, homogenization=list(homogenization.keys())[0]
-            )
-        return _config
+        return generate_material(rotation, elements, phase, homogenization)
 
     @staticmethod
     def read(file_path):
@@ -79,16 +73,37 @@ class GridFactory:
 
     @staticmethod
     def via_voronoi_tessellation(spatial_discretization, num_grains, box_size):
-        if isinstance(spatial_discretization, (int, float)):
-            spatial_discretization = np.array(
-                [spatial_discretization, spatial_discretization, spatial_discretization]
-            )
-        if isinstance(box_size, (int, float)):
-            box_size = np.array([box_size, box_size, box_size])
-        seed = seeds.from_random(box_size, num_grains)
-        return GeomGrid.from_Voronoi_tessellation(
-            spatial_discretization, box_size, seed
+        return generate_grid_from_voronoi_tessellation(
+            spatial_discretization, num_grains, box_size
         )
+
+
+def generate_grid_from_voronoi_tessellation(
+    spatial_discretization, num_grains, box_size
+):
+    if isinstance(spatial_discretization, (int, float)):
+        spatial_discretization = np.array(
+            [spatial_discretization, spatial_discretization, spatial_discretization]
+        )
+    if isinstance(box_size, (int, float)):
+        box_size = np.array([box_size, box_size, box_size])
+    seed = seeds.from_random(box_size, num_grains)
+    return GeomGrid.from_Voronoi_tessellation(spatial_discretization, box_size, seed)
+
+
+def generate_material(rotation, elements, phase, homogenization):
+    _config = ConfigMaterial(
+        {"material": [], "phase": phase, "homogenization": homogenization}
+    )
+    if not isinstance(rotation, (list, tuple, np.ndarray)):
+        rotation = [rotation]
+    if not isinstance(rotation, (list, tuple, np.ndarray)):
+        elements = [elements]
+    for r, e in zip(rotation, elements):
+        _config = _config.material_add(
+            O=r, phase=e, homogenization=list(homogenization.keys())[0]
+        )
+    return _config
 
 
 def generate_loading_tensor(default="F"):
@@ -297,6 +312,20 @@ def get_phase(composition, elasticity, plasticity=None, lattice=None, output_lis
     if plasticity is not None:
         d[composition]["mechanical"]["plastic"] = plasticity
     return d
+
+
+def get_random_rotation(
+    shape: int | np.ndarray | Sequence[int] | None = None,
+    rng_seed: (
+        int
+        | np.ndarray
+        | Sequence[int]
+        | np.random.bit_generator.SeedSequence
+        | np.random._generator.Generator
+        | None
+    ) = None,
+):
+    return Rotation.from_random(shape=shape, rng_seed=rng_seed)
 
 
 def get_rotation(method="from_random", *args, **kwargs):
