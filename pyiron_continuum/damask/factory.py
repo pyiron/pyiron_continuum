@@ -234,9 +234,8 @@ def get_loading(solver, load_steps):
     if not isinstance(load_steps, list):
         load_steps = [load_steps]
     if "mech_bc_dict" in load_steps[0]:
-        return YAML(solver=solver, loadstep=translate_load_steps(load_steps))
-    else:
-        return YAML(solver=solver, loadstep=load_steps)
+        load_steps = translate_load_steps(load_steps)
+    return YAML(solver=solver, loadstep=load_steps)
 
 
 def translate_load_steps(load_steps):
