@@ -1,0 +1,64 @@
+[build-system]
+requires = [
+    "pyiron_base",
+    "setuptools",
+    "versioneer[toml]==0.29",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyiron_continuum"
+description = "pyiron_continuum - Your pyiron-like module."
+readme = "docs/README.md"
+keywords = [ "pyiron",]
+requires-python = ">=3.9, <3.13"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Scientific/Engineering",
+    "License :: OSI Approved :: BSD License",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "coveralls",
+    "coverage",
+    "codacy-coverage",
+    "matplotlib==3.9.2",
+    "numpy==1.26.4",
+    "pyiron_base==0.10.0",
+    "pyiron_snippets==0.1.4",
+    "scipy==1.14.1",
+    "sympy==1.13.2",
+    "python-blosc2",
+    "python-damask==3.0.0b",
+    "mendeleev==0.17.0",
+]
+dynamic = [ "version",]
+authors = [
+    { name = "Sam Waseda", email = "waseda@mpie.de" },
+]
+
+[project.license]
+file = "LICENSE"
+
+[project.urls]
+Homepage = "https://pyiron.org/"
+Documentation = "https://pyiron_continuum.readthedocs.io"
+Repository = "https://github.com/pyiron/pyiron_continuum"
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440-pre"
+versionfile_source = "pyiron_continuum/_version.py"
+parentdir_prefix = "pyiron_continuum"
+tag_prefix = "pyiron_continuum-"
+
+[tool.setuptools.packages.find]
+include = [ "pyiron_continuum*",]
+
+[tool.setuptools.dynamic.version]
+attr = "pyiron_continuum.__version__"
