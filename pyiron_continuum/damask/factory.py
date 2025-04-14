@@ -29,10 +29,7 @@ __date__ = "Oct 04, 2021"
 
 
 class MaterialFactory:
-    def __init__(self):
-        """A factory for damask ConfigMaterial class."""
-        pass
-
+    """A factory for damask ConfigMaterial class."""
     @staticmethod
     def config(rotation, elements, phase, homogenization):
         return generate_material(rotation, elements, phase, homogenization)
